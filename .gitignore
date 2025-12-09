@@ -1,0 +1,67 @@
+# Binarios y archivos compilados
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Archivos de Visual Studio
+.vs/
+.vscode/
+*.sln.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+logs/
+*.log
+
+# Configuración local (No subir a git)
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+
+# Archivos de test
+TestResults/
+*.trx
+
+# Certificados y keys
+*.pfx
+*.pem
+*.key
+
+# Dependencias
+node_modules/
+packages/
+.packages/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp
+
+# IDEs
+.idea/
+*.iml
+
+# Publish
+publish/
+PublishProfiles/
+
+# Entity Framework
+*.db
+*.db-wal
+*.db-shm
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+
+# Contenedores
+.docker/
+
+# Estadísticas de cobertura
+coverage/

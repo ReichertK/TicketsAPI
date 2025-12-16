@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using Serilog;
 using System.Text;
 using TicketsAPI.Config;
@@ -67,7 +68,8 @@ try
                 ValidateAudience = true,
                 ValidAudience = audience,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromMinutes(5)
+                ClockSkew = TimeSpan.FromMinutes(5),
+                RoleClaimType = ClaimTypes.Role
             };
 
             // SignalR WebSocket support

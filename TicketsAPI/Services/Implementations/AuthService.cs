@@ -53,7 +53,8 @@ namespace TicketsAPI.Services.Implementations
                 ? await _permisoRepository.GetByRolAsync(usuario.Id_Rol) 
                 : new List<Models.Entities.Permiso>();
 
-            var token = GenerateJwtToken(usuario.Id_Usuario, usuario.Nombre, usuario.Email, usuario.Id_Rol.ToString());
+            var roleValue = rol?.Nombre_Rol ?? usuario.Id_Rol.ToString();
+            var token = GenerateJwtToken(usuario.Id_Usuario, usuario.Nombre, usuario.Email, roleValue);
             var response = new LoginResponse
             {
                 Id_Usuario = usuario.Id_Usuario,
@@ -117,7 +118,7 @@ namespace TicketsAPI.Services.Implementations
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, name),
                 new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim("role", role)
+                new Claim(ClaimTypes.Role, role)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(

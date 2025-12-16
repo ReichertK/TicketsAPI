@@ -21,6 +21,36 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada. Defina 'ConnectionStrings:DbTkt' o 'ConnectionStrings:DefaultConnection'.");
         }
 
+        // Endpoint temporal de apoyo para pruebas locales: devuelve un usuario de muestra
+        // IMPORTANTE: No exponer en producción
+        [HttpGet("sample-user")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetSampleUser()
+        {
+            try
+            {
+                using var conn = new MySqlConnection(_connectionString);
+                await conn.OpenAsync();
+
+                using var cmd = new MySqlCommand("SELECT idUsuario, nombre, email, passwordUsuarioEnc FROM usuario ORDER BY idUsuario LIMIT 1", conn);
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    var id = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                    var nombre = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                    var email = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                    var passEnc = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+                    return Ok(new { Id_Usuario = id, Usuario = nombre, Email = email, PasswordHash = passEnc });
+                }
+
+                return NotFound(new { message = "No hay usuarios en la tabla 'usuario'." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
         [HttpGet("db-audit")] // api/admin/db-audit?detalle=true
         [AllowAnonymous]
         public async Task<IActionResult> AuditDatabase([FromQuery] bool detalle = false)

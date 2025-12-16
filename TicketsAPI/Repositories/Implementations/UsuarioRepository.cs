@@ -33,7 +33,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario";
             var result = await conn.QueryAsync<Usuario>(sql);
             return result.ToList();
@@ -47,7 +48,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario WHERE email = @email LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { email });
         }
@@ -60,7 +62,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario WHERE idUsuario = @id";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { id });
         }
@@ -73,7 +76,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario WHERE nombre = @usuario LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { usuario });
         }
@@ -86,7 +90,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario WHERE tipo = @tipo";
             var result = await conn.QueryAsync<Usuario>(sql, new { tipo = idRol });
             return result.ToList();
@@ -100,7 +105,8 @@ namespace TicketsAPI.Repositories.Implementations
                     nombre AS Nombre,
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
-                    idKine AS Id_Departamento
+                    idKine AS Id_Departamento,
+                    tipo AS Id_Rol
                 FROM usuario WHERE idKine = @idDepartamento";
             var result = await conn.QueryAsync<Usuario>(sql, new { idDepartamento });
             return result.ToList();

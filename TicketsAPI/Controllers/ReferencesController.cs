@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
@@ -27,6 +28,7 @@ namespace TicketsAPI.Controllers
         /// <summary>
         /// Obtener todos los estados
         /// </summary>
+        [AllowAnonymous]
         [HttpGet("estados")]
         public async Task<IActionResult> GetEstados()
         {
@@ -45,6 +47,7 @@ namespace TicketsAPI.Controllers
         /// <summary>
         /// Obtener todas las prioridades
         /// </summary>
+        [AllowAnonymous]
         [HttpGet("prioridades")]
         public async Task<IActionResult> GetPrioridades()
         {
@@ -63,6 +66,7 @@ namespace TicketsAPI.Controllers
         /// <summary>
         /// Obtener todos los departamentos
         /// </summary>
+        [AllowAnonymous]
         [HttpGet("departamentos")]
         public async Task<IActionResult> GetDepartamentos()
         {

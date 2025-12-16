@@ -99,6 +99,24 @@ namespace TicketsAPI.Services.Interfaces
     }
 
     /// <summary>
+    /// Interfaz para servicio de prioridades
+    /// </summary>
+    public interface IPrioridadService
+    {
+        Task<List<PrioridadDTO>> GetAllAsync();
+        Task<PrioridadDTO?> GetByIdAsync(int id);
+    }
+
+    /// <summary>
+    /// Interfaz para servicio de departamentos
+    /// </summary>
+    public interface IDepartamentoService
+    {
+        Task<List<DepartamentoDTO>> GetAllAsync();
+        Task<DepartamentoDTO?> GetByIdAsync(int id);
+    }
+
+    /// <summary>
     /// DTO auxiliar para transiciones permitidas
     /// </summary>
     public class TransicionPermitidaDTO

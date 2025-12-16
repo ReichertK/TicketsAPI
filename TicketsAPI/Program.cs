@@ -4,6 +4,7 @@ using Serilog;
 using System.Text;
 using TicketsAPI.Config;
 using TicketsAPI.Middleware;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +35,8 @@ try
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins(allowedOrigins ?? new[] { "http://localhost:3000", "http://localhost:5173" })
+            var defaults = new[] { "http://localhost:3000", "http://localhost:5173", "https://localhost:5001", "http://localhost:5000" };
+            policy.WithOrigins(allowedOrigins ?? defaults)
                   .WithMethods(allowedMethods ?? new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" })
                   .WithHeaders(allowedHeaders ?? new[] { "*" })
                   .AllowCredentials();
@@ -42,6 +44,8 @@ try
     });
 
     // ==================== AUTHENTICATION ====================
+    // Bind JwtSettings for DI consumers (AuthService)
+    builder.Services.Configure<TicketsAPI.Config.JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
     var secretKey = jwtSettings["SecretKey"];
     var issuer = jwtSettings["Issuer"];
@@ -82,12 +86,40 @@ try
 
     builder.Services.AddAuthorization();
 
-    // ==================== DEPENDENCY INJECTION ====================
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    builder.Services.AddSingleton(connectionString);
+    // ==================== RATE LIMITING (IP) ====================
+    builder.Services.AddMemoryCache();
+    builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+    builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
+    builder.Services.AddInMemoryRateLimiting();
+    builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
-    // Registrar repositorios y servicios
-    // TODO: Agregar registros cuando se implementen
+    // ==================== DEPENDENCY INJECTION ====================
+    // Priorizar DbTkt para entorno local segun appsettings
+    var connectionString = builder.Configuration.GetConnectionString("DbTkt")
+        ?? builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? builder.Configuration.GetSection("ApiSettings").GetValue<string>("ConnectionString")
+        ?? builder.Configuration.GetValue<string>("ConnectionString")
+        ?? throw new InvalidOperationException("ConnectionString no configurada. Defina 'ConnectionStrings:DbTkt' o 'ConnectionStrings:DefaultConnection'.");
+
+    // Registrar repositorios (MySQL 5.5 compatible)
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IUsuarioRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.UsuarioRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.ITicketRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.TicketRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IEstadoRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.EstadoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPrioridadRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.PrioridadRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IDepartamentoRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.DepartamentoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPoliticaTransicionRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.PoliticaTransicionRepository(connectionString));
+
+    // Registrar servicios
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IAuthService, TicketsAPI.Services.Implementations.AuthService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IEstadoService, TicketsAPI.Services.Implementations.EstadoService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IPrioridadService, TicketsAPI.Services.Implementations.PrioridadService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IDepartamentoService, TicketsAPI.Services.Implementations.DepartamentoService>();
 
     // ==================== AUTOMAPPER ====================
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -110,6 +142,8 @@ try
                 Url = new Uri("https://github.com/ReichertK/TicketsAPI")
             }
         });
+
+        // Nota: la habilitación de Swagger se lee fuera de este bloque
 
         // Agregar autenticación JWT al Swagger
         c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -143,6 +177,9 @@ try
             c.IncludeXmlComments(xmlPath);
     });
 
+    // Leer setting para habilitar Swagger independientemente del entorno
+    var enableSwaggerSetting = builder.Configuration.GetValue<bool>("ApiSettings:EnableSwagger", builder.Environment.IsDevelopment());
+
     // ==================== SIGNALR ====================
     builder.Services.AddSignalR()
         .AddMessagePackProtocol();
@@ -161,22 +198,42 @@ try
     // CORS
     app.UseCors("AllowFrontend");
 
+
     // Swagger
-    if (app.Environment.IsDevelopment())
+    if (enableSwaggerSetting)
     {
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tickets API v1");
-            c.RoutePrefix = string.Empty;
+            c.RoutePrefix = "swagger";
         });
     }
 
     app.UseHttpsRedirection();
+    // Aplicar rate limiting antes de auth para proteger endpoints de SP
+    app.UseIpRateLimiting();
     app.UseAuthentication();
     app.UseAuthorization();
 
     // ==================== ENDPOINTS ====================
+    // Página de bienvenida mínima en '/'
+    app.MapGet("/", () =>
+    {
+        var html = @"<!doctype html>
+        <html lang='es'>
+        <head><meta charset='utf-8'><title>TicketsAPI</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.6}a{color:#0b5cff;text-decoration:none}a:hover{text-decoration:underline}.tag{display:inline-block;background:#eef3ff;border:1px solid #cfe0ff;color:#0b5cff;border-radius:6px;padding:2px 8px;font-size:12px;margin-left:8px}</style></head>
+        <body>
+        <h1>TicketsAPI</h1>
+        <p>Bienvenido. Recursos útiles:</p>
+        <ul>
+            <li><a href='/swagger'>Swagger UI</a> <span class='tag'>API Docs</span></li>
+            <li><a href='/health'>/health</a> <span class='tag'>Health</span></li>
+            <li><a href='/api/sp'>/api/sp</a> <span class='tag'>JWT + 60/min</span></li>
+        </ul>
+        </body></html>";
+        return Results.Content(html, "text/html");
+    });
     app.MapControllers();
     app.MapHealthChecks("/health");
     app.MapHub<TicketHub>("/hubs/tickets");

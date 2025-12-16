@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TicketsAPI.Models.DTOs;
+using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {

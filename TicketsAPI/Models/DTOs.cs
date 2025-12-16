@@ -125,13 +125,9 @@ namespace TicketsAPI.Models.DTOs
     /// </summary>
     public class CreateUpdateTicketDTO
     {
-        [Required(ErrorMessage = "El título es requerido")]
-        [StringLength(200, MinimumLength = 5, ErrorMessage = "El título debe tener entre 5 y 200 caracteres")]
-        public string Titulo { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "La descripción es requerida")]
-        [StringLength(2000, MinimumLength = 10, ErrorMessage = "La descripción debe tener entre 10 y 2000 caracteres")]
-        public string Descripcion { get; set; } = string.Empty;
+        [Required(ErrorMessage = "El contenido es requerido")]
+        [StringLength(10000, MinimumLength = 10, ErrorMessage = "El contenido debe tener entre 10 y 10000 caracteres")]
+        public string Contenido { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La prioridad es requerida")]
         public int Id_Prioridad { get; set; }
@@ -140,8 +136,7 @@ namespace TicketsAPI.Models.DTOs
         public int Id_Departamento { get; set; }
 
         public int? Id_Usuario_Asignado { get; set; }
-        public int? Dias_Para_Resolucion { get; set; }
-        public string? Notas { get; set; }
+        public int? Id_Motivo { get; set; }
     }
 
     /// <summary>
@@ -149,27 +144,27 @@ namespace TicketsAPI.Models.DTOs
     /// </summary>
     public class TicketDTO
     {
-        public int Id_Ticket { get; set; }
-        public string Titulo { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public int Id_Estado { get; set; }
+        public long Id_Tkt { get; set; }
+        public int? Id_Estado { get; set; }
         public EstadoDTO? Estado { get; set; }
-        public int Id_Prioridad { get; set; }
+        public int? Id_Prioridad { get; set; }
         public PrioridadDTO? Prioridad { get; set; }
-        public int Id_Departamento { get; set; }
+        public int? Id_Departamento { get; set; }
         public DepartamentoDTO? Departamento { get; set; }
-        public int Id_Usuario_Creador { get; set; }
+        public int? Id_Usuario { get; set; }
         public UsuarioDTO? UsuarioCreador { get; set; }
         public int? Id_Usuario_Asignado { get; set; }
         public UsuarioDTO? UsuarioAsignado { get; set; }
-        public int? Id_Usuario_Aprobador { get; set; }
-        public UsuarioDTO? UsuarioAprobador { get; set; }
-        public DateTime Fecha_Creacion { get; set; }
-        public DateTime? Fecha_Asignacion { get; set; }
-        public DateTime? Fecha_Cierre { get; set; }
-        public DateTime Fecha_Actualizacion { get; set; }
-        public string? Notas { get; set; }
-        public int? Dias_Para_Resolucion { get; set; }
+        public int? Id_Empresa { get; set; }
+        public int? Id_Perfil { get; set; }
+        public int? Id_Sucursal { get; set; }
+        public DateTime? Date_Creado { get; set; }
+        public DateTime? Date_Asignado { get; set; }
+        public DateTime? Date_Cierre { get; set; }
+        public DateTime? Date_Cambio_Estado { get; set; }
+        public string? Contenido { get; set; }
+        public int? Id_Motivo { get; set; }
+        public int? Habilitado { get; set; }
         public List<ComentarioDTO>? Comentarios { get; set; }
         public List<HistorialTicketDTO>? Historial { get; set; }
     }
@@ -182,6 +177,7 @@ namespace TicketsAPI.Models.DTOs
         [Required(ErrorMessage = "El nuevo estado es requerido")]
         public int Id_Estado_Nuevo { get; set; }
 
+        public string? Comentario { get; set; }
         public string? Motivo { get; set; }
     }
 
@@ -313,5 +309,97 @@ namespace TicketsAPI.Models.DTOs
         public Dictionary<string, int> TicketsPorDepartamento { get; set; } = new();
         public decimal TiempoPromedioResolucion { get; set; }
         public decimal TasaCumplimientoSLA { get; set; }
+    }
+
+    // ==================== MOTIVO DTOs ====================
+    /// <summary>
+    /// DTO para motivo de ticket
+    /// </summary>
+    public class MotivoDTO
+    {
+        public int Id_Motivo { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Categoria { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para crear/actualizar motivo
+    /// </summary>
+    public class CreateUpdateMotivoDTO
+    {
+        [Required]
+        public string Nombre { get; set; } = string.Empty;
+        public string? Categoria { get; set; }
+    }
+
+    // ==================== GRUPO DTOs ====================
+    /// <summary>
+    /// DTO para grupo
+    /// </summary>
+    public class GrupoDTO
+    {
+        public int Id_Grupo { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+        public bool Activo { get; set; }
+    }
+
+    // ==================== APROBACION DTOs ====================
+    /// <summary>
+    /// DTO para solicitud de aprobación
+    /// </summary>
+    public class AprobacionDTO
+    {
+        public int Id_Aprobacion { get; set; }
+        public int Id_Tkt { get; set; }
+        public int Id_Usuario_Solicitante { get; set; }
+        public int Id_Usuario_Aprobador { get; set; }
+        public string Estado { get; set; } = "Pendiente";
+        public DateTime Fecha_Solicitud { get; set; }
+        public DateTime? Fecha_Respuesta { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para crear aprobación
+    /// </summary>
+    public class CreateAprobacionDTO
+    {
+        [Required]
+        public int Id_Usuario_Aprobador { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para responder aprobación
+    /// </summary>
+    public class ResponderAprobacionDTO
+    {
+        [Required]
+        public bool Aprobado { get; set; }
+        public string? Comentario { get; set; }
+    }
+
+    // ==================== TRANSICION DTOs ====================
+    /// <summary>
+    /// DTO para transición de estado
+    /// </summary>
+    public class TransicionDTO
+    {
+        public int Id_Transicion { get; set; }
+        public int Id_Tkt { get; set; }
+        public int Id_Estado_Anterior { get; set; }
+        public int Id_Estado_Nuevo { get; set; }
+        public int Id_Usuario { get; set; }
+        public string? Comentario { get; set; }
+        public DateTime Fecha { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para crear/actualizar departamento
+    /// </summary>
+    public class CreateUpdateDepartamentoDTO
+    {
+        [Required]
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
     }
 }

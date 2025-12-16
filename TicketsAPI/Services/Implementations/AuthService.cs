@@ -14,11 +14,19 @@ namespace TicketsAPI.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IRolRepository _rolRepository;
+        private readonly IPermisoRepository _permisoRepository;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthService(IUsuarioRepository usuarioRepository, IOptions<JwtSettings> jwtOptions)
+        public AuthService(
+            IUsuarioRepository usuarioRepository, 
+            IRolRepository rolRepository,
+            IPermisoRepository permisoRepository,
+            IOptions<JwtSettings> jwtOptions)
         {
             _usuarioRepository = usuarioRepository;
+            _rolRepository = rolRepository;
+            _permisoRepository = permisoRepository;
             _jwtSettings = jwtOptions.Value;
         }
 
@@ -35,6 +43,16 @@ namespace TicketsAPI.Services.Implementations
             if (!PasswordMatches(usuario.Contraseña, request.Contraseña))
                 return null;
 
+            // Cargar rol con permisos
+            var rol = usuario.Id_Rol > 0 
+                ? await _rolRepository.GetWithPermisosAsync(usuario.Id_Rol) 
+                : null;
+
+            // Cargar permisos del rol
+            var permisos = usuario.Id_Rol > 0 
+                ? await _permisoRepository.GetByRolAsync(usuario.Id_Rol) 
+                : new List<Models.Entities.Permiso>();
+
             var token = GenerateJwtToken(usuario.Id_Usuario, usuario.Nombre, usuario.Email, usuario.Id_Rol.ToString());
             var response = new LoginResponse
             {
@@ -43,8 +61,14 @@ namespace TicketsAPI.Services.Implementations
                 Email = usuario.Email,
                 Token = token,
                 RefreshToken = Guid.NewGuid().ToString(),
-                Rol = new RolDTO { Id_Rol = usuario.Id_Rol },
-                Permisos = new List<string>()
+                Rol = rol != null ? new RolDTO 
+                { 
+                    Id_Rol = rol.Id_Rol,
+                    Nombre_Rol = rol.Nombre_Rol,
+                    Descripcion = rol.Descripcion,
+                    Activo = rol.Activo
+                } : new RolDTO { Id_Rol = usuario.Id_Rol },
+                Permisos = permisos.Select(p => p.Codigo).ToList()
             };
 
             await _usuarioRepository.UpdateLastSessionAsync(usuario.Id_Usuario);

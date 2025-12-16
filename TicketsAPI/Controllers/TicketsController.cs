@@ -211,7 +211,7 @@ namespace TicketsAPI.Controllers
                 var userRole = GetCurrentUserRole();
                 var roleId = int.Parse(userRole ?? "0");
 
-                var transitions = await _estadoService.GetTransicionesPermitidas(ticket.Id_Estado, roleId);
+                var transitions = await _estadoService.GetTransicionesPermitidas(ticket.Id_Estado ?? 1, roleId);
                 return Success(transitions, "Transiciones obtenidas exitosamente");
             }
             catch (Exception ex)

@@ -5,6 +5,10 @@ using System.Text;
 using TicketsAPI.Config;
 using TicketsAPI.Middleware;
 using AspNetCoreRateLimit;
+using TicketsAPI.Models;
+using TicketsAPI.Models.Entities;
+using TicketsAPI.Repositories.Interfaces;
+using TicketsAPI.Repositories.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,20 +110,42 @@ try
         new TicketsAPI.Repositories.Implementations.UsuarioRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.ITicketRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.TicketRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Ticket>>(sp =>
+        sp.GetRequiredService<TicketsAPI.Repositories.Interfaces.ITicketRepository>());
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IEstadoRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.EstadoRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPrioridadRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.PrioridadRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IDepartamentoRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.DepartamentoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Departamento>>(sp =>
+        sp.GetRequiredService<TicketsAPI.Repositories.Interfaces.IDepartamentoRepository>());
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPoliticaTransicionRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.PoliticaTransicionRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IRolRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.RolRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPermisoRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.PermisoRepository(connectionString));
+    
+    // Registrar repositorios adicionales (nuevos endpoints)
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Motivo>>(sp =>
+        new TicketsAPI.Repositories.Implementations.MotivoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Aprobacion>>(sp =>
+        new TicketsAPI.Repositories.Implementations.AprobacionRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Transicion>>(sp =>
+        new TicketsAPI.Repositories.Implementations.TransicionRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Grupo>>(sp =>
+        new TicketsAPI.Repositories.Implementations.GrupoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Comentario>>(sp =>
+        new TicketsAPI.Repositories.Implementations.ComentarioRepository(connectionString));
 
     // Registrar servicios
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IAuthService, TicketsAPI.Services.Implementations.AuthService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.ITicketService, TicketsAPI.Services.Implementations.TicketService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IEstadoService, TicketsAPI.Services.Implementations.EstadoService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IPrioridadService, TicketsAPI.Services.Implementations.PrioridadService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IDepartamentoService, TicketsAPI.Services.Implementations.DepartamentoService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.INotificacionService, TicketsAPI.Services.Implementations.NotificacionService>();
 
     // ==================== AUTOMAPPER ====================
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -149,10 +175,11 @@ try
         c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
             In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-            Description = "Ingrese JWT token",
+            Description = "Ingrese solo el JWT token (sin 'Bearer'). Swagger lo agregará automáticamente.",
             Name = "Authorization",
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-            Scheme = "Bearer"
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
         });
 
         c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement

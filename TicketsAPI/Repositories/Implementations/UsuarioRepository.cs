@@ -28,7 +28,13 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<List<Usuario>> GetAllAsync()
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario";
             var result = await conn.QueryAsync<Usuario>(sql);
             return result.ToList();
         }
@@ -36,28 +42,52 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<Usuario?> GetByEmailAsync(string email)
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario WHERE email = @email LIMIT 1";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario WHERE email = @email LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { email });
         }
 
         public async Task<Usuario?> GetByIdAsync(int id)
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario WHERE idUsuario = @id";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario WHERE idUsuario = @id";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { id });
         }
 
         public async Task<Usuario?> GetByUsuarioAsync(string usuario)
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario WHERE nombre = @usuario LIMIT 1";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario WHERE nombre = @usuario LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { usuario });
         }
 
         public async Task<List<Usuario>> GetByRolAsync(int idRol)
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario WHERE tipo = @tipo";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario WHERE tipo = @tipo";
             var result = await conn.QueryAsync<Usuario>(sql, new { tipo = idRol });
             return result.ToList();
         }
@@ -65,7 +95,13 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<List<Usuario>> GetByDepartamentoAsync(int idDepartamento)
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM usuario WHERE idKine = @idDepartamento";
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento
+                FROM usuario WHERE idKine = @idDepartamento";
             var result = await conn.QueryAsync<Usuario>(sql, new { idDepartamento });
             return result.ToList();
         }

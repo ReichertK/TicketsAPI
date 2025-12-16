@@ -118,21 +118,22 @@ namespace TicketsAPI.Models.Entities
     /// </summary>
     public class Ticket
     {
-        public int Id_Ticket { get; set; }
-        public string Titulo { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public int Id_Estado { get; set; }
-        public int Id_Prioridad { get; set; }
-        public int Id_Departamento { get; set; }
-        public int Id_Usuario_Creador { get; set; }
+        public long Id_Tkt { get; set; }
+        public int? Id_Estado { get; set; }
+        public DateTime? Date_Creado { get; set; }
+        public DateTime? Date_Cierre { get; set; }
+        public DateTime? Date_Asignado { get; set; }
+        public DateTime? Date_Cambio_Estado { get; set; }
+        public int? Id_Usuario { get; set; }
         public int? Id_Usuario_Asignado { get; set; }
-        public int? Id_Usuario_Aprobador { get; set; }
-        public DateTime Fecha_Creacion { get; set; }
-        public DateTime? Fecha_Asignacion { get; set; }
-        public DateTime? Fecha_Cierre { get; set; }
-        public DateTime Fecha_Actualizacion { get; set; }
-        public string? Notas { get; set; }
-        public int? Dias_Para_Resolucion { get; set; }
+        public int? Id_Empresa { get; set; }
+        public int? Id_Perfil { get; set; }
+        public int? Id_Motivo { get; set; }
+        public int? Id_Sucursal { get; set; }
+        public int? Habilitado { get; set; }
+        public int? Id_Prioridad { get; set; }
+        public string? Contenido { get; set; }
+        public int? Id_Departamento { get; set; }
 
         // Navegación
         public virtual Estado? Estado { get; set; }
@@ -199,5 +200,55 @@ namespace TicketsAPI.Models.Entities
         public virtual Estado? EstadoOrigen { get; set; }
         public virtual Estado? EstadoDestino { get; set; }
         public virtual Rol? Rol { get; set; }
+    }
+
+    /// <summary>
+    /// Motivos/Categorías para los tickets
+    /// </summary>
+    public class Motivo
+    {
+        public int Id_Motivo { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Categoria { get; set; }
+    }
+
+    /// <summary>
+    /// Aprobaciones de tickets
+    /// </summary>
+    public class Aprobacion
+    {
+        public int Id_Aprobacion { get; set; }
+        public int Id_Tkt { get; set; }
+        public int Id_Usuario_Solicitante { get; set; }
+        public int Id_Usuario_Aprobador { get; set; }
+        public string Estado { get; set; } = "Pendiente"; // Pendiente, Aprobada, Rechazada
+        public DateTime Fecha_Solicitud { get; set; }
+        public DateTime? Fecha_Respuesta { get; set; }
+        public string? Comentario_Respuesta { get; set; }
+    }
+
+    /// <summary>
+    /// Transiciones de estado de tickets
+    /// </summary>
+    public class Transicion
+    {
+        public int Id_Transicion { get; set; }
+        public int Id_Tkt { get; set; }
+        public int Id_Estado_Anterior { get; set; }
+        public int Id_Estado_Nuevo { get; set; }
+        public int Id_Usuario { get; set; }
+        public string? Comentario { get; set; }
+        public DateTime Fecha { get; set; }
+    }
+
+    /// <summary>
+    /// Grupos de usuarios
+    /// </summary>
+    public class Grupo
+    {
+        public int Id_Grupo { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+        public bool Activo { get; set; } = true;
     }
 }

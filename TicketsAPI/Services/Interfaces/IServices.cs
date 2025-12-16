@@ -82,10 +82,15 @@ namespace TicketsAPI.Services.Interfaces
     public interface INotificacionService
     {
         Task NotificarNuevoTicketAsync(int idTicket);
+        Task NotificarNuevoTicketAsync(int idTicket, int idUsuarioCreador);
         Task NotificarActualizacionTicketAsync(int idTicket);
+        Task ActualizacionTicketAsync(int idTicket, int idUsuarioActualizador);
         Task NotificarSolicitudAprobacionAsync(int idTicket);
+        Task SolicitudAprobacionAsync(int idTicket, int idUsuarioSolicitante, int idUsuarioAprobador);
         Task NotificarTransicionEstadoAsync(int idTicket, string nuevoEstado);
+        Task TransicionEstadoAsync(int idTicket, int idUsuario, int idEstadoNuevo);
         Task NotificarNuevoComentarioAsync(int idTicket);
+        Task NuevoComentarioAsync(int idTicket, int idUsuario, string comentario);
     }
 
     /// <summary>

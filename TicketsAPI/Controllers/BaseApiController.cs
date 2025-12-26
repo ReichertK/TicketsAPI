@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
+using System.Security.Claims;
 
 namespace TicketsAPI.Controllers
 {
@@ -23,7 +24,8 @@ namespace TicketsAPI.Controllers
         /// </summary>
         protected int GetCurrentUserId()
         {
-            var userIdClaim = User.FindFirst("sub")?.Value;
+            // Prefer standard NameIdentifier (mapped from 'sub' by JWT handler) and fallback to raw 'sub'
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
             return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
 

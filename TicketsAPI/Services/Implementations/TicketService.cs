@@ -1,16 +1,33 @@
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Services.Interfaces;
+using TicketsAPI.Exceptions;
 
 namespace TicketsAPI.Services.Implementations
 {
     public class TicketService : ITicketService
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly IPrioridadRepository _prioridadRepository;
+        private readonly IDepartamentoRepository _departamentoRepository;
+        private readonly IMotivoRepository _motivoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IAuthService _authService;
 
-        public TicketService(ITicketRepository ticketRepository)
+        public TicketService(
+            ITicketRepository ticketRepository,
+            IPrioridadRepository prioridadRepository,
+            IDepartamentoRepository departamentoRepository,
+            IMotivoRepository motivoRepository,
+            IUsuarioRepository usuarioRepository,
+            IAuthService authService)
         {
             _ticketRepository = ticketRepository;
+            _prioridadRepository = prioridadRepository;
+            _departamentoRepository = departamentoRepository;
+            _motivoRepository = motivoRepository;
+            _usuarioRepository = usuarioRepository;
+            _authService = authService;
         }
 
         public async Task<TicketDTO?> GetByIdAsync(int id)
@@ -21,60 +38,27 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro)
         {
-            // El repositorio ya devuelve PaginatedResponse, pero con entidades
-            // Por ahora, implementación simplificada que usa GetAllAsync
-            var allTickets = await _ticketRepository.GetAllAsync();
-            
-            // Aplicar filtros básicos
-            var filtered = allTickets.AsQueryable();
-            
-            if (filtro.Id_Estado.HasValue)
-                filtered = filtered.Where(t => t.Id_Estado == filtro.Id_Estado.Value);
-            
-            if (filtro.Id_Prioridad.HasValue)
-                filtered = filtered.Where(t => t.Id_Prioridad == filtro.Id_Prioridad.Value);
-            
-            if (filtro.Id_Departamento.HasValue)
-                filtered = filtered.Where(t => t.Id_Departamento == filtro.Id_Departamento.Value);
-
-            var total = filtered.Count();
-            var skip = (filtro.Pagina - 1) * filtro.TamañoPagina;
-            var tickets = filtered.Skip(skip).Take(filtro.TamañoPagina).ToList();
-
-            var ticketsDto = tickets.Select(t => new TicketDTO
-            {
-                Id_Tkt = t.Id_Tkt,
-                Contenido = t.Contenido,
-                Id_Estado = t.Id_Estado,
-                Id_Prioridad = t.Id_Prioridad,
-                Id_Departamento = t.Id_Departamento,
-                Id_Usuario = t.Id_Usuario,
-                Id_Usuario_Asignado = t.Id_Usuario_Asignado,
-                Id_Empresa = t.Id_Empresa,
-                Id_Perfil = t.Id_Perfil,
-                Id_Sucursal = t.Id_Sucursal,
-                Date_Creado = t.Date_Creado,
-                Date_Asignado = t.Date_Asignado,
-                Date_Cierre = t.Date_Cierre,
-                Date_Cambio_Estado = t.Date_Cambio_Estado
-            }).ToList();
-
-            var totalPaginas = (int)Math.Ceiling(total / (double)filtro.TamañoPagina);
-
-            return new PaginatedResponse<TicketDTO>
-            {
-                Datos = ticketsDto,
-                TotalRegistros = total,
-                TotalPaginas = totalPaginas,
-                PaginaActual = filtro.Pagina,
-                TamañoPagina = filtro.TamañoPagina,
-                TienePaginaAnterior = filtro.Pagina > 1,
-                TienePaginaSiguiente = filtro.Pagina < totalPaginas
-            };
+            return await _ticketRepository.GetFilteredAsync(filtro);
         }
 
         public async Task<int> CreateAsync(CreateUpdateTicketDTO dto, int idUsuarioCreador)
         {
+            // Validar FK de Prioridad
+            if (!await _prioridadRepository.ExistsAsync(dto.Id_Prioridad))
+                throw new ValidationException($"La prioridad con ID {dto.Id_Prioridad} no existe");
+
+            // Validar FK de Departamento
+            if (!await _departamentoRepository.ExistsAsync(dto.Id_Departamento))
+                throw new ValidationException($"El departamento con ID {dto.Id_Departamento} no existe");
+
+            // Validar FK de Motivo (opcional)
+            if (dto.Id_Motivo.HasValue && !await _motivoRepository.ExistsAsync(dto.Id_Motivo.Value))
+                throw new ValidationException($"El motivo con ID {dto.Id_Motivo} no existe");
+
+            // Validar FK de Usuario Asignado (opcional)
+            if (dto.Id_Usuario_Asignado.HasValue && !await _usuarioRepository.ExistsAsync(dto.Id_Usuario_Asignado.Value))
+                throw new ValidationException($"El usuario asignado con ID {dto.Id_Usuario_Asignado} no existe");
+
             var ticket = new Models.Entities.Ticket
             {
                 Contenido = dto.Contenido,
@@ -90,18 +74,59 @@ namespace TicketsAPI.Services.Implementations
             return await _ticketRepository.CreateAsync(ticket);
         }
 
-        public async Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto)
+            public async Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto, int idUsuarioActual)
         {
+                // Validar que el ticket exista
             var ticket = await _ticketRepository.GetByIdAsync(id);
-            if (ticket == null) return false;
+                if (ticket == null) 
+                    throw new NotFoundException($"El ticket con ID {id} no existe");
 
-            ticket.Contenido = dto.Contenido;
-            ticket.Id_Prioridad = dto.Id_Prioridad;
-            ticket.Id_Departamento = dto.Id_Departamento;
-            ticket.Id_Usuario_Asignado = dto.Id_Usuario_Asignado;
-            ticket.Id_Motivo = dto.Id_Motivo;
+                // Validar permisos: TKT_EDIT_ANY (4) o TKT_EDIT_ASSIGNED (5)
+                var tienePermisoEditarCualquiera = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_EDIT_ANY");
+                var tienePermisoEditarAsignados = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_EDIT_ASSIGNED");
 
-            return await _ticketRepository.UpdateAsync(ticket);
+                if (!tienePermisoEditarCualquiera)
+                {
+                    // Solo puede editar si tiene permiso de editar asignados Y es creador o asignado
+                    if (!tienePermisoEditarAsignados)
+                        throw new UnauthorizedException("No tienes permisos para editar tickets");
+
+                    bool esCreador = ticket.Id_Usuario == idUsuarioActual;
+                    bool esAsignado = ticket.Id_Usuario_Asignado == idUsuarioActual;
+
+                    if (!esCreador && !esAsignado)
+                        throw new UnauthorizedException("Solo puedes editar tickets creados por ti o asignados a ti");
+                }
+
+            // Validar FK de Prioridad
+            if (!await _prioridadRepository.ExistsAsync(dto.Id_Prioridad))
+                throw new ValidationException($"La prioridad con ID {dto.Id_Prioridad} no existe");
+
+            // Validar FK de Departamento
+            if (!await _departamentoRepository.ExistsAsync(dto.Id_Departamento))
+                throw new ValidationException($"El departamento con ID {dto.Id_Departamento} no existe");
+
+            // Validar FK de Motivo (opcional)
+            if (dto.Id_Motivo.HasValue && !await _motivoRepository.ExistsAsync(dto.Id_Motivo.Value))
+                throw new ValidationException($"El motivo con ID {dto.Id_Motivo} no existe");
+
+            // Validar FK de Usuario Asignado (opcional)
+            if (dto.Id_Usuario_Asignado.HasValue && !await _usuarioRepository.ExistsAsync(dto.Id_Usuario_Asignado.Value))
+                throw new ValidationException($"El usuario asignado con ID {dto.Id_Usuario_Asignado} no existe");
+
+                // Usar sp_actualizar_tkt en lugar de UPDATE directo
+                return await _ticketRepository.UpdateViaStoredProcedureAsync(
+                    idTkt: ticket.Id_Tkt,
+                    idEstado: ticket.Id_Estado ?? 1,
+                    idUsuario: ticket.Id_Usuario,
+                    idEmpresa: ticket.Id_Empresa,
+                    idPerfil: ticket.Id_Perfil,
+                    idMotivo: dto.Id_Motivo,
+                    idSucursal: ticket.Id_Sucursal,
+                    idPrioridad: dto.Id_Prioridad,
+                    contenido: dto.Contenido,
+                    idDepartamento: dto.Id_Departamento
+                );
         }
 
         public async Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario)
@@ -117,7 +142,8 @@ namespace TicketsAPI.Services.Implementations
         public async Task<bool> AsignarAsync(int id, int idUsuario)
         {
             var ticket = await _ticketRepository.GetByIdAsync(id);
-            if (ticket == null) return false;
+            if (ticket == null)
+                throw new NotFoundException($"El ticket con ID {id} no existe");
 
             ticket.Id_Usuario_Asignado = idUsuario;
             ticket.Date_Asignado = DateTime.UtcNow;
@@ -128,9 +154,12 @@ namespace TicketsAPI.Services.Implementations
         public async Task<bool> CloseAsync(int id, int idUsuario)
         {
             var ticket = await _ticketRepository.GetByIdAsync(id);
-            if (ticket == null) return false;
+            if (ticket == null)
+                throw new NotFoundException($"El ticket con ID {id} no existe");
 
+            ticket.Id_Estado = 5; // Estado cerrado
             ticket.Date_Cierre = DateTime.UtcNow;
+            ticket.Id_Usuario = idUsuario;
 
             return await _ticketRepository.UpdateAsync(ticket);
         }

@@ -24,6 +24,7 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<List<Models.Entities.Usuario>> GetByRolAsync(int idRol);
         Task<List<Models.Entities.Usuario>> GetByDepartamentoAsync(int idDepartamento);
         Task<bool> UpdateLastSessionAsync(int idUsuario);
+        Task<bool> ExistsAsync(int id);
     }
 
     /// <summary>
@@ -32,11 +33,25 @@ namespace TicketsAPI.Repositories.Interfaces
     public interface ITicketRepository : IBaseRepository<Models.Entities.Ticket>
     {
         Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro);
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByUsuarioCreadorAsync(int idUsuario);
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByUsuarioAsignadoAsync(int idUsuario);
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByEstadoAsync(int idEstado);
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByDepartamentoAsync(int idDepartamento);
         Task<TicketDTO?> GetDetailAsync(int id);
+            Task<bool> UpdateViaStoredProcedureAsync(long idTkt, int idEstado, int? idUsuario, int? idEmpresa, int? idPerfil, int? idMotivo, int? idSucursal, int idPrioridad, string contenido, int idDepartamento);
+        Task<TransicionResultDTO> TransicionarEstadoViaStoredProcedureAsync(
+            int idTkt,
+            int estadoTo,
+            int idUsuarioActor,
+            string? comentario = null,
+            string? motivo = null,
+            int? idAsignadoNuevo = null,
+            string? metaJson = null);
+        Task<List<HistorialTicketDTO>> GetHistorialViaStoredProcedureAsync(int idTkt);
     }
 
     /// <summary>
@@ -55,6 +70,7 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<Models.Entities.Prioridad?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Prioridad>> GetAllActiveAsync();
+        Task<bool> ExistsAsync(int id);
     }
 
     /// <summary>
@@ -64,6 +80,7 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<Models.Entities.Departamento?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Departamento>> GetAllActiveAsync();
+        Task<bool> ExistsAsync(int id);
     }
 
     /// <summary>
@@ -73,6 +90,7 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<List<Models.Entities.Comentario>> GetByTicketAsync(int idTicket);
         Task<List<Models.Entities.Comentario>> GetByUsuarioAsync(int idUsuario);
+        Task<ComentarioResultDTO> CrearComentarioViaStoredProcedureAsync(int idTkt, int idUsuario, string comentario);
     }
 
     /// <summary>
@@ -110,5 +128,13 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<Models.Entities.PoliticaTransicion?> GetTransicionAsync(int idEstadoOrigen, int idEstadoDestino, int idRol);
         Task<List<Models.Entities.PoliticaTransicion>> GetPosiblesTransicionesAsync(int idEstadoActual, int idRol);
+    }
+
+    /// <summary>
+    /// Interfaz para repositorio de motivos
+    /// </summary>
+    public interface IMotivoRepository : IBaseRepository<Models.Entities.Motivo>
+    {
+        Task<bool> ExistsAsync(int id);
     }
 }

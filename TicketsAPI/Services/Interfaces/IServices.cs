@@ -21,7 +21,7 @@ namespace TicketsAPI.Services.Interfaces
         Task<TicketDTO?> GetByIdAsync(int id);
         Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro);
         Task<int> CreateAsync(CreateUpdateTicketDTO dto, int idUsuarioCreador);
-        Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto);
+            Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto, int idUsuarioActual);
         Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario);
         Task<bool> AsignarAsync(int id, int idUsuario);
         Task<bool> CloseAsync(int id, int idUsuario);

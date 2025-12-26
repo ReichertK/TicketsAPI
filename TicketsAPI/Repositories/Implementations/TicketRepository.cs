@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Models.Entities;
@@ -11,11 +12,23 @@ namespace TicketsAPI.Repositories.Implementations
 
         public async Task<int> CreateAsync(Ticket entity)
         {
+            // Usar stored procedure sp_agregar_tkt en lugar de INSERT directo
             using var conn = CreateConnection();
-            const string sql = @"INSERT INTO tkt (Id_Estado, Id_Prioridad, Id_Departamento, Id_Usuario, Id_Usuario_Asignado, Date_Creado, Contenido, Id_Motivo, Habilitado)
-                                VALUES (@Id_Estado, @Id_Prioridad, @Id_Departamento, @Id_Usuario, @Id_Usuario_Asignado, NOW(), @Contenido, @Id_Motivo, 1);
-                                SELECT LAST_INSERT_ID();";
-            return await conn.ExecuteScalarAsync<int>(sql, entity);
+            var parameters = new DynamicParameters();
+            parameters.Add("@w_id_estado", entity.Id_Estado);
+            parameters.Add("@w_id_usuario", entity.Id_Usuario);
+            parameters.Add("@w_id_empresa", entity.Id_Empresa ?? 1);
+            parameters.Add("@w_id_perfil", entity.Id_Perfil ?? 0);
+            parameters.Add("@w_id_motivo", entity.Id_Motivo);
+            parameters.Add("@w_id_sucursal", entity.Id_Sucursal ?? 0);
+            parameters.Add("@w_id_prioridad", entity.Id_Prioridad);
+            parameters.Add("@w_contenido", entity.Contenido);
+            parameters.Add("@w_id_departamento", entity.Id_Departamento);
+            parameters.Add("@p_resultado", dbType: DbType.String, size: 255, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("sp_agregar_tkt", parameters, commandType: CommandType.StoredProcedure);
+            var lastId = await conn.ExecuteScalarAsync<int>("SELECT LAST_INSERT_ID();");
+            return lastId;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -41,6 +54,7 @@ namespace TicketsAPI.Repositories.Implementations
             return await conn.QuerySingleOrDefaultAsync<Ticket>(sql, new { id });
         }
 
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         public async Task<List<Ticket>> GetByUsuarioAsync(int idUsuario)
         {
             using var conn = CreateConnection();
@@ -49,6 +63,7 @@ namespace TicketsAPI.Repositories.Implementations
             return result.ToList();
         }
 
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         public async Task<List<Ticket>> GetByUsuarioCreadorAsync(int idUsuario)
         {
             using var conn = CreateConnection();
@@ -57,6 +72,7 @@ namespace TicketsAPI.Repositories.Implementations
             return result.ToList();
         }
 
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         public async Task<List<Ticket>> GetByUsuarioAsignadoAsync(int idUsuario)
         {
             using var conn = CreateConnection();
@@ -65,6 +81,7 @@ namespace TicketsAPI.Repositories.Implementations
             return result.ToList();
         }
 
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         public async Task<List<Ticket>> GetByEstadoAsync(int idEstado)
         {
             using var conn = CreateConnection();
@@ -73,6 +90,7 @@ namespace TicketsAPI.Repositories.Implementations
             return result.ToList();
         }
 
+        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         public async Task<List<Ticket>> GetByDepartamentoAsync(int idDepartamento)
         {
             using var conn = CreateConnection();
@@ -95,49 +113,45 @@ namespace TicketsAPI.Repositories.Implementations
 
         public async Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro)
         {
+            // Ejecutar sp_listar_tkts para respetar filtros/permisos del sistema original
             using var conn = CreateConnection();
-            var where = new List<string> { "t.Habilitado = 1" };
-            var param = new DynamicParameters();
-            if (filtro.Id_Estado.HasValue) { where.Add("t.Id_Estado = @Id_Estado"); param.Add("Id_Estado", filtro.Id_Estado); }
-            if (filtro.Id_Prioridad.HasValue) { where.Add("t.Id_Prioridad = @Id_Prioridad"); param.Add("Id_Prioridad", filtro.Id_Prioridad); }
-            if (filtro.Id_Departamento.HasValue) { where.Add("t.Id_Departamento = @Id_Departamento"); param.Add("Id_Departamento", filtro.Id_Departamento); }
-            if (filtro.Id_Usuario_Asignado.HasValue) { where.Add("t.Id_Usuario_Asignado = @Id_Usuario_Asignado"); param.Add("Id_Usuario_Asignado", filtro.Id_Usuario_Asignado); }
-            if (!string.IsNullOrWhiteSpace(filtro.Busqueda)) { where.Add("(t.Contenido LIKE @q)"); param.Add("q", "%" + filtro.Busqueda + "%"); }
-            if (filtro.Fecha_Desde.HasValue) { where.Add("t.Date_Creado >= @Fecha_Desde"); param.Add("Fecha_Desde", filtro.Fecha_Desde); }
-            if (filtro.Fecha_Hasta.HasValue) { where.Add("t.Date_Creado <= @Fecha_Hasta"); param.Add("Fecha_Hasta", filtro.Fecha_Hasta); }
 
-            var whereSql = "WHERE " + string.Join(" AND ", where);
+            var page = Math.Max(1, filtro.Pagina);
+            var pageSize = Math.Clamp(filtro.TamañoPagina, 1, 100);
 
-            var countSql = $"SELECT COUNT(*) FROM tkt t {whereSql}";
-            var total = await conn.ExecuteScalarAsync<int>(countSql, param);
+            var parameters = new DynamicParameters();
+            parameters.Add("@w_Id_Tkt", null, DbType.Int64);
+            parameters.Add("@w_Id_Estado", filtro.Id_Estado, DbType.Int32);
+            parameters.Add("@w_Date_Creado", filtro.Fecha_Desde?.Date, DbType.Date);
+            parameters.Add("@w_Date_Cierre", filtro.Fecha_Hasta, DbType.DateTime);
+            parameters.Add("@w_Date_Asignado", null, DbType.DateTime);
+            parameters.Add("@w_Date_Cambio_Estado", null, DbType.DateTime);
+            parameters.Add("@w_Id_Usuario", filtro.Id_Usuario, DbType.Int32);
+            parameters.Add("@w_Nombre_Usuario", null, DbType.String);
+            parameters.Add("@w_Id_Empresa", null, DbType.Int32);
+            parameters.Add("@w_Id_Perfil", null, DbType.Int32);
+            parameters.Add("@w_Id_Motivo", filtro.Id_Motivo, DbType.Int32);
+            parameters.Add("@w_Id_Sucursal", null, DbType.Int32);
+            parameters.Add("@w_Habilitado", 1, DbType.Int32); // Solo tickets habilitados
+            parameters.Add("@w_Id_Prioridad", filtro.Id_Prioridad, DbType.Int32);
+            parameters.Add("@w_Contenido", filtro.Busqueda, DbType.String);
+            parameters.Add("@w_Id_Departamento", filtro.Id_Departamento, DbType.Int32);
+            parameters.Add("@w_Page", page, DbType.Int32);
+            parameters.Add("@w_Page_Size", pageSize, DbType.Int32);
+            parameters.Add("@totalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-                 var page = Math.Max(1, filtro.Pagina);
-                 var pageSize = Math.Clamp(filtro.TamañoPagina, 1, 100);
-            var offset = (page - 1) * pageSize;
+            var items = await conn.QueryAsync<TicketDTO>(
+                "sp_listar_tkts",
+                parameters,
+                commandType: CommandType.StoredProcedure);
 
-                 var orderBy = !string.IsNullOrWhiteSpace(filtro.Ordenar_Por) ? filtro.Ordenar_Por : "t.Date_Cambio_Estado";
-                 var orderDir = filtro.Orden_Descendente == true ? "DESC" : "ASC";
+            var totalRecords = parameters.Get<int>("@totalRecords");
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
 
-                     var dataSql = $@"SELECT t.Id_Tkt, t.Contenido, t.Id_Estado, t.Id_Prioridad,
-                                   t.Id_Departamento, t.Id_Usuario, t.Id_Usuario_Asignado,
-                                   t.Id_Empresa, t.Id_Perfil, t.Id_Sucursal,
-                                   t.Date_Creado, t.Date_Asignado, t.Date_Cierre, t.Date_Cambio_Estado,
-                                   t.Id_Motivo, t.Habilitado
-                               FROM tkt t
-                               {whereSql}
-                           ORDER BY {orderBy} {orderDir}
-                               LIMIT @PageSize OFFSET @Offset";
-
-            param.Add("PageSize", pageSize);
-            param.Add("Offset", offset);
-
-            var items = await conn.QueryAsync<TicketDTO>(dataSql, param);
-
-            var totalPages = (int)Math.Ceiling(total / (double)pageSize);
             return new PaginatedResponse<TicketDTO>
             {
                 Datos = items.ToList(),
-                TotalRegistros = total,
+                TotalRegistros = totalRecords,
                 TotalPaginas = totalPages,
                 PaginaActual = page,
                 TamañoPagina = pageSize,
@@ -303,6 +317,104 @@ namespace TicketsAPI.Repositories.Implementations
             }
 
             return dto;
+        }
+
+            public async Task<bool> UpdateViaStoredProcedureAsync(
+                long idTkt,
+                int idEstado,
+                int? idUsuario,
+                int? idEmpresa,
+                int? idPerfil,
+                int? idMotivo,
+                int? idSucursal,
+                int idPrioridad,
+                string contenido,
+                int idDepartamento)
+            {
+                using var conn = CreateConnection();
+                var parameters = new DynamicParameters();
+                parameters.Add("@w_id_tkt", idTkt, DbType.Int64);
+                parameters.Add("@w_id_estado", idEstado, DbType.Int32);
+                parameters.Add("@w_id_usuario", idUsuario, DbType.Int32);
+                parameters.Add("@w_id_empresa", idEmpresa ?? 1, DbType.Int32);
+                parameters.Add("@w_id_perfil", idPerfil ?? 0, DbType.Int32);
+                parameters.Add("@w_id_motivo", idMotivo, DbType.Int32);
+                parameters.Add("@w_id_sucursal", idSucursal ?? 0, DbType.Int32);
+                parameters.Add("@w_id_prioridad", idPrioridad, DbType.Int32);
+                parameters.Add("@w_contenido", contenido, DbType.String);
+                parameters.Add("@w_id_departamento", idDepartamento, DbType.Int32);
+                parameters.Add("@p_resultado", dbType: DbType.String, size: 255, direction: ParameterDirection.Output);
+
+                await conn.ExecuteAsync("sp_actualizar_tkt", parameters, commandType: CommandType.StoredProcedure);
+            
+                var resultado = parameters.Get<string>("@p_resultado");
+                return !string.IsNullOrEmpty(resultado);
+            }
+
+        public async Task<TransicionResultDTO> TransicionarEstadoViaStoredProcedureAsync(
+            int idTkt,
+            int estadoTo,
+            int idUsuarioActor,
+            string? comentario = null,
+            string? motivo = null,
+            int? idAsignadoNuevo = null,
+            string? metaJson = null)
+        {
+            using var conn = CreateConnection();
+            var parameters = new DynamicParameters();
+            parameters.Add("@p_id_tkt", idTkt, DbType.Int32);
+            parameters.Add("@p_estado_to", estadoTo, DbType.Int32);
+            parameters.Add("@p_id_usuario_actor", idUsuarioActor, DbType.Int32);
+            parameters.Add("@p_comentario", comentario, DbType.String);
+            parameters.Add("@p_motivo", motivo, DbType.String);
+            parameters.Add("@p_id_asignado_nuevo", idAsignadoNuevo, DbType.Int32);
+            parameters.Add("@p_meta_json", metaJson, DbType.String);
+
+            // sp_tkt_transicionar devuelve una fila con success, message, nuevo_estado, id_asignado
+            var result = await conn.QuerySingleAsync<TransicionResultDTO>(
+                "sp_tkt_transicionar",
+                parameters,
+                commandType: CommandType.StoredProcedure);
+
+            return result;
+        }
+
+        public async Task<List<HistorialTicketDTO>> GetHistorialViaStoredProcedureAsync(int idTkt)
+        {
+            using var conn = CreateConnection();
+            var parameters = new DynamicParameters();
+            parameters.Add("@p_id_tkt", idTkt, DbType.Int32);
+
+            var records = await conn.QueryAsync(
+                "sp_tkt_historial",
+                parameters,
+                commandType: CommandType.StoredProcedure);
+
+            var historial = new List<HistorialTicketDTO>();
+
+            foreach (var r in records)
+            {
+                historial.Add(new HistorialTicketDTO
+                {
+                    Id_Historial = r.orden != null ? (int)r.orden : 0,
+                    Id_Ticket = idTkt,
+                    Id_Usuario = r.id_usuario != null ? (int)r.id_usuario : 0,
+                    Accion = r.tipo as string ?? string.Empty,
+                    Campo_Modificado = "Estado",
+                    Valor_Anterior = r.estadofrom_nombre as string,
+                    Valor_Nuevo = r.estadoto_nombre as string,
+                    Fecha_Cambio = r.fecha != null ? (DateTime)r.fecha : DateTime.MinValue,
+                    Usuario = new UsuarioDTO
+                    {
+                        Id_Usuario = r.id_usuario != null ? (int)r.id_usuario : 0,
+                        Nombre = r.usuario_nombre as string ?? string.Empty,
+                        Email = string.Empty,
+                        Activo = true
+                    }
+                });
+            }
+
+            return historial;
         }
     }
 }

@@ -4,7 +4,7 @@ using TicketsAPI.Repositories.Interfaces;
 
 namespace TicketsAPI.Repositories.Implementations
 {
-    public class MotivoRepository : BaseRepository, IBaseRepository<Motivo>
+    public class MotivoRepository : BaseRepository, IMotivoRepository
     {
         public MotivoRepository(string connectionString) : base(connectionString) { }
 
@@ -62,6 +62,14 @@ namespace TicketsAPI.Repositories.Implementations
             const string sql = "SELECT * FROM motivo WHERE Categoria = @categoria ORDER BY Nombre";
             var result = await conn.QueryAsync<Motivo>(sql, new { categoria });
             return result.ToList();
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            using var conn = CreateConnection();
+            const string sql = "SELECT COUNT(*) FROM motivo WHERE Id_Motivo = @id";
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { id });
+            return count > 0;
         }
     }
 }

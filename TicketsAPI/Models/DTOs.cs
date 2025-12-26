@@ -260,6 +260,8 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Prioridad { get; set; }
         public int? Id_Departamento { get; set; }
         public int? Id_Usuario_Asignado { get; set; }
+        public int? Id_Motivo { get; set; }
+        public int? Id_Usuario { get; set; }
         public DateTime? Fecha_Desde { get; set; }
         public DateTime? Fecha_Hasta { get; set; }
         public string? Busqueda { get; set; }
@@ -401,5 +403,28 @@ namespace TicketsAPI.Models.DTOs
         [Required]
         public string Nombre { get; set; } = string.Empty;
         public string? Descripcion { get; set; }
+    }
+
+    // ==================== TRANSICION RESULT DTO ====================
+    /// <summary>
+    /// Resultado de la transición de estado de un ticket (salida de sp_tkt_transicionar)
+    /// </summary>
+    public class TransicionResultDTO
+    {
+        public int Success { get; set; }  // 1 = éxito, 0 = error
+        public string? Message { get; set; }  // Mensaje del SP
+        public string? NuevoEstado { get; set; }  // Nuevo estado asignado
+        public int? IdAsignado { get; set; }  // Usuario asignado (si aplica)
+    }
+
+    // ==================== COMENTARIO RESULT DTO ====================
+    /// <summary>
+    /// Resultado de la creación de comentario (salida de sp_tkt_comentar)
+    /// </summary>
+    public class ComentarioResultDTO
+    {
+        public int Success { get; set; }  // 1 = éxito, 0 = error
+        public string? Message { get; set; }  // Mensaje del SP
+        public int? IdComentario { get; set; }  // ID del comentario creado (si aplica)
     }
 }

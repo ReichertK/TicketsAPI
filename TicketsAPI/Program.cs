@@ -138,8 +138,11 @@ try
         new TicketsAPI.Repositories.Implementations.TransicionRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Grupo>>(sp =>
         new TicketsAPI.Repositories.Implementations.GrupoRepository(connectionString));
-    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Comentario>>(sp =>
-        new TicketsAPI.Repositories.Implementations.ComentarioRepository(connectionString));
+    
+    // Registrar ComentarioRepository como ambas interfaces
+    var comentarioRepository = new TicketsAPI.Repositories.Implementations.ComentarioRepository(connectionString);
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Comentario>>(comentarioRepository);
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IComentarioRepository>(comentarioRepository);
 
     // Registrar servicios
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IAuthService, TicketsAPI.Services.Implementations.AuthService>();

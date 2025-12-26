@@ -13,13 +13,13 @@ namespace TicketsAPI.Controllers
     [Authorize]
     public class ComentariosController : ControllerBase
     {
-        private readonly IBaseRepository<Comentario> _comentarioRepository;
+        private readonly IComentarioRepository _comentarioRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
         private readonly ILogger<ComentariosController> _logger;
 
         public ComentariosController(
-            IBaseRepository<Comentario> comentarioRepository,
+            IComentarioRepository comentarioRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
             ILogger<ComentariosController> logger)
@@ -80,23 +80,45 @@ namespace TicketsAPI.Controllers
                     return NotFound(new { message = "Ticket no encontrado" });
 
                 var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                
+                // Validar que el usuario esté autenticado correctamente
+                if (usuarioId <= 0)
+                    return Unauthorized(new { message = "Usuario no autenticado" });
 
-                var comentario = new Comentario
+                // Llamar a sp_tkt_comentar para validación
+                var result = await _comentarioRepository.CrearComentarioViaStoredProcedureAsync(
+                    idTkt: ticketId,
+                    idUsuario: usuarioId,
+                    comentario: dto.Contenido);
+
+                if (result.Success != 1)
                 {
-                    Id_Ticket = ticketId,
-                    Id_Usuario = usuarioId,
-                    Contenido = dto.Contenido,
-                    Privado = dto.Privado,
-                    Fecha_Creacion = DateTime.Now
-                };
-
-                var id = await _comentarioRepository.CreateAsync(comentario);
-                comentario.Id_Comentario = id;
+                    return BadRequest(new { message = result.Message ?? "Error al crear comentario" });
+                }
 
                 // Notificar nuevo comentario
                 await _notificacionService.NuevoComentarioAsync(ticketId, usuarioId, dto.Contenido);
 
-                return CreatedAtAction(nameof(GetComentarioPorId), new { id }, comentario);
+                // Retornar el comentario creado
+                // result.IdComentario ahora contiene el ID obtenido vía LAST_INSERT_ID()
+                if (!result.IdComentario.HasValue || result.IdComentario <= 0)
+                    return StatusCode(500, new { message = "Error al recuperar el ID del comentario creado" });
+
+                var comentarioCreado = await _comentarioRepository.GetByIdAsync(result.IdComentario.Value);
+                if (comentarioCreado == null)
+                    return StatusCode(500, new { message = "Error al recuperar el comentario creado" });
+
+                var responseDto = new ComentarioDTO
+                {
+                    Id_Comentario = comentarioCreado.Id_Comentario,
+                    Id_Ticket = comentarioCreado.Id_Ticket,
+                    Id_Usuario = comentarioCreado.Id_Usuario,
+                    Contenido = comentarioCreado.Contenido,
+                    Fecha_Creacion = comentarioCreado.Fecha_Creacion,
+                    Privado = comentarioCreado.Privado
+                };
+
+                return CreatedAtAction(nameof(GetComentarioPorId), new { id = comentarioCreado.Id_Comentario }, responseDto);
             }
             catch (Exception ex)
             {

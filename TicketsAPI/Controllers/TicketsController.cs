@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
+using TicketsAPI.Repositories.Interfaces;
+using TicketsAPI.Exceptions;
 
 namespace TicketsAPI.Controllers
 {
@@ -14,16 +16,19 @@ namespace TicketsAPI.Controllers
         private readonly ITicketService _ticketService;
         private readonly IEstadoService _estadoService;
         private readonly INotificacionService _notificacionService;
+        private readonly ITicketRepository _ticketRepository;
 
         public TicketsController(
             ILogger<TicketsController> logger,
             ITicketService ticketService,
             IEstadoService estadoService,
-            INotificacionService notificacionService) : base(logger)
+            INotificacionService notificacionService,
+            ITicketRepository ticketRepository) : base(logger)
         {
             _ticketService = ticketService;
             _estadoService = estadoService;
             _notificacionService = notificacionService;
+            _ticketRepository = ticketRepository;
         }
 
         /// <summary>
@@ -34,6 +39,13 @@ namespace TicketsAPI.Controllers
         {
             try
             {
+                var userId = GetCurrentUserId();
+                if (userId <= 0)
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+
+                filtro ??= new TicketFiltroDTO();
+                filtro.Id_Usuario = userId;
+
                 var result = await _ticketService.GetFilteredAsync(filtro);
                 return Success(result, "Tickets obtenidos exitosamente");
             }
@@ -84,6 +96,11 @@ namespace TicketsAPI.Controllers
 
                 return Success(new { id }, "Ticket creado exitosamente", 201);
             }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al crear ticket");
+                return Error<object>(ex.Message, statusCode: 400);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear ticket");
@@ -102,14 +119,31 @@ namespace TicketsAPI.Controllers
                 if (!ModelState.IsValid)
                     return Error<object>("Datos inválidos", statusCode: 400);
 
-                var result = await _ticketService.UpdateAsync(id, dto);
-                if (!result)
-                    return Error<object>("Error al actualizar el ticket", statusCode: 400);
+                    var userId = GetCurrentUserId();
+                    if (userId <= 0)
+                        return Unauthorized(new { message = "Usuario no autenticado" });
+
+                    var result = await _ticketService.UpdateAsync(id, dto, userId);
 
                 // Notificar en tiempo real
                 await _notificacionService.NotificarActualizacionTicketAsync(id);
 
                 return Success<object>(new { }, "Ticket actualizado exitosamente");
+            }
+                catch (NotFoundException ex)
+                {
+                    _logger.LogWarning(ex, "Ticket no encontrado al actualizar");
+                    return Error<object>(ex.Message, statusCode: 404);
+                }
+                catch (UnauthorizedException ex)
+                {
+                    _logger.LogWarning(ex, "Permiso denegado al actualizar ticket");
+                    return Error<object>(ex.Message, statusCode: 403);
+                }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al actualizar ticket");
+                return Error<object>(ex.Message, statusCode: 400);
             }
             catch (Exception ex)
             {
@@ -127,19 +161,44 @@ namespace TicketsAPI.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _ticketService.TransicionarEstadoAsync(id, dto, userId);
                 
-                if (!result)
-                    return Error<object>("No tiene permiso para realizar esta transición", statusCode: 403);
-
-                // Notificar en tiempo real
-                var ticket = await _ticketService.GetByIdAsync(id);
-                if (ticket != null)
+                // Validar que el usuario esté autenticado correctamente
+                if (userId <= 0)
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+                
+                // Llamar directamente a sp_tkt_transicionar para validación de permisos
+                var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
+                    idTkt: id,
+                    estadoTo: dto.Id_Estado_Nuevo,
+                    idUsuarioActor: userId,
+                    comentario: dto.Comentario,
+                    motivo: dto.Motivo);
+                
+                if (result.Success != 1)
                 {
-                    await _notificacionService.NotificarTransicionEstadoAsync(id, ticket.Estado?.Nombre_Estado ?? "");
+                    // Mapear status codes dinámicamente según el mensaje de error de la SP
+                    var message = result.Message ?? "Error en la transición de estado";
+                    int statusCode = 403;  // Por defecto: permiso denegado
+                    
+                    if (message.Contains("Ticket no encontrado"))
+                        statusCode = 404;
+                    else if (message.Contains("Comentario requerido"))
+                        statusCode = 400;
+                    // Para "Transición no permitida" y "Solo el asignado..." se mantiene 403
+                    
+                    return Error<object>(message, statusCode: statusCode);
                 }
 
-                return Success<object>(new { }, "Estado actualizado exitosamente");
+                // Notificar en tiempo real sobre el cambio de estado
+                // SP retorna nuevo_estado como INT, pero se convierte a string en DTO
+                var nuevoEstadoNombre = result.NuevoEstado?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(nuevoEstadoNombre))
+                {
+                    await _notificacionService.NotificarTransicionEstadoAsync(id, nuevoEstadoNombre);
+                }
+
+                return Success<object>(new { nuevoEstado = result.NuevoEstado, idAsignado = result.IdAsignado }, 
+                    "Estado actualizado exitosamente");
             }
             catch (Exception ex)
             {
@@ -163,6 +222,11 @@ namespace TicketsAPI.Controllers
                 await _notificacionService.NotificarActualizacionTicketAsync(id);
 
                 return Success<object>(new { }, "Ticket asignado exitosamente");
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Ticket no encontrado al asignar");
+                return Error<object>(ex.Message, statusCode: 404);
             }
             catch (Exception ex)
             {
@@ -188,6 +252,11 @@ namespace TicketsAPI.Controllers
                 await _notificacionService.NotificarActualizacionTicketAsync(id);
 
                 return Success<object>(new { }, "Ticket cerrado exitosamente");
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Ticket no encontrado al cerrar");
+                return Error<object>(ex.Message, statusCode: 404);
             }
             catch (Exception ex)
             {
@@ -217,6 +286,30 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener transiciones");
+                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+            }
+        }
+
+        /// <summary>
+        /// Obtener historial completo de un ticket (transiciones + comentarios)
+        /// </summary>
+        [HttpGet("{id}/historial")]
+        public async Task<IActionResult> GetHistorial(int id)
+        {
+            try
+            {
+                var ticket = await _ticketService.GetByIdAsync(id);
+                if (ticket == null)
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
+
+                // Obtener historial usando sp_tkt_historial
+                var historial = await _ticketRepository.GetHistorialViaStoredProcedureAsync(id);
+
+                return Success(historial, "Historial obtenido exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener historial del ticket");
                 return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
             }
         }

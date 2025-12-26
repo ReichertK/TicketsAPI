@@ -43,9 +43,9 @@ namespace TicketsAPI.Services.Implementations
             if (!PasswordMatches(usuario.Contraseña, request.Contraseña))
                 return null;
 
-            // Cargar rol con permisos
+            // Cargar rol desde BD usando el Id_Rol del usuario
             var rol = usuario.Id_Rol > 0 
-                ? await _rolRepository.GetWithPermisosAsync(usuario.Id_Rol) 
+                ? await _rolRepository.GetByIdAsync(usuario.Id_Rol) 
                 : null;
 
             // Cargar permisos del rol

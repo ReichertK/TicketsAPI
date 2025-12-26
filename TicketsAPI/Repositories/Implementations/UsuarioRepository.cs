@@ -34,7 +34,7 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
                 FROM usuario";
             var result = await conn.QueryAsync<Usuario>(sql);
             return result.ToList();
@@ -49,7 +49,7 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
                 FROM usuario WHERE email = @email LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { email });
         }
@@ -63,7 +63,7 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
                 FROM usuario WHERE idUsuario = @id";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { id });
         }
@@ -77,7 +77,7 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
                 FROM usuario WHERE nombre = @usuario LIMIT 1";
             return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { usuario });
         }
@@ -91,9 +91,9 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
-                FROM usuario WHERE tipo = @tipo";
-            var result = await conn.QueryAsync<Usuario>(sql, new { tipo = idRol });
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
+                FROM usuario WHERE CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END = @idRol";
+            var result = await conn.QueryAsync<Usuario>(sql, new { idRol });
             return result.ToList();
         }
 
@@ -106,7 +106,7 @@ namespace TicketsAPI.Repositories.Implementations
                     email AS Email,
                     passwordUsuarioEnc AS Contraseña,
                     idKine AS Id_Departamento,
-                    tipo AS Id_Rol
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol
                 FROM usuario WHERE idKine = @idDepartamento";
             var result = await conn.QueryAsync<Usuario>(sql, new { idDepartamento });
             return result.ToList();
@@ -130,5 +130,14 @@ namespace TicketsAPI.Repositories.Implementations
             var rows = await conn.ExecuteAsync(sql, new { idUsuario });
             return rows > 0;
         }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            using var conn = CreateConnection();
+            const string sql = "SELECT COUNT(*) FROM usuario WHERE idUsuario = @id";
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { id });
+            return count > 0;
+        }
     }
 }
+

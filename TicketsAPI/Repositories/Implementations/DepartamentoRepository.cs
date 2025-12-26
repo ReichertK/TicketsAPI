@@ -60,5 +60,13 @@ namespace TicketsAPI.Repositories.Implementations
             var rows = await conn.ExecuteAsync(sql, entity);
             return rows > 0;
         }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            using var conn = CreateConnection();
+            var sql = "SELECT COUNT(*) FROM departamento WHERE Id_Departamento = @id";
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { id });
+            return count > 0;
+        }
     }
 }

@@ -10,24 +10,22 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class GruposController : ControllerBase
+    public class GruposController : BaseApiController
     {
         private readonly IBaseRepository<Grupo> _grupoRepository;
-        private readonly ILogger<GruposController> _logger;
 
         public GruposController(
             IBaseRepository<Grupo> grupoRepository,
-            ILogger<GruposController> logger)
+            ILogger<GruposController> logger) : base(logger)
         {
             _grupoRepository = grupoRepository;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener todos los grupos activos
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<GrupoDTO>>> ObtenerGrupos()
+        public async Task<IActionResult> ObtenerGrupos()
         {
             try
             {
@@ -38,12 +36,12 @@ namespace TicketsAPI.Controllers
                     Tipo_Grupo = g.Tipo_Grupo
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Grupos obtenidos exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener grupos: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener grupos" });
+                _logger.LogError(ex, "Error al obtener grupos");
+                return Error<object>("Error al obtener grupos", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -51,13 +49,13 @@ namespace TicketsAPI.Controllers
         /// Obtener grupo por ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<GrupoDTO>> ObtenerGrupoPorId(int id)
+        public async Task<IActionResult> ObtenerGrupoPorId(int id)
         {
             try
             {
                 var grupo = await _grupoRepository.GetByIdAsync(id);
                 if (grupo == null)
-                    return NotFound(new { message = "Grupo no encontrado" });
+                    return Error<object>("Grupo no encontrado", statusCode: 404);
 
                 var dto = new GrupoDTO
                 {
@@ -65,12 +63,12 @@ namespace TicketsAPI.Controllers
                     Tipo_Grupo = grupo.Tipo_Grupo
                 };
 
-                return Ok(dto);
+                return Success(dto, "Grupo obtenido exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener grupo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener grupo" });
+                _logger.LogError(ex, "Error al obtener grupo");
+                return Error<object>("Error al obtener grupo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -79,10 +77,13 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CrearGrupo([FromBody] GrupoDTO dto)
+        public async Task<IActionResult> CrearGrupo([FromBody] GrupoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var grupo = new Grupo
                 {
                     Tipo_Grupo = dto.Tipo_Grupo
@@ -91,12 +92,12 @@ namespace TicketsAPI.Controllers
                 var id = await _grupoRepository.CreateAsync(grupo);
                 grupo.Id_Grupo = id;
 
-                return CreatedAtAction(nameof(ObtenerGrupoPorId), new { id }, grupo);
+                return Success(new { id }, "Grupo creado exitosamente", 201);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al crear grupo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al crear grupo" });
+                _logger.LogError(ex, "Error al crear grupo");
+                return Error<object>("Error al crear grupo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -105,23 +106,26 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ActualizarGrupo(int id, [FromBody] GrupoDTO dto)
+        public async Task<IActionResult> ActualizarGrupo(int id, [FromBody] GrupoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var grupo = await _grupoRepository.GetByIdAsync(id);
                 if (grupo == null)
-                    return NotFound(new { message = "Grupo no encontrado" });
+                    return Error<object>("Grupo no encontrado", statusCode: 404);
 
                 grupo.Tipo_Grupo = dto.Tipo_Grupo;
 
                 await _grupoRepository.UpdateAsync(grupo);
-                return Ok(new { message = "Grupo actualizado exitosamente" });
+                return Success<object>(new { }, "Grupo actualizado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al actualizar grupo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al actualizar grupo" });
+                _logger.LogError(ex, "Error al actualizar grupo");
+                return Error<object>("Error al actualizar grupo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -130,20 +134,20 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> EliminarGrupo(int id)
+        public async Task<IActionResult> EliminarGrupo(int id)
         {
             try
             {
                 var deleted = await _grupoRepository.DeleteAsync(id);
                 if (!deleted)
-                    return NotFound(new { message = "Grupo no encontrado" });
+                    return Error<object>("Grupo no encontrado", statusCode: 404);
 
-                return Ok(new { message = "Grupo eliminado exitosamente" });
+                return Success<object>(new { }, "Grupo eliminado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al eliminar grupo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al eliminar grupo" });
+                _logger.LogError(ex, "Error al eliminar grupo");
+                return Error<object>("Error al eliminar grupo", new List<string> { ex.Message }, 500);
             }
         }
     }

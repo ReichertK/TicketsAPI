@@ -1,11 +1,23 @@
-# EJEMPLOS PRÁCTICOS - FASE 1 REFACTORIZACIÓN
-## Cómo refactorizar cada tipo de endpoint
+# Ejemplos Prácticos - FASE 1 API Estandarizada ✅
 
-**Referencia:** Para usar mientras implementas FASE 1
+Ejemplos reales de cómo usar la API estandarizada con `ApiResponse<T>`.
+
+**Estado:** ✅ COMPLETADO  
+**Última actualización:** 27 enero 2026
 
 ---
 
-## 📌 PATRONES A USAR
+## 🔐 Autenticación
+
+Todos los endpoints autenticados requieren token JWT en header:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+## 📌 PATRONES ESTANDARIZADOS
 
 ### Patrón 1: GET (Listar)
 
@@ -26,20 +38,20 @@ public IActionResult GetAll()
 }
 ```
 
-**DESPUÉS (Consistente)**
+**DESPUÉS (Estandarizado ✅)**
 ```csharp
 [HttpGet]
-public IActionResult GetAll()
+public async Task<IActionResult> GetAll()
 {
     try
     {
-        var items = _repository.GetAll();
-        return OkResponse(items, "Elementos obtenidos exitosamente");
+        var items = await _repository.GetAllAsync();
+        return Success(items, "Elementos obtenidos exitosamente");
     }
     catch (Exception ex)
     {
-        return InternalServerErrorResponse<List<ItemDTO>>(
-            "Error al obtener elementos", ex);
+        _logger.LogError(ex, "Error al obtener elementos");
+        return Error<object>("Error al obtener elementos", new List<string> { ex.Message }, 500);
     }
 }
 ```
@@ -47,7 +59,7 @@ public IActionResult GetAll()
 **Response (200 OK):**
 ```json
 {
-  "success": true,
+  "exitoso": true,
   "statusCode": 200,
   "message": "Elementos obtenidos exitosamente",
   "data": [

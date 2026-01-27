@@ -10,24 +10,22 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class MotivosController : ControllerBase
+    public class MotivosController : BaseApiController
     {
         private readonly IBaseRepository<Motivo> _motivoRepository;
-        private readonly ILogger<MotivosController> _logger;
 
         public MotivosController(
             IBaseRepository<Motivo> motivoRepository,
-            ILogger<MotivosController> logger)
+            ILogger<MotivosController> logger) : base(logger)
         {
             _motivoRepository = motivoRepository;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener todos los motivos
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<MotivoDTO>>> ObtenerMotivos()
+        public async Task<IActionResult> ObtenerMotivos()
         {
             try
             {
@@ -39,12 +37,12 @@ namespace TicketsAPI.Controllers
                     Categoria = m.Categoria
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Motivos obtenidos exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener motivos: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener motivos" });
+                _logger.LogError(ex, "Error al obtener motivos");
+                return Error<object>("Error al obtener motivos", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -52,13 +50,13 @@ namespace TicketsAPI.Controllers
         /// Obtener motivo por ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<MotivoDTO>> ObtenerMotivoPorId(int id)
+        public async Task<IActionResult> ObtenerMotivoPorId(int id)
         {
             try
             {
                 var motivo = await _motivoRepository.GetByIdAsync(id);
                 if (motivo == null)
-                    return NotFound(new { message = "Motivo no encontrado" });
+                    return Error<object>("Motivo no encontrado", statusCode: 404);
 
                 var dto = new MotivoDTO
                 {
@@ -67,12 +65,12 @@ namespace TicketsAPI.Controllers
                     Categoria = motivo.Categoria
                 };
 
-                return Ok(dto);
+                return Success(dto, "Motivo obtenido exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener motivo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener motivo" });
+                _logger.LogError(ex, "Error al obtener motivo");
+                return Error<object>("Error al obtener motivo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -81,10 +79,13 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CrearMotivo([FromBody] CreateUpdateMotivoDTO dto)
+        public async Task<IActionResult> CrearMotivo([FromBody] CreateUpdateMotivoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var motivo = new Motivo
                 {
                     Nombre = dto.Nombre,
@@ -94,12 +95,12 @@ namespace TicketsAPI.Controllers
                 var id = await _motivoRepository.CreateAsync(motivo);
                 motivo.Id_Motivo = id;
 
-                return CreatedAtAction(nameof(ObtenerMotivoPorId), new { id }, motivo);
+                return Success(new { id }, "Motivo creado exitosamente", 201);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al crear motivo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al crear motivo" });
+                _logger.LogError(ex, "Error al crear motivo");
+                return Error<object>("Error al crear motivo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -108,24 +109,27 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ActualizarMotivo(int id, [FromBody] CreateUpdateMotivoDTO dto)
+        public async Task<IActionResult> ActualizarMotivo(int id, [FromBody] CreateUpdateMotivoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var motivo = await _motivoRepository.GetByIdAsync(id);
                 if (motivo == null)
-                    return NotFound(new { message = "Motivo no encontrado" });
+                    return Error<object>("Motivo no encontrado", statusCode: 404);
 
                 motivo.Nombre = dto.Nombre;
                 motivo.Categoria = dto.Categoria;
 
                 await _motivoRepository.UpdateAsync(motivo);
-                return Ok(new { message = "Motivo actualizado exitosamente" });
+                return Success<object>(new { }, "Motivo actualizado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al actualizar motivo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al actualizar motivo" });
+                _logger.LogError(ex, "Error al actualizar motivo");
+                return Error<object>("Error al actualizar motivo", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -134,21 +138,21 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> EliminarMotivo(int id)
+        public async Task<IActionResult> EliminarMotivo(int id)
         {
             try
             {
                 var motivo = await _motivoRepository.GetByIdAsync(id);
                 if (motivo == null)
-                    return NotFound(new { message = "Motivo no encontrado" });
+                    return Error<object>("Motivo no encontrado", statusCode: 404);
 
                 await _motivoRepository.DeleteAsync(id);
-                return Ok(new { message = "Motivo eliminado exitosamente" });
+                return Success<object>(new { }, "Motivo eliminado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al eliminar motivo: {ex.Message}");
-                return StatusCode(500, new { message = "Error al eliminar motivo" });
+                _logger.LogError(ex, "Error al eliminar motivo");
+                return Error<object>("Error al eliminar motivo", new List<string> { ex.Message }, 500);
             }
         }
     }

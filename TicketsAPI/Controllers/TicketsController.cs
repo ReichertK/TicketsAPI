@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
 using TicketsAPI.Repositories.Interfaces;
@@ -17,18 +18,21 @@ namespace TicketsAPI.Controllers
         private readonly IEstadoService _estadoService;
         private readonly INotificacionService _notificacionService;
         private readonly ITicketRepository _ticketRepository;
+        private readonly IExportService _exportService;
 
         public TicketsController(
             ILogger<TicketsController> logger,
             ITicketService ticketService,
             IEstadoService estadoService,
             INotificacionService notificacionService,
-            ITicketRepository ticketRepository) : base(logger)
+            ITicketRepository ticketRepository,
+            IExportService exportService) : base(logger)
         {
             _ticketService = ticketService;
             _estadoService = estadoService;
             _notificacionService = notificacionService;
             _ticketRepository = ticketRepository;
+            _exportService = exportService;
         }
 
         /// <summary>
@@ -53,6 +57,45 @@ namespace TicketsAPI.Controllers
             {
                 _logger.LogError(ex, "Error al obtener tickets");
                 return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+            }
+        }
+
+        /// <summary>
+        /// Búsqueda avanzada de tickets con soporte para búsqueda en comentarios
+        /// </summary>
+        /// <param name="filtro">Filtros de búsqueda avanzada</param>
+        /// <returns>Lista paginada de tickets</returns>
+        /// <remarks>
+        /// Opciones de búsqueda avanzada:
+        /// - BuscarEnComentarios: Buscar también en el contenido de comentarios
+        /// - BuscarEnContenido: Buscar en el contenido del ticket (default: true)
+        /// - TipoBusqueda: "contiene" (default), "exacta", "comienza", "termina"
+        /// 
+        /// Ejemplo:
+        /// GET /api/v1/Tickets/buscar?Busqueda=error&amp;BuscarEnComentarios=true&amp;TipoBusqueda=contiene
+        /// </remarks>
+        [HttpGet("buscar")]
+        [ProducesResponseType(typeof(ApiResponse<PaginatedResponse<TicketDTO>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 401)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 500)]
+        public async Task<IActionResult> BuscarAvanzado([FromQuery] TicketFiltroDTO filtro)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId <= 0)
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+
+                filtro ??= new TicketFiltroDTO();
+                filtro.Id_Usuario = userId;
+
+                var result = await _ticketService.GetFilteredAsync(filtro);
+                return Success(result, $"Búsqueda completada: {result.TotalRegistros} tickets encontrados");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en búsqueda avanzada");
+                return Error<object>("Error al realizar búsqueda", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -328,9 +371,30 @@ namespace TicketsAPI.Controllers
         {
             try
             {
-                await Task.CompletedTask;
-                // TODO: Implementar exportación a CSV
-                return Error<object>("Funcionalidad en desarrollo", statusCode: 501);
+                var userId = GetCurrentUserId();
+                if (userId <= 0)
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+
+                filtro ??= new TicketFiltroDTO();
+                filtro.Id_Usuario = userId;
+
+                // Obtener tickets filtrados (sin paginación para exportar todos)
+                filtro.TamañoPagina = int.MaxValue; // Obtener todos los resultados
+                filtro.Pagina = 1;
+
+                var result = await _ticketService.GetFilteredAsync(filtro);
+                
+                if (result.Datos == null || !result.Datos.Any())
+                    return Error<object>("No hay tickets para exportar", statusCode: 404);
+
+                // Generar CSV
+                var csvContent = await _exportService.ExportTicketsToCsvAsync(result.Datos);
+
+                // Retornar archivo
+                var fileName = $"tickets_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                var bytes = Encoding.UTF8.GetBytes(csvContent);
+
+                return File(bytes, "text/csv", fileName);
             }
             catch (Exception ex)
             {

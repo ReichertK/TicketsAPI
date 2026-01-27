@@ -266,6 +266,12 @@ namespace TicketsAPI.Models.DTOs
         public DateTime? Fecha_Desde { get; set; }
         public DateTime? Fecha_Hasta { get; set; }
         public string? Busqueda { get; set; }
+        
+        // Opciones de búsqueda avanzada
+        public bool? BuscarEnComentarios { get; set; } = false;
+        public bool? BuscarEnContenido { get; set; } = true;
+        public string? TipoBusqueda { get; set; } = "contiene"; // "contiene", "exacta", "comienza", "termina"
+        
         public string? Ordenar_Por { get; set; }
         public bool? Orden_Descendente { get; set; }
         public int Pagina { get; set; } = 1;
@@ -425,5 +431,65 @@ namespace TicketsAPI.Models.DTOs
         public int Success { get; set; }  // 1 = éxito, 0 = error
         public string? Message { get; set; }  // Mensaje del SP
         public int? IdComentario { get; set; }  // ID del comentario creado (si aplica)
+    }
+
+    // ==================== REPORTES DTOs ====================
+    /// <summary>
+    /// DTO para reporte agrupado por estado
+    /// </summary>
+    public class ReporteEstadoDTO
+    {
+        public string NombreEstado { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+        public double Porcentaje { get; set; }
+        public string Color { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO para reporte agrupado por prioridad
+    /// </summary>
+    public class ReportePrioridadDTO
+    {
+        public string NombrePrioridad { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+        public double Porcentaje { get; set; }
+        public string Color { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO para reporte agrupado por departamento
+    /// </summary>
+    public class ReporteDepartamentoDTO
+    {
+        public string NombreDepartamento { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+        public double Porcentaje { get; set; }
+        public int TicketsAbiertos { get; set; }
+        public int TicketsCerrados { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para reporte de tendencias por periodo
+    /// </summary>
+    public class TendenciaDTO
+    {
+        public string Periodo { get; set; } = string.Empty; // "2024-01-27", "Semana 4", "Enero 2024"
+        public int TicketsCreados { get; set; }
+        public int TicketsCerrados { get; set; }
+        public int TicketsAbiertos { get; set; }
+        public double TiempoPromedioResolucionHoras { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para filtros de reportes
+    /// </summary>
+    public class FiltroReporteDTO
+    {
+        public DateTime? FechaDesde { get; set; }
+        public DateTime? FechaHasta { get; set; }
+        public int? IdDepartamento { get; set; }
+        public int? IdEstado { get; set; }
+        public int? IdPrioridad { get; set; }
+        public string? AgrupacionPeriodo { get; set; } = "dia"; // "dia", "semana", "mes"
     }
 }

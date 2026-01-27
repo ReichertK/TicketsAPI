@@ -7,11 +7,11 @@ namespace TicketsAPI.Controllers
 {
     [ApiController]
     [Route("api/admin")]
-    public class AdminController : ControllerBase
+    public class AdminController : BaseApiController
     {
         private readonly string _connectionString;
 
-        public AdminController(IConfiguration configuration)
+        public AdminController(IConfiguration configuration, ILogger<AdminController> logger) : base(logger)
         {
             // Priorizar DbTkt para entorno local
             _connectionString = configuration.GetConnectionString("DbTkt")
@@ -40,14 +40,15 @@ namespace TicketsAPI.Controllers
                     var nombre = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
                     var email = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
                     var passEnc = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
-                    return Ok(new { Id_Usuario = id, Usuario = nombre, Email = email, PasswordHash = passEnc });
+                    return Success(new { Id_Usuario = id, Usuario = nombre, Email = email, PasswordHash = passEnc }, "Usuario de muestra obtenido");
                 }
 
-                return NotFound(new { message = "No hay usuarios en la tabla 'usuario'." });
+                return Error<object>("No hay usuarios en la tabla 'usuario'.", statusCode: 404);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Error en GetSampleUser");
+                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -160,7 +161,8 @@ namespace TicketsAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Error en AuditDatabase");
+                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
             }
         }
     }

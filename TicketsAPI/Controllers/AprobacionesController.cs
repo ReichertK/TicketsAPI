@@ -11,34 +11,35 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1")]
     [Authorize]
-    public class AprobacionesController : ControllerBase
+    public class AprobacionesController : BaseApiController
     {
         private readonly IBaseRepository<Aprobacion> _aprobacionRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
-        private readonly ILogger<AprobacionesController> _logger;
 
         public AprobacionesController(
             IBaseRepository<Aprobacion> aprobacionRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
-            ILogger<AprobacionesController> logger)
+            ILogger<AprobacionesController> logger) : base(logger)
         {
             _aprobacionRepository = aprobacionRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener aprobaciones pendientes para el usuario actual
         /// </summary>
         [HttpGet("Approvals/Pending")]
-        public async Task<ActionResult<List<AprobacionDTO>>> ObtenerAprobacionesPendientes()
+        public async Task<IActionResult> ObtenerAprobacionesPendientes()
         {
             try
             {
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
+                if (usuarioId <= 0)
+                    return Error<object>("Usuario no autenticado", statusCode: 401);
+
                 var aprobaciones = await _aprobacionRepository.GetAllAsync();
 
                 var aprobacionesPendientes = aprobaciones
@@ -57,12 +58,12 @@ namespace TicketsAPI.Controllers
                     Fecha_Respuesta = a.Fecha_Respuesta
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Aprobaciones pendientes obtenidas exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener aprobaciones: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener aprobaciones" });
+                _logger.LogError(ex, "Error al obtener aprobaciones");
+                return Error<object>("Error al obtener aprobaciones", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -70,15 +71,20 @@ namespace TicketsAPI.Controllers
         /// Solicitar aprobación para un ticket
         /// </summary>
         [HttpPost("Tickets/{ticketId}/Approvals")]
-        public async Task<ActionResult> SolicitarAprobacion(int ticketId, [FromBody] CreateAprobacionDTO dto)
+        public async Task<IActionResult> SolicitarAprobacion(int ticketId, [FromBody] CreateAprobacionDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
+                if (usuarioId <= 0)
+                    return Error<object>("Usuario no autenticado", statusCode: 401);
 
                 var aprobacion = new Aprobacion
                 {
@@ -94,12 +100,12 @@ namespace TicketsAPI.Controllers
                 // Notificar solicitud de aprobación
                 await _notificacionService.SolicitudAprobacionAsync(ticketId, usuarioId, dto.Id_Usuario_Aprobador);
 
-                return CreatedAtAction(nameof(ObtenerAprobacionPorId), new { id }, aprobacion);
+                return Success(aprobacion, "Aprobación solicitada exitosamente", 201);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al solicitar aprobación: {ex.Message}");
-                return StatusCode(500, new { message = "Error al solicitar aprobación" });
+                _logger.LogError(ex, "Error al solicitar aprobación");
+                return Error<object>("Error al solicitar aprobación", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -107,13 +113,13 @@ namespace TicketsAPI.Controllers
         /// Obtener aprobación por ID
         /// </summary>
         [HttpGet("Approvals/{id}")]
-        public async Task<ActionResult<AprobacionDTO>> ObtenerAprobacionPorId(int id)
+        public async Task<IActionResult> ObtenerAprobacionPorId(int id)
         {
             try
             {
                 var aprobacion = await _aprobacionRepository.GetByIdAsync(id);
                 if (aprobacion == null)
-                    return NotFound(new { message = "Aprobación no encontrada" });
+                    return Error<object>("Aprobación no encontrada", statusCode: 404);
 
                 var dto = new AprobacionDTO
                 {
@@ -126,12 +132,12 @@ namespace TicketsAPI.Controllers
                     Fecha_Respuesta = aprobacion.Fecha_Respuesta
                 };
 
-                return Ok(dto);
+                return Success(dto, "Aprobación obtenida exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener aprobación: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener aprobación" });
+                _logger.LogError(ex, "Error al obtener aprobación");
+                return Error<object>("Error al obtener aprobación", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -139,17 +145,22 @@ namespace TicketsAPI.Controllers
         /// Responder solicitud de aprobación (aprobar o rechazar)
         /// </summary>
         [HttpPut("Approvals/{id}/Respond")]
-        public async Task<ActionResult> ResponderAprobacion(int id, [FromBody] ResponderAprobacionDTO dto)
+        public async Task<IActionResult> ResponderAprobacion(int id, [FromBody] ResponderAprobacionDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var aprobacion = await _aprobacionRepository.GetByIdAsync(id);
                 if (aprobacion == null)
-                    return NotFound(new { message = "Aprobación no encontrada" });
+                    return Error<object>("Aprobación no encontrada", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
+                if (usuarioId <= 0)
+                    return Error<object>("Usuario no autenticado", statusCode: 401);
                 if (aprobacion.Id_Usuario_Aprobador != usuarioId)
-                    return Forbid("No tiene permiso para responder esta aprobación");
+                    return Error<object>("No tiene permiso para responder esta aprobación", statusCode: 403);
 
                 aprobacion.Estado = dto.Aprobado ? "Aprobada" : "Rechazada";
                 aprobacion.Fecha_Respuesta = DateTime.Now;
@@ -157,12 +168,12 @@ namespace TicketsAPI.Controllers
 
                 await _aprobacionRepository.UpdateAsync(aprobacion);
 
-                return Ok(new { message = $"Aprobación {(dto.Aprobado ? "aprobada" : "rechazada")} exitosamente" });
+                return Success<object>(new { }, $"Aprobación {(dto.Aprobado ? "aprobada" : "rechazada")} exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al responder aprobación: {ex.Message}");
-                return StatusCode(500, new { message = "Error al responder aprobación" });
+                _logger.LogError(ex, "Error al responder aprobación");
+                return Error<object>("Error al responder aprobación", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -170,13 +181,13 @@ namespace TicketsAPI.Controllers
         /// Obtener historial de aprobaciones de un ticket
         /// </summary>
         [HttpGet("Tickets/{ticketId}/Approvals")]
-        public async Task<ActionResult<List<AprobacionDTO>>> ObtenerAprobacionesPorTicket(int ticketId)
+        public async Task<IActionResult> ObtenerAprobacionesPorTicket(int ticketId)
         {
             try
             {
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
                 var aprobaciones = await _aprobacionRepository.GetAllAsync();
                 var aprobacionesTicket = aprobaciones
@@ -195,12 +206,12 @@ namespace TicketsAPI.Controllers
                     Fecha_Respuesta = a.Fecha_Respuesta
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Aprobaciones obtenidas exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener aprobaciones del ticket: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener aprobaciones del ticket" });
+                _logger.LogError(ex, "Error al obtener aprobaciones del ticket");
+                return Error<object>("Error al obtener aprobaciones del ticket", new List<string> { ex.Message }, 500);
             }
         }
     }

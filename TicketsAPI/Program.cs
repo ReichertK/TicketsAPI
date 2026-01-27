@@ -166,6 +166,12 @@ try
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IPrioridadService, TicketsAPI.Services.Implementations.PrioridadService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IDepartamentoService, TicketsAPI.Services.Implementations.DepartamentoService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.INotificacionService, TicketsAPI.Services.Implementations.NotificacionService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IExportService, TicketsAPI.Services.Implementations.ExportService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IReporteService, TicketsAPI.Services.Implementations.ReporteService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Implementations.CacheService>();
+
+    // ==================== MEMORY CACHE ====================
+    builder.Services.AddMemoryCache();
 
     // ==================== AUTOMAPPER ====================
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -181,21 +187,55 @@ try
         {
             Title = "Tickets API",
             Version = "1.0.0",
-            Description = "API REST para gestión integral de tickets",
+            Description = @"API REST para gestión integral de tickets con soporte para:
+- Autenticación JWT
+- Búsqueda avanzada full-text
+- Exportación a CSV
+- Reportes y analytics en tiempo real
+- SignalR para notificaciones
+- Sistema de permisos por roles",
             Contact = new Microsoft.OpenApi.Models.OpenApiContact
             {
                 Name = "Equipo de Desarrollo",
+                Email = "dev@ticketsapi.com",
                 Url = new Uri("https://github.com/ReichertK/TicketsAPI")
+            },
+            License = new Microsoft.OpenApi.Models.OpenApiLicense
+            {
+                Name = "MIT License",
+                Url = new Uri("https://opensource.org/licenses/MIT")
             }
         });
 
-        // Nota: la habilitación de Swagger se lee fuera de este bloque
+        // Agrupar endpoints por tags
+        c.TagActionsBy(api =>
+        {
+            if (api.GroupName != null)
+                return new[] { api.GroupName };
+
+            var controllerName = api.ActionDescriptor.RouteValues["controller"];
+            return new[] { controllerName ?? "General" };
+        });
+
+        // Ordenar tags alfabéticamente
+        c.OrderActionsBy(api => $"{api.ActionDescriptor.RouteValues["controller"]}_{api.HttpMethod}");
+
+        // Agregar descripciones de tags
+        c.DocumentFilter<SwaggerTagDescriptionsDocumentFilter>();
 
         // Agregar autenticación JWT al Swagger
         c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
             In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-            Description = "Ingrese solo el JWT token (sin 'Bearer'). Swagger lo agregará automáticamente.",
+            Description = @"JWT Authorization header usando Bearer scheme.
+                
+Ejemplo: 'Bearer {token}'
+                
+1. Haga login en /api/v1/Auth/login
+2. Copie el token de la respuesta
+3. Click en 'Authorize' arriba
+4. Ingrese solo el token (sin 'Bearer')
+5. Click 'Authorize' y 'Close'",
             Name = "Authorization",
             Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
             Scheme = "bearer",
@@ -237,6 +277,25 @@ try
 
     // ==================== BUILD ====================
     var app = builder.Build();
+
+    // ==================== CACHE WARMUP ====================
+    // Pre-cargar cache de referencias al iniciar
+    using (var scope = app.Services.CreateScope())
+    {
+        var cacheService = scope.ServiceProvider.GetRequiredService<TicketsAPI.Services.Implementations.CacheService>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        try
+        {
+            logger.LogInformation("Iniciando cache warmup...");
+            await cacheService.WarmupCacheAsync();
+            logger.LogInformation("Cache warmup completado exitosamente");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error en cache warmup - continuando sin cache precargado");
+        }
+    }
 
     // ==================== MIDDLEWARE ====================
     // Error handling

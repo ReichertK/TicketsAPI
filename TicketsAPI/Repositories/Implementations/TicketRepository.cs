@@ -420,5 +420,223 @@ namespace TicketsAPI.Repositories.Implementations
 
             return historial;
         }
+
+        /// <summary>
+        /// Búsqueda avanzada con soporte para búsqueda en comentarios y diferentes tipos de matching
+        /// </summary>
+        public async Task<PaginatedResponse<TicketDTO>> GetFilteredAdvancedAsync(TicketFiltroDTO filtro)
+        {
+            using var conn = CreateConnection();
+
+            var page = Math.Max(1, filtro.Pagina);
+            var pageSize = Math.Clamp(filtro.TamañoPagina, 1, 100);
+            var offset = (page - 1) * pageSize;
+
+            // Construir la condición de búsqueda según el tipo
+            string searchCondition = "1=1";
+            var parameters = new DynamicParameters();
+
+            if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+            {
+                var tipoBusqueda = filtro.TipoBusqueda?.ToLower() ?? "contiene";
+                var searchPattern = tipoBusqueda switch
+                {
+                    "exacta" => filtro.Busqueda,
+                    "comienza" => $"{filtro.Busqueda}%",
+                    "termina" => $"%{filtro.Busqueda}",
+                    _ => $"%{filtro.Busqueda}%" // contiene (default)
+                };
+
+                var conditions = new List<string>();
+
+                // Buscar en contenido del ticket
+                if (filtro.BuscarEnContenido ?? true)
+                {
+                    conditions.Add("t.Contenido LIKE @searchPattern");
+                }
+
+                // Buscar en comentarios
+                if (filtro.BuscarEnComentarios ?? false)
+                {
+                    conditions.Add(@"EXISTS (
+                        SELECT 1 FROM tkt_comentario tc 
+                        WHERE tc.Id_Tkt = t.Id_Tkt 
+                        AND tc.Contenido LIKE @searchPattern
+                    )");
+                }
+
+                if (conditions.Any())
+                {
+                    searchCondition = $"({string.Join(" OR ", conditions)})";
+                    parameters.Add("@searchPattern", searchPattern);
+                }
+            }
+
+            // Construir la query completa
+            var whereClause = new List<string> { searchCondition };
+
+            if (filtro.Id_Estado.HasValue)
+            {
+                whereClause.Add("t.Id_Estado = @IdEstado");
+                parameters.Add("@IdEstado", filtro.Id_Estado.Value);
+            }
+
+            if (filtro.Id_Prioridad.HasValue)
+            {
+                whereClause.Add("t.Id_Prioridad = @IdPrioridad");
+                parameters.Add("@IdPrioridad", filtro.Id_Prioridad.Value);
+            }
+
+            if (filtro.Id_Departamento.HasValue)
+            {
+                whereClause.Add("t.Id_Departamento = @IdDepartamento");
+                parameters.Add("@IdDepartamento", filtro.Id_Departamento.Value);
+            }
+
+            if (filtro.Id_Usuario.HasValue)
+            {
+                whereClause.Add("t.Id_Usuario = @IdUsuario");
+                parameters.Add("@IdUsuario", filtro.Id_Usuario.Value);
+            }
+
+            if (filtro.Id_Usuario_Asignado.HasValue)
+            {
+                whereClause.Add("t.Id_Usuario_Asignado = @IdUsuarioAsignado");
+                parameters.Add("@IdUsuarioAsignado", filtro.Id_Usuario_Asignado.Value);
+            }
+
+            if (filtro.Id_Motivo.HasValue)
+            {
+                whereClause.Add("t.Id_Motivo = @IdMotivo");
+                parameters.Add("@IdMotivo", filtro.Id_Motivo.Value);
+            }
+
+            if (filtro.Fecha_Desde.HasValue)
+            {
+                whereClause.Add("DATE(t.Date_Creado) >= @FechaDesde");
+                parameters.Add("@FechaDesde", filtro.Fecha_Desde.Value.Date);
+            }
+
+            if (filtro.Fecha_Hasta.HasValue)
+            {
+                whereClause.Add("DATE(t.Date_Creado) <= @FechaHasta");
+                parameters.Add("@FechaHasta", filtro.Fecha_Hasta.Value.Date);
+            }
+
+            whereClause.Add("t.Habilitado = 1");
+
+            var whereSql = string.Join(" AND ", whereClause);
+
+            // Construir ORDER BY
+            var orderBy = "t.Date_Creado DESC"; // Default
+            if (!string.IsNullOrWhiteSpace(filtro.Ordenar_Por))
+            {
+                var direction = filtro.Orden_Descendente ?? true ? "DESC" : "ASC";
+                var validColumns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["fecha"] = "t.Date_Creado",
+                    ["estado"] = "e.TipoEstado",
+                    ["prioridad"] = "p.NombrePrioridad",
+                    ["departamento"] = "d.Nombre"
+                };
+
+                if (validColumns.TryGetValue(filtro.Ordenar_Por, out var column))
+                {
+                    orderBy = $"{column} {direction}";
+                }
+            }
+
+            // Query para contar total
+            var countSql = $@"
+                SELECT COUNT(DISTINCT t.Id_Tkt)
+                FROM tkt t
+                LEFT JOIN usuario u ON t.Id_Usuario = u.idUsuario
+                LEFT JOIN departamento d ON t.Id_Departamento = d.Id_Departamento
+                LEFT JOIN prioridad p ON t.Id_Prioridad = p.Id_Prioridad
+                LEFT JOIN estado e ON t.Id_Estado = e.Id_Estado
+                WHERE {whereSql}";
+
+            var totalRecords = await conn.ExecuteScalarAsync<int>(countSql, parameters);
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            // Query principal con paginación
+            var sql = $@"
+                SELECT 
+                    t.Id_Tkt,
+                    t.Id_Estado,
+                    t.Id_Prioridad,
+                    t.Id_Departamento,
+                    t.Id_Usuario,
+                    t.Id_Usuario_Asignado,
+                    t.Id_Empresa,
+                    t.Id_Perfil,
+                    t.Id_Sucursal,
+                    t.Date_Creado,
+                    t.Date_Asignado,
+                    t.Date_Cierre,
+                    t.Date_Cambio_Estado,
+                    t.Contenido,
+                    t.Id_Motivo,
+                    t.Habilitado,
+                    e.Id_Estado AS 'Estado.Id_Estado',
+                    e.TipoEstado AS 'Estado.Nombre_Estado',
+                    '' AS 'Estado.Color',
+                    0 AS 'Estado.Orden',
+                    1 AS 'Estado.Activo',
+                    p.Id_Prioridad AS 'Prioridad.Id_Prioridad',
+                    p.NombrePrioridad AS 'Prioridad.Nombre_Prioridad',
+                    0 AS 'Prioridad.Valor',
+                    '' AS 'Prioridad.Color',
+                    1 AS 'Prioridad.Activo',
+                    d.Id_Departamento AS 'Departamento.Id_Departamento',
+                    d.Nombre AS 'Departamento.Nombre',
+                    '' AS 'Departamento.Descripcion',
+                    1 AS 'Departamento.Activo',
+                    u.idUsuario AS 'UsuarioCreador.Id_Usuario',
+                    u.nombre AS 'UsuarioCreador.Nombre',
+                    u.apellido AS 'UsuarioCreador.Apellido',
+                    u.email AS 'UsuarioCreador.Email',
+                    ua.idUsuario AS 'UsuarioAsignado.Id_Usuario',
+                    ua.nombre AS 'UsuarioAsignado.Nombre',
+                    ua.apellido AS 'UsuarioAsignado.Apellido',
+                    ua.email AS 'UsuarioAsignado.Email'
+                FROM tkt t
+                LEFT JOIN usuario u ON t.Id_Usuario = u.idUsuario
+                LEFT JOIN usuario ua ON t.Id_Usuario_Asignado = ua.idUsuario
+                LEFT JOIN departamento d ON t.Id_Departamento = d.Id_Departamento
+                LEFT JOIN prioridad p ON t.Id_Prioridad = p.Id_Prioridad
+                LEFT JOIN estado e ON t.Id_Estado = e.Id_Estado
+                WHERE {whereSql}
+                ORDER BY {orderBy}
+                LIMIT @Offset, @PageSize";
+
+            parameters.Add("@Offset", offset);
+            parameters.Add("@PageSize", pageSize);
+
+            var items = await conn.QueryAsync<TicketDTO, EstadoDTO, PrioridadDTO, DepartamentoDTO, UsuarioDTO, UsuarioDTO, TicketDTO>(
+                sql,
+                (ticket, estado, prioridad, departamento, usuarioCreador, usuarioAsignado) =>
+                {
+                    ticket.Estado = estado;
+                    ticket.Prioridad = prioridad;
+                    ticket.Departamento = departamento;
+                    ticket.UsuarioCreador = usuarioCreador;
+                    ticket.UsuarioAsignado = usuarioAsignado;
+                    return ticket;
+                },
+                parameters,
+                splitOn: "Id_Estado,Id_Prioridad,Id_Departamento,Id_Usuario,Id_Usuario");
+
+            return new PaginatedResponse<TicketDTO>
+            {
+                Datos = items.ToList(),
+                TotalRegistros = totalRecords,
+                TotalPaginas = totalPages,
+                PaginaActual = page,
+                TamañoPagina = pageSize,
+                TienePaginaAnterior = page > 1,
+                TienePaginaSiguiente = page < totalPages
+            };
+        }
     }
 }

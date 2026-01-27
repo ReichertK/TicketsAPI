@@ -33,6 +33,7 @@ namespace TicketsAPI.Repositories.Interfaces
     public interface ITicketRepository : IBaseRepository<Models.Entities.Ticket>
     {
         Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro);
+        Task<PaginatedResponse<TicketDTO>> GetFilteredAdvancedAsync(TicketFiltroDTO filtro);
         [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByUsuarioCreadorAsync(int idUsuario);
         [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]

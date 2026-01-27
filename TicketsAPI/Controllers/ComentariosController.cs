@@ -11,36 +11,34 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1")]
     [Authorize]
-    public class ComentariosController : ControllerBase
+    public class ComentariosController : BaseApiController
     {
         private readonly IComentarioRepository _comentarioRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
-        private readonly ILogger<ComentariosController> _logger;
 
         public ComentariosController(
             IComentarioRepository comentarioRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
-            ILogger<ComentariosController> logger)
+            ILogger<ComentariosController> logger) : base(logger)
         {
             _comentarioRepository = comentarioRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener comentarios de un ticket
         /// </summary>
         [HttpGet("Tickets/{ticketId}/Comments")]
-        public async Task<ActionResult<List<ComentarioDTO>>> GetComentariosPorTicket(int ticketId)
+        public async Task<IActionResult> GetComentariosPorTicket(int ticketId)
         {
             try
             {
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
                 var comentarios = await _comentarioRepository.GetAllAsync();
                 var comentariosTicket = comentarios
@@ -58,12 +56,12 @@ namespace TicketsAPI.Controllers
                     Privado = c.Privado
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Comentarios obtenidos exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener comentarios: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener comentarios" });
+                _logger.LogError(ex, "Error al obtener comentarios");
+                return Error<object>("Error al obtener comentarios", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -71,19 +69,20 @@ namespace TicketsAPI.Controllers
         /// Crear nuevo comentario en un ticket
         /// </summary>
         [HttpPost("Tickets/{ticketId}/Comments")]
-        public async Task<ActionResult> CrearComentario(int ticketId, [FromBody] CreateUpdateComentarioDTO dto)
+        public async Task<IActionResult> CrearComentario(int ticketId, [FromBody] CreateUpdateComentarioDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
-                
-                // Validar que el usuario esté autenticado correctamente
+                var usuarioId = GetCurrentUserId();
                 if (usuarioId <= 0)
-                    return Unauthorized(new { message = "Usuario no autenticado" });
+                    return Error<object>("Usuario no autenticado", statusCode: 401);
 
                 // Llamar a sp_tkt_comentar para validación
                 var result = await _comentarioRepository.CrearComentarioViaStoredProcedureAsync(
@@ -93,7 +92,7 @@ namespace TicketsAPI.Controllers
 
                 if (result.Success != 1)
                 {
-                    return BadRequest(new { message = result.Message ?? "Error al crear comentario" });
+                    return Error<object>(result.Message ?? "Error al crear comentario", statusCode: 400);
                 }
 
                 // Notificar nuevo comentario
@@ -102,11 +101,11 @@ namespace TicketsAPI.Controllers
                 // Retornar el comentario creado
                 // result.IdComentario ahora contiene el ID obtenido vía LAST_INSERT_ID()
                 if (!result.IdComentario.HasValue || result.IdComentario <= 0)
-                    return StatusCode(500, new { message = "Error al recuperar el ID del comentario creado" });
+                    return Error<object>("Error al recuperar el ID del comentario creado", statusCode: 500);
 
                 var comentarioCreado = await _comentarioRepository.GetByIdAsync(result.IdComentario.Value);
                 if (comentarioCreado == null)
-                    return StatusCode(500, new { message = "Error al recuperar el comentario creado" });
+                    return Error<object>("Error al recuperar el comentario creado", statusCode: 500);
 
                 var responseDto = new ComentarioDTO
                 {
@@ -118,12 +117,12 @@ namespace TicketsAPI.Controllers
                     Privado = comentarioCreado.Privado
                 };
 
-                return CreatedAtAction(nameof(GetComentarioPorId), new { id = comentarioCreado.Id_Comentario }, responseDto);
+                return Success(responseDto, "Comentario creado exitosamente", 201);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al crear comentario: {ex.Message}");
-                return StatusCode(500, new { message = "Error al crear comentario" });
+                _logger.LogError(ex, "Error al crear comentario");
+                return Error<object>("Error al crear comentario", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -131,13 +130,13 @@ namespace TicketsAPI.Controllers
         /// Obtener comentario por ID
         /// </summary>
         [HttpGet("Comments/{id}")]
-        public async Task<ActionResult<ComentarioDTO>> GetComentarioPorId(int id)
+        public async Task<IActionResult> GetComentarioPorId(int id)
         {
             try
             {
                 var comentario = await _comentarioRepository.GetByIdAsync(id);
                 if (comentario == null)
-                    return NotFound(new { message = "Comentario no encontrado" });
+                    return Error<object>("Comentario no encontrado", statusCode: 404);
 
                 var dto = new ComentarioDTO
                 {
@@ -149,12 +148,12 @@ namespace TicketsAPI.Controllers
                     Privado = comentario.Privado
                 };
 
-                return Ok(dto);
+                return Success(dto, "Comentario obtenido exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener comentario: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener comentario" });
+                _logger.LogError(ex, "Error al obtener comentario");
+                return Error<object>("Error al obtener comentario", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -162,29 +161,32 @@ namespace TicketsAPI.Controllers
         /// Actualizar comentario
         /// </summary>
         [HttpPut("Comments/{id}")]
-        public async Task<ActionResult> ActualizarComentario(int id, [FromBody] CreateUpdateComentarioDTO dto)
+        public async Task<IActionResult> ActualizarComentario(int id, [FromBody] CreateUpdateComentarioDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var comentario = await _comentarioRepository.GetByIdAsync(id);
                 if (comentario == null)
-                    return NotFound(new { message = "Comentario no encontrado" });
+                    return Error<object>("Comentario no encontrado", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
                 if (comentario.Id_Usuario != usuarioId)
-                    return Forbid("No tiene permiso para editar este comentario");
+                    return Error<object>("No tiene permiso para editar este comentario", statusCode: 403);
 
                 comentario.Contenido = dto.Contenido;
                 comentario.Privado = dto.Privado;
                 comentario.Fecha_Actualizacion = DateTime.Now;
                 await _comentarioRepository.UpdateAsync(comentario);
 
-                return Ok(new { message = "Comentario actualizado exitosamente" });
+                return Success<object>(new { }, "Comentario actualizado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al actualizar comentario: {ex.Message}");
-                return StatusCode(500, new { message = "Error al actualizar comentario" });
+                _logger.LogError(ex, "Error al actualizar comentario");
+                return Error<object>("Error al actualizar comentario", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -192,25 +194,25 @@ namespace TicketsAPI.Controllers
         /// Eliminar comentario
         /// </summary>
         [HttpDelete("Comments/{id}")]
-        public async Task<ActionResult> EliminarComentario(int id)
+        public async Task<IActionResult> EliminarComentario(int id)
         {
             try
             {
                 var comentario = await _comentarioRepository.GetByIdAsync(id);
                 if (comentario == null)
-                    return NotFound(new { message = "Comentario no encontrado" });
+                    return Error<object>("Comentario no encontrado", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
                 if (comentario.Id_Usuario != usuarioId)
-                    return Forbid("No tiene permiso para eliminar este comentario");
+                    return Error<object>("No tiene permiso para eliminar este comentario", statusCode: 403);
 
                 await _comentarioRepository.DeleteAsync(id);
-                return Ok(new { message = "Comentario eliminado exitosamente" });
+                return Success<object>(new { }, "Comentario eliminado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al eliminar comentario: {ex.Message}");
-                return StatusCode(500, new { message = "Error al eliminar comentario" });
+                _logger.LogError(ex, "Error al eliminar comentario");
+                return Error<object>("Error al eliminar comentario", new List<string> { ex.Message }, 500);
             }
         }
     }

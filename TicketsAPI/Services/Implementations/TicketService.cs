@@ -38,6 +38,14 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro)
         {
+            // Si se usa búsqueda avanzada (en comentarios o tipo de búsqueda diferente), usar método avanzado
+            if ((filtro.BuscarEnComentarios ?? false) || 
+                (!string.IsNullOrWhiteSpace(filtro.TipoBusqueda) && filtro.TipoBusqueda != "contiene"))
+            {
+                return await _ticketRepository.GetFilteredAdvancedAsync(filtro);
+            }
+
+            // Caso normal: usar SP existente
             return await _ticketRepository.GetFilteredAsync(filtro);
         }
 

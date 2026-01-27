@@ -11,39 +11,37 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1")]
     [Authorize]
-    public class TransicionesController : ControllerBase
+    public class TransicionesController : BaseApiController
     {
         private readonly IBaseRepository<Transicion> _transicionRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
         private readonly ITicketService _ticketService;
-        private readonly ILogger<TransicionesController> _logger;
 
         public TransicionesController(
             IBaseRepository<Transicion> transicionRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
             ITicketService ticketService,
-            ILogger<TransicionesController> logger)
+            ILogger<TransicionesController> logger) : base(logger)
         {
             _transicionRepository = transicionRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
             _ticketService = ticketService;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener historial de transiciones de un ticket
         /// </summary>
         [HttpGet("Tickets/{ticketId}/Transitions")]
-        public async Task<ActionResult<List<TransicionDTO>>> ObtenerTransicionesPorTicket(int ticketId)
+        public async Task<IActionResult> ObtenerTransicionesPorTicket(int ticketId)
         {
             try
             {
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
                 var transiciones = await _transicionRepository.GetAllAsync();
                 var transicionesTicket = transiciones
@@ -62,12 +60,12 @@ namespace TicketsAPI.Controllers
                     Fecha = t.Fecha
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Transiciones obtenidas exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener transiciones: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener transiciones" });
+                _logger.LogError(ex, "Error al obtener transiciones");
+                return Error<object>("Error al obtener transiciones", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -75,15 +73,20 @@ namespace TicketsAPI.Controllers
         /// Realizar transición de estado en un ticket
         /// </summary>
         [HttpPost("Tickets/{ticketId}/Transition")]
-        public async Task<ActionResult> RealizarTransicion(int ticketId, [FromBody] TransicionEstadoDTO dto)
+        public async Task<IActionResult> RealizarTransicion(int ticketId, [FromBody] TransicionEstadoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
-                    return NotFound(new { message = "Ticket no encontrado" });
+                    return Error<object>("Ticket no encontrado", statusCode: 404);
 
-                var usuarioId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+                var usuarioId = GetCurrentUserId();
+                if (usuarioId <= 0)
+                    return Error<object>("Usuario no autenticado", statusCode: 401);
 
                 // Crear DTO para transición
                 var transicionDto = new TransicionEstadoDTO
@@ -111,12 +114,12 @@ namespace TicketsAPI.Controllers
                 // Notificar transición de estado
                 await _notificacionService.TransicionEstadoAsync(ticketId, usuarioId, dto.Id_Estado_Nuevo);
 
-                return Ok(new { message = "Transición realizada exitosamente", id });
+                return Success(new { id }, "Transición realizada exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al realizar transición: {ex.Message}");
-                return StatusCode(500, new { message = "Error al realizar transición" });
+                _logger.LogError(ex, "Error al realizar transición");
+                return Error<object>("Error al realizar transición", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -124,13 +127,13 @@ namespace TicketsAPI.Controllers
         /// Obtener transición por ID
         /// </summary>
         [HttpGet("Transitions/{id}")]
-        public async Task<ActionResult<TransicionDTO>> ObtenerTransicionPorId(int id)
+        public async Task<IActionResult> ObtenerTransicionPorId(int id)
         {
             try
             {
                 var transicion = await _transicionRepository.GetByIdAsync(id);
                 if (transicion == null)
-                    return NotFound(new { message = "Transición no encontrada" });
+                    return Error<object>("Transición no encontrada", statusCode: 404);
 
                 var dto = new TransicionDTO
                 {
@@ -143,12 +146,12 @@ namespace TicketsAPI.Controllers
                     Fecha = transicion.Fecha
                 };
 
-                return Ok(dto);
+                return Success(dto, "Transición obtenida exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener transición: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener transición" });
+                _logger.LogError(ex, "Error al obtener transición");
+                return Error<object>("Error al obtener transición", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -156,7 +159,7 @@ namespace TicketsAPI.Controllers
         /// Obtener historial de transiciones de un usuario
         /// </summary>
         [HttpGet("Users/{userId}/Transitions")]
-        public async Task<ActionResult<List<TransicionDTO>>> ObtenerTransicionesPorUsuario(int userId)
+        public async Task<IActionResult> ObtenerTransicionesPorUsuario(int userId)
         {
             try
             {
@@ -177,12 +180,12 @@ namespace TicketsAPI.Controllers
                     Fecha = t.Fecha
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Transiciones del usuario obtenidas exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener transiciones del usuario: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener transiciones del usuario" });
+                _logger.LogError(ex, "Error al obtener transiciones del usuario");
+                return Error<object>("Error al obtener transiciones del usuario", new List<string> { ex.Message }, 500);
             }
         }
     }

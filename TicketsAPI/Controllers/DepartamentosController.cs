@@ -10,24 +10,22 @@ namespace TicketsAPI.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class DepartamentosController : ControllerBase
+    public class DepartamentosController : BaseApiController
     {
         private readonly IBaseRepository<Departamento> _departamentoRepository;
-        private readonly ILogger<DepartamentosController> _logger;
 
         public DepartamentosController(
             IBaseRepository<Departamento> departamentoRepository,
-            ILogger<DepartamentosController> logger)
+            ILogger<DepartamentosController> logger) : base(logger)
         {
             _departamentoRepository = departamentoRepository;
-            _logger = logger;
         }
 
         /// <summary>
         /// Obtener todos los departamentos
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<DepartamentoDTO>>> ObtenerDepartamentos()
+        public async Task<IActionResult> ObtenerDepartamentos()
         {
             try
             {
@@ -39,12 +37,12 @@ namespace TicketsAPI.Controllers
                     Descripcion = d.Descripcion
                 }).ToList();
 
-                return Ok(dtos);
+                return Success(dtos, "Departamentos obtenidos exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener departamentos: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener departamentos" });
+                _logger.LogError(ex, "Error al obtener departamentos");
+                return Error<object>("Error al obtener departamentos", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -52,13 +50,13 @@ namespace TicketsAPI.Controllers
         /// Obtener departamento por ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<DepartamentoDTO>> ObtenerDepartamentoPorId(int id)
+        public async Task<IActionResult> ObtenerDepartamentoPorId(int id)
         {
             try
             {
                 var departamento = await _departamentoRepository.GetByIdAsync(id);
                 if (departamento == null)
-                    return NotFound(new { message = "Departamento no encontrado" });
+                    return Error<object>("Departamento no encontrado", statusCode: 404);
 
                 var dto = new DepartamentoDTO
                 {
@@ -67,12 +65,12 @@ namespace TicketsAPI.Controllers
                     Descripcion = departamento.Descripcion
                 };
 
-                return Ok(dto);
+                return Success(dto, "Departamento obtenido exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al obtener departamento: {ex.Message}");
-                return StatusCode(500, new { message = "Error al obtener departamento" });
+                _logger.LogError(ex, "Error al obtener departamento");
+                return Error<object>("Error al obtener departamento", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -81,10 +79,13 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CrearDepartamento([FromBody] CreateUpdateDepartamentoDTO dto)
+        public async Task<IActionResult> CrearDepartamento([FromBody] CreateUpdateDepartamentoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var departamento = new Departamento
                 {
                     Nombre = dto.Nombre ?? string.Empty,
@@ -94,12 +95,12 @@ namespace TicketsAPI.Controllers
                 var id = await _departamentoRepository.CreateAsync(departamento);
                 departamento.Id_Departamento = id;
 
-                return CreatedAtAction(nameof(ObtenerDepartamentoPorId), new { id }, departamento);
+                return Success(new { id }, "Departamento creado exitosamente", 201);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al crear departamento: {ex.Message}");
-                return StatusCode(500, new { message = "Error al crear departamento" });
+                _logger.LogError(ex, "Error al crear departamento");
+                return Error<object>("Error al crear departamento", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -108,24 +109,27 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ActualizarDepartamento(int id, [FromBody] CreateUpdateDepartamentoDTO dto)
+        public async Task<IActionResult> ActualizarDepartamento(int id, [FromBody] CreateUpdateDepartamentoDTO dto)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
                 var departamento = await _departamentoRepository.GetByIdAsync(id);
                 if (departamento == null)
-                    return NotFound(new { message = "Departamento no encontrado" });
+                    return Error<object>("Departamento no encontrado", statusCode: 404);
 
                 departamento.Nombre = dto.Nombre ?? string.Empty;
                 departamento.Descripcion = dto.Descripcion ?? string.Empty;
 
                 await _departamentoRepository.UpdateAsync(departamento);
-                return Ok(new { message = "Departamento actualizado exitosamente" });
+                return Success<object>(new { }, "Departamento actualizado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al actualizar departamento: {ex.Message}");
-                return StatusCode(500, new { message = "Error al actualizar departamento" });
+                _logger.LogError(ex, "Error al actualizar departamento");
+                return Error<object>("Error al actualizar departamento", new List<string> { ex.Message }, 500);
             }
         }
 
@@ -134,21 +138,21 @@ namespace TicketsAPI.Controllers
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> EliminarDepartamento(int id)
+        public async Task<IActionResult> EliminarDepartamento(int id)
         {
             try
             {
                 var departamento = await _departamentoRepository.GetByIdAsync(id);
                 if (departamento == null)
-                    return NotFound(new { message = "Departamento no encontrado" });
+                    return Error<object>("Departamento no encontrado", statusCode: 404);
 
                 await _departamentoRepository.DeleteAsync(id);
-                return Ok(new { message = "Departamento eliminado exitosamente" });
+                return Success<object>(new { }, "Departamento eliminado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error al eliminar departamento: {ex.Message}");
-                return StatusCode(500, new { message = "Error al eliminar departamento" });
+                _logger.LogError(ex, "Error al eliminar departamento");
+                return Error<object>("Error al eliminar departamento", new List<string> { ex.Message }, 500);
             }
         }
     }

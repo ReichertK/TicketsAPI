@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\Admin\Documents\GitHub\TicketsAPI\integration_complete_all_endpoints.py", line 18, in <module>
+    import mysql.connector
+ModuleNotFoundError: No module named 'mysql'

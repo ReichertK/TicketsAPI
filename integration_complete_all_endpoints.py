@@ -52,12 +52,17 @@ class TestResult:
 class CompleteSuiteAllEndpoints:
     def __init__(self):
         self.token: str = ""
+        self.refresh_token: str = ""  # Agregar refresh_token
         self.results: List[TestResult] = []
         self.test_data: Dict[str, Any] = {}
 
     def request(self, method: str, endpoint: str, json_body=None, token=None, params=None):
         """Ejecuta request HTTP contra API."""
-        url = f"{API_BASE_URL}{endpoint}"
+        # Si endpoint empieza con /api/, usar base URL sin /v1 (para admin, sp, etc.)
+        if endpoint.startswith("/api/"):
+            url = f"https://localhost:5001{endpoint}"
+        else:
+            url = f"{API_BASE_URL}{endpoint}"
         headers = {"Content-Type": "application/json"}
         if token:
             headers["Authorization"] = f"Bearer {token}"
@@ -92,7 +97,9 @@ class CompleteSuiteAllEndpoints:
         for body in payloads:
             status, resp = self.request("POST", "/Auth/login", json_body=body)
             if status == 200 and (resp.get("datos") or resp.get("data")):
-                self.token = resp["datos"]["token"] if "datos" in resp else resp["data"]["token"]
+                datos = resp.get("datos") or resp.get("data")
+                self.token = datos["token"] if "token" in datos else datos.get("Token", "")
+                self.refresh_token = datos.get("refreshToken") or datos.get("RefreshToken", "")
                 print(f"[*] Login OK - Token obtenido")
                 return True
         print("[-] Login FALLIDO")
@@ -140,7 +147,7 @@ class CompleteSuiteAllEndpoints:
         print("\n[*] Testing Auth Endpoints...")
         
         # POST /Auth/login - Éxito
-        status, resp = self.request("POST", "/Auth/login", json_body={"usuario": "admin", "contrasena": "changeme"})
+        status, resp = self.request("POST", "/Auth/login", json_body={"Usuario": "admin", "Contraseña": "changeme"})
         self.add_result(TestResult(
             nombre="Auth: Login exitoso",
             metodo="POST",
@@ -154,7 +161,7 @@ class CompleteSuiteAllEndpoints:
         ))
         
         # POST /Auth/login - Error 400 (credenciales vacías)
-        status, resp = self.request("POST", "/Auth/login", json_body={"usuario": "", "contrasena": ""})
+        status, resp = self.request("POST", "/Auth/login", json_body={"Usuario": "", "Contraseña": ""})
         self.add_result(TestResult(
             nombre="Auth: Login sin credenciales (400)",
             metodo="POST",
@@ -168,7 +175,7 @@ class CompleteSuiteAllEndpoints:
         ))
         
         # POST /Auth/login - Error 401 (credenciales inválidas)
-        status, resp = self.request("POST", "/Auth/login", json_body={"usuario": "invalid", "contrasena": "wrong"})
+        status, resp = self.request("POST", "/Auth/login", json_body={"Usuario": "invalid", "Contraseña": "wrong"})
         self.add_result(TestResult(
             nombre="Auth: Login credenciales inválidas (401)",
             metodo="POST",
@@ -210,7 +217,8 @@ class CompleteSuiteAllEndpoints:
         ))
         
         # POST /Auth/refresh-token
-        status, resp = self.request("POST", "/Auth/refresh-token", token=self.token)
+        payload = {"RefreshToken": self.refresh_token} if self.refresh_token else {}
+        status, resp = self.request("POST", "/Auth/refresh-token", json_body=payload, token=self.token)
         self.add_result(TestResult(
             nombre="Auth: Refresh token",
             metodo="POST",
@@ -341,13 +349,13 @@ class CompleteSuiteAllEndpoints:
                 tipo="exitoso" if status == 200 else "error",
             ))
             
-            # PATCH /Tickets/{id}/asignar
-            payload = {"id_usuario_asignado": 2}
-            status, resp = self.request("PATCH", f"/Tickets/{ticket_id}/asignar", json_body=payload, token=self.token)
+            # PATCH /Tickets/{id}/asignar/{usuarioId}
+            usuario_id = 2
+            status, resp = self.request("PATCH", f"/Tickets/{ticket_id}/asignar/{usuario_id}", token=self.token)
             self.add_result(TestResult(
                 nombre="Tickets: PATCH assign",
                 metodo="PATCH",
-                endpoint=f"/Tickets/{ticket_id}/asignar",
+                endpoint=f"/Tickets/{ticket_id}/asignar/{usuario_id}",
                 esperado=200,
                 obtenido=status,
                 exito=status == 200,
@@ -419,9 +427,9 @@ class CompleteSuiteAllEndpoints:
         ticket_id = self.test_data.get("ticket_id")
         
         if ticket_id:
-            # POST /Tickets/{id}/comentarios
+            # POST /Tickets/{id}/Comments
             payload = {"Contenido": f"Comentario {int(time.time())}"}
-            status, resp = self.request("POST", f"/Tickets/{ticket_id}/comentarios", json_body=payload, token=self.token)
+            status, resp = self.request("POST", f"/Tickets/{ticket_id}/Comments", json_body=payload, token=self.token)
             comment_id = None
             if status in (200, 201):
                 datos = resp.get("datos") or {}
@@ -431,7 +439,7 @@ class CompleteSuiteAllEndpoints:
             self.add_result(TestResult(
                 nombre="Comentarios: POST create",
                 metodo="POST",
-                endpoint=f"/Tickets/{ticket_id}/comentarios",
+                endpoint=f"/Tickets/{ticket_id}/Comments",
                 esperado=201,
                 obtenido=status,
                 exito=status in (200, 201),
@@ -442,11 +450,11 @@ class CompleteSuiteAllEndpoints:
             ))
             
             # POST sin contenido (400)
-            status, resp = self.request("POST", f"/Tickets/{ticket_id}/comentarios", json_body={"Contenido": ""}, token=self.token)
+            status, resp = self.request("POST", f"/Tickets/{ticket_id}/Comments", json_body={"Contenido": ""}, token=self.token)
             self.add_result(TestResult(
                 nombre="Comentarios: POST sin contenido (400)",
                 metodo="POST",
-                endpoint=f"/Tickets/{ticket_id}/comentarios",
+                endpoint=f"/Tickets/{ticket_id}/Comments",
                 esperado=400,
                 obtenido=status,
                 exito=status == 400,
@@ -455,12 +463,12 @@ class CompleteSuiteAllEndpoints:
                 tipo="error",
             ))
             
-            # GET /Tickets/{id}/comentarios
-            status, resp = self.request("GET", f"/Tickets/{ticket_id}/comentarios", token=self.token)
+            # GET /Tickets/{id}/Comments
+            status, resp = self.request("GET", f"/Tickets/{ticket_id}/Comments", token=self.token)
             self.add_result(TestResult(
                 nombre="Comentarios: GET all",
                 metodo="GET",
-                endpoint=f"/Tickets/{ticket_id}/comentarios",
+                endpoint=f"/Tickets/{ticket_id}/Comments",
                 esperado=200,
                 obtenido=status,
                 exito=status == 200,
@@ -734,12 +742,12 @@ class CompleteSuiteAllEndpoints:
         """Pruebas completas de Admin."""
         print("\n[*] Testing Admin Endpoints...")
         
-        # GET /sample-user
-        status, resp = self.request("GET", "/admin/sample-user", token=self.token)
+        # GET /api/admin/sample-user
+        status, resp = self.request("GET", "/api/admin/sample-user", token=self.token)
         self.add_result(TestResult(
             nombre="Admin: GET sample-user",
             metodo="GET",
-            endpoint="/admin/sample-user",
+            endpoint="/api/admin/sample-user",
             esperado=200,
             obtenido=status,
             exito=status == 200,
@@ -748,12 +756,12 @@ class CompleteSuiteAllEndpoints:
             tipo="exitoso",
         ))
         
-        # GET /db-audit
-        status, resp = self.request("GET", "/admin/db-audit", token=self.token)
+        # GET /api/admin/db-audit
+        status, resp = self.request("GET", "/api/admin/db-audit", token=self.token)
         self.add_result(TestResult(
             nombre="Admin: GET db-audit",
             metodo="GET",
-            endpoint="/admin/db-audit",
+            endpoint="/api/admin/db-audit",
             esperado=200,
             obtenido=status,
             exito=status == 200,
@@ -762,12 +770,12 @@ class CompleteSuiteAllEndpoints:
             tipo="exitoso",
         ))
         
-        # GET /db-audit con detalle
-        status, resp = self.request("GET", "/admin/db-audit", params={"detalle": "true"}, token=self.token)
+        # GET /api/admin/db-audit con detalle
+        status, resp = self.request("GET", "/api/admin/db-audit", params={"detalle": "true"}, token=self.token)
         self.add_result(TestResult(
             nombre="Admin: GET db-audit with detail",
             metodo="GET",
-            endpoint="/admin/db-audit?detalle=true",
+            endpoint="/api/admin/db-audit?detalle=true",
             esperado=200,
             obtenido=status,
             exito=status == 200,
@@ -783,11 +791,11 @@ class CompleteSuiteAllEndpoints:
         print("\n[*] Testing Reportes Endpoints...")
         
         endpoints = [
-            "dashboard",
-            "por-estado",
-            "por-prioridad",
-            "por-departamento",
-            "tendencias",
+            "Dashboard",
+            "PorEstado",
+            "PorPrioridad",
+            "PorDepartamento",
+            "Tendencias",
         ]
         
         for endpoint_name in endpoints:
@@ -810,12 +818,12 @@ class CompleteSuiteAllEndpoints:
         """Pruebas completas de Stored Procedures."""
         print("\n[*] Testing StoredProcedures Endpoints...")
         
-        # GET /stored-procedures
-        status, resp = self.request("GET", "/stored-procedures", token=self.token)
+        # GET /api/sp
+        status, resp = self.request("GET", "/api/sp", token=self.token)
         self.add_result(TestResult(
             nombre="SP: GET list",
             metodo="GET",
-            endpoint="/stored-procedures",
+            endpoint="/api/sp",
             esperado=200,
             obtenido=status,
             exito=status == 200,
@@ -824,12 +832,12 @@ class CompleteSuiteAllEndpoints:
             tipo="exitoso",
         ))
         
-        # GET /stored-procedures/{name}
-        status, resp = self.request("GET", "/stored-procedures/sp_listar_tkts", token=self.token)
+        # GET /api/sp/{name}
+        status, resp = self.request("GET", "/api/sp/sp_listar_tkts", token=self.token)
         self.add_result(TestResult(
             nombre="SP: GET by name",
             metodo="GET",
-            endpoint="/stored-procedures/sp_listar_tkts",
+            endpoint="/api/sp/sp_listar_tkts",
             esperado=200,
             obtenido=status,
             exito=status == 200,

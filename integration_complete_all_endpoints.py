@@ -85,9 +85,9 @@ class CompleteSuiteAllEndpoints:
     def login(self) -> bool:
         """Autentica y obtiene token JWT."""
         payloads = [
+            {"Usuario": "admin", "Contraseña": "changeme"},
             {"usuario": "admin", "contrasena": "changeme"},
-            {"username": "admin", "password": "changeme"},
-            {"user": "admin", "pass": "changeme"},
+            {"Usuario": "admin", "Contraseña": "changeme"},
         ]
         for body in payloads:
             status, resp = self.request("POST", "/Auth/login", json_body=body)

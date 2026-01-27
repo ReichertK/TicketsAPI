@@ -103,27 +103,36 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<ComentarioResultDTO> CrearComentarioViaStoredProcedureAsync(int idTkt, int idUsuario, string comentario)
         {
             using var conn = CreateConnection();
-            
-            var pSuccess = new DynamicParameters();
-            pSuccess.Add("@p_id_tkt", idTkt);
-            pSuccess.Add("@p_id_usuario", idUsuario);
-            pSuccess.Add("@p_comentario", comentario);
-            
-            // OUT parameters
-            pSuccess.Add("@p_success", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
-            pSuccess.Add("@p_mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
-            await conn.ExecuteAsync("sp_tkt_comentar", pSuccess, commandType: System.Data.CommandType.StoredProcedure);
+            // La SP retorna un SELECT con columnas success y mensaje; no usa parámetros OUT.
+            var result = await conn.QuerySingleAsync<dynamic>(
+                "sp_tkt_comentar",
+                new
+                {
+                    p_id_tkt = idTkt,
+                    p_id_usuario = idUsuario,
+                    p_comentario = comentario
+                },
+                commandType: System.Data.CommandType.StoredProcedure);
 
-            int success = pSuccess.Get<int?>("@p_success") ?? 0;
-            string? mensaje = pSuccess.Get<string?>("@p_mensaje");
+            int success = 0;
+            string? mensaje = null;
+            try
+            {
+                success = result.success is int s ? s : Convert.ToInt32(result.success);
+                mensaje = result.mensaje as string;
+            }
+            catch
+            {
+                // Fallback defensivo
+                success = 0;
+                mensaje = "Error al ejecutar sp_tkt_comentar";
+            }
+
             int? idComentario = null;
-
-            // Si la SP fue exitosa, obtener el ID del comentario insertado usando LAST_INSERT_ID()
-            // Esto es necesario porque sp_tkt_comentar no retorna el ID
             if (success == 1)
             {
-                idComentario = await conn.QuerySingleAsync<int>("SELECT LAST_INSERT_ID()");
+                idComentario = await conn.ExecuteScalarAsync<int>("SELECT LAST_INSERT_ID()");
             }
 
             return new ComentarioResultDTO

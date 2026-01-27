@@ -458,10 +458,11 @@ namespace TicketsAPI.Repositories.Implementations
                 // Buscar en comentarios
                 if (filtro.BuscarEnComentarios ?? false)
                 {
+                    // Columna real en tkt_comentario es 'comentario'
                     conditions.Add(@"EXISTS (
                         SELECT 1 FROM tkt_comentario tc 
                         WHERE tc.Id_Tkt = t.Id_Tkt 
-                        AND tc.Contenido LIKE @searchPattern
+                        AND tc.comentario LIKE @searchPattern
                     )");
                 }
 
@@ -562,6 +563,7 @@ namespace TicketsAPI.Repositories.Implementations
             // Query principal con paginación
             var sql = $@"
                 SELECT 
+                    -- Campos del ticket (primero para evitar cortes de split)
                     t.Id_Tkt,
                     t.Id_Estado,
                     t.Id_Prioridad,
@@ -578,28 +580,38 @@ namespace TicketsAPI.Repositories.Implementations
                     t.Contenido,
                     t.Id_Motivo,
                     t.Habilitado,
-                    e.Id_Estado AS 'Estado.Id_Estado',
-                    e.TipoEstado AS 'Estado.Nombre_Estado',
-                    '' AS 'Estado.Color',
-                    0 AS 'Estado.Orden',
-                    1 AS 'Estado.Activo',
-                    p.Id_Prioridad AS 'Prioridad.Id_Prioridad',
-                    p.NombrePrioridad AS 'Prioridad.Nombre_Prioridad',
-                    0 AS 'Prioridad.Valor',
-                    '' AS 'Prioridad.Color',
-                    1 AS 'Prioridad.Activo',
-                    d.Id_Departamento AS 'Departamento.Id_Departamento',
-                    d.Nombre AS 'Departamento.Nombre',
-                    '' AS 'Departamento.Descripcion',
-                    1 AS 'Departamento.Activo',
-                    u.idUsuario AS 'UsuarioCreador.Id_Usuario',
-                    u.nombre AS 'UsuarioCreador.Nombre',
-                    u.apellido AS 'UsuarioCreador.Apellido',
-                    u.email AS 'UsuarioCreador.Email',
-                    ua.idUsuario AS 'UsuarioAsignado.Id_Usuario',
-                    ua.nombre AS 'UsuarioAsignado.Nombre',
-                    ua.apellido AS 'UsuarioAsignado.Apellido',
-                    ua.email AS 'UsuarioAsignado.Email'
+                    -- Estado
+                    e.Id_Estado AS Estado_Id,
+                    e.Id_Estado AS Id_Estado,
+                    e.TipoEstado AS Nombre_Estado,
+                    '' AS Color,
+                    0 AS Orden,
+                    1 AS Activo,
+                    -- Prioridad
+                    p.Id_Prioridad AS Prioridad_Id,
+                    p.Id_Prioridad AS Id_Prioridad,
+                    p.NombrePrioridad AS Nombre_Prioridad,
+                    0 AS Valor,
+                    '' AS Color,
+                    1 AS Activo,
+                    -- Departamento
+                    d.Id_Departamento AS Departamento_Id,
+                    d.Id_Departamento AS Id_Departamento,
+                    d.Nombre AS Nombre,
+                    '' AS Descripcion,
+                    1 AS Activo,
+                    -- Usuario creador
+                    u.idUsuario AS UsuarioCreador_Id,
+                    u.idUsuario AS Id_Usuario,
+                    u.nombre AS Nombre,
+                    '' AS Apellido,
+                    u.email AS Email,
+                    -- Usuario asignado
+                    ua.idUsuario AS UsuarioAsignado_Id,
+                    ua.idUsuario AS Id_Usuario,
+                    ua.nombre AS Nombre,
+                    '' AS Apellido,
+                    ua.email AS Email
                 FROM tkt t
                 LEFT JOIN usuario u ON t.Id_Usuario = u.idUsuario
                 LEFT JOIN usuario ua ON t.Id_Usuario_Asignado = ua.idUsuario
@@ -625,7 +637,7 @@ namespace TicketsAPI.Repositories.Implementations
                     return ticket;
                 },
                 parameters,
-                splitOn: "Id_Estado,Id_Prioridad,Id_Departamento,Id_Usuario,Id_Usuario");
+                splitOn: "Estado_Id,Prioridad_Id,Departamento_Id,UsuarioCreador_Id,UsuarioAsignado_Id");
 
             return new PaginatedResponse<TicketDTO>
             {

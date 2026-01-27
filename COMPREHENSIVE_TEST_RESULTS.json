@@ -1,0 +1,259 @@
+[
+  {
+    "nombre": "Login",
+    "metodo": "POST",
+    "endpoint": "/Auth/login",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "OK",
+    "categoria": "auth",
+    "extra": null
+  },
+  {
+    "nombre": "Auth: GET /me",
+    "metodo": "GET",
+    "endpoint": "/Auth/me",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Usuario obtenido exitosamente', 'datos': {'userId': 1, 'role': None}, 'errores': []}",
+    "categoria": "auth",
+    "extra": null
+  },
+  {
+    "nombre": "Ref: Estados",
+    "metodo": "GET",
+    "endpoint": "/references/estados",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Estados obtenidos exitosamente', 'datos': [{'id_Estado': 1, 'nombre_Estado': 'Abierto', 'color': '#6c757d', 'orden': 0, 'activo': True, 'tickets': None}, {'id_Estado': 2,",
+    "categoria": "referencias",
+    "extra": null
+  },
+  {
+    "nombre": "Ref: Prioridades",
+    "metodo": "GET",
+    "endpoint": "/references/prioridades",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Prioridades obtenidas exitosamente', 'datos': [{'id_Prioridad': 1, 'nombre_Prioridad': 'Alta', 'valor': 0, 'color': '#6c757d', 'activo': True, 'tickets': None}, {'id_Prio",
+    "categoria": "referencias",
+    "extra": null
+  },
+  {
+    "nombre": "Ref: Departamentos",
+    "metodo": "GET",
+    "endpoint": "/references/departamentos",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Departamentos obtenidos exitosamente', 'datos': [{'id_Departamento': 59, 'nombre': 'Administración', 'descripcion': '', 'activo': True, 'usuarios': None, 'tickets': None}",
+    "categoria": "referencias",
+    "extra": null
+  },
+  {
+    "nombre": "Tickets: GET all",
+    "metodo": "GET",
+    "endpoint": "/Tickets",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Tickets obtenidos exitosamente', 'datos': {'datos': [{'id_Tkt': 2, 'id_Estado': 1, 'estado': None, 'id_Prioridad': 7, 'prioridad': None, 'id_Departamento': 59, 'departame",
+    "categoria": "tickets",
+    "extra": null
+  },
+  {
+    "nombre": "Tickets: POST create",
+    "metodo": "POST",
+    "endpoint": "/Tickets",
+    "esperado": 201,
+    "obtenido": 201,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Ticket creado exitosamente', 'datos': {'id': 20}, 'errores': []}",
+    "categoria": "tickets",
+    "extra": {
+      "ticket_id": 20
+    }
+  },
+  {
+    "nombre": "Tickets: GET by ID",
+    "metodo": "GET",
+    "endpoint": "/Tickets/20",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Ticket obtenido exitosamente', 'datos': {'id_Tkt': 20, 'id_Estado': 1, 'estado': {'id_Estado': 1, 'nombre_Estado': 'Abierto', 'color': '', 'orden': 0, 'activo': True}, 'i",
+    "categoria": "tickets",
+    "extra": null
+  },
+  {
+    "nombre": "Tickets: PUT update",
+    "metodo": "PUT",
+    "endpoint": "/Tickets/20",
+    "esperado": 200,
+    "obtenido": 403,
+    "exito": false,
+    "detalle": "{'exitoso': False, 'mensaje': 'No tienes permisos para editar tickets', 'datos': None, 'errores': []}",
+    "categoria": "tickets",
+    "extra": null
+  },
+  {
+    "nombre": "Tickets: PATCH assign",
+    "metodo": "PATCH",
+    "endpoint": "/Tickets/20/asignar/1",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Ticket asignado exitosamente', 'datos': {}, 'errores': []}",
+    "categoria": "tickets",
+    "extra": null
+  },
+  {
+    "nombre": "Tickets: Búsqueda avanzada",
+    "metodo": "GET",
+    "endpoint": "/Tickets/buscar",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Búsqueda completada: 7 tickets encontrados', 'datos': {'datos': [{'id_Tkt': 20, 'id_Estado': 1, 'estado': {'id_Estado': 1, 'nombre_Estado': 'Abierto', 'color': '', 'orden",
+    "categoria": "tickets",
+    "extra": null
+  },
+  {
+    "nombre": "Comentarios: POST create",
+    "metodo": "POST",
+    "endpoint": "/Tickets/20/Comments",
+    "esperado": 201,
+    "obtenido": 201,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Comentario creado exitosamente', 'datos': {'id_Comentario': 28, 'id_Ticket': 20, 'id_Usuario': 1, 'usuario': None, 'contenido': 'Comment 1769531023', 'fecha_Creacion': '2",
+    "categoria": "comentarios",
+    "extra": {
+      "comment_id": null
+    }
+  },
+  {
+    "nombre": "Comentarios: GET all",
+    "metodo": "GET",
+    "endpoint": "/Tickets/20/Comments",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Comentarios obtenidos exitosamente', 'datos': [{'id_Comentario': 28, 'id_Ticket': 20, 'id_Usuario': 1, 'usuario': None, 'contenido': 'Comment 1769531023', 'fecha_Creacion",
+    "categoria": "comentarios",
+    "extra": null
+  },
+  {
+    "nombre": "Historial: GET",
+    "metodo": "GET",
+    "endpoint": "/Tickets/20/historial",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Historial obtenido exitosamente', 'datos': [{'id_Historial': 28, 'id_Ticket': 20, 'id_Usuario': 1, 'usuario': {'id_Usuario': 1, 'nombre': 'Admin', 'apellido': '', 'email'",
+    "categoria": "historial",
+    "extra": null
+  },
+  {
+    "nombre": "Transiciones: GET permitidas",
+    "metodo": "GET",
+    "endpoint": "/Tickets/20/transiciones-permitidas",
+    "esperado": 200,
+    "obtenido": 500,
+    "exito": false,
+    "detalle": "{'exitoso': False, 'mensaje': 'Error interno del servidor', 'datos': None, 'errores': [\"Table 'cdk_tkt_dev.politicastransicion' doesn't exist\"]}",
+    "categoria": "historial",
+    "extra": null
+  },
+  {
+    "nombre": "Depts: GET all",
+    "metodo": "GET",
+    "endpoint": "/Departamentos",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Departamentos obtenidos exitosamente', 'datos': [{'id_Departamento': 59, 'nombre': 'Administración', 'descripcion': '', 'activo': False}, {'id_Departamento': 13, 'nombre'",
+    "categoria": "departamentos",
+    "extra": null
+  },
+  {
+    "nombre": "Depts: GET by ID",
+    "metodo": "GET",
+    "endpoint": "/Departamentos/59",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Departamento obtenido exitosamente', 'datos': {'id_Departamento': 59, 'nombre': 'Administración', 'descripcion': '', 'activo': False}, 'errores': []}",
+    "categoria": "departamentos",
+    "extra": null
+  },
+  {
+    "nombre": "Motivos: GET all",
+    "metodo": "GET",
+    "endpoint": "/Motivos",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Motivos obtenidos exitosamente', 'datos': [{'id_Motivo': 5, 'nombre': 'Autorización de Obra Social', 'categoria': None}, {'id_Motivo': 36, 'nombre': 'Calibración / Contro",
+    "categoria": "motivos",
+    "extra": null
+  },
+  {
+    "nombre": "Reportes: Dashboard",
+    "metodo": "GET",
+    "endpoint": "/Reportes/Dashboard",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Dashboard obtenido correctamente', 'datos': {'ticketsTotal': 15, 'ticketsAbiertos': 15, 'ticketsCerrados': 0, 'ticketsEnProceso': 0, 'ticketsAsignadosAMi': 0, 'ticketsPor",
+    "categoria": "reportes",
+    "extra": null
+  },
+  {
+    "nombre": "Reportes: PorEstado",
+    "metodo": "GET",
+    "endpoint": "/Reportes/PorEstado",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Reporte por estado obtenido correctamente', 'datos': [{'nombreEstado': 'Sin Estado', 'cantidad': 17, 'porcentaje': 100, 'color': '#CCCCCC'}], 'errores': []}",
+    "categoria": "reportes",
+    "extra": null
+  },
+  {
+    "nombre": "Reportes: PorPrioridad",
+    "metodo": "GET",
+    "endpoint": "/Reportes/PorPrioridad",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Reporte por prioridad obtenido correctamente', 'datos': [{'nombrePrioridad': 'Sin Prioridad', 'cantidad': 17, 'porcentaje': 100, 'color': '#CCCCCC'}], 'errores': []}",
+    "categoria": "reportes",
+    "extra": null
+  },
+  {
+    "nombre": "Reportes: PorDepartamento",
+    "metodo": "GET",
+    "endpoint": "/Reportes/PorDepartamento",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Reporte por departamento obtenido correctamente', 'datos': [{'nombreDepartamento': 'Sin Departamento', 'cantidad': 17, 'porcentaje': 100, 'ticketsAbiertos': 17, 'ticketsC",
+    "categoria": "reportes",
+    "extra": null
+  },
+  {
+    "nombre": "Reportes: Tendencias",
+    "metodo": "GET",
+    "endpoint": "/Reportes/Tendencias",
+    "esperado": 200,
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Tendencias obtenidas correctamente', 'datos': [], 'errores': []}",
+    "categoria": "reportes",
+    "extra": null
+  }
+]

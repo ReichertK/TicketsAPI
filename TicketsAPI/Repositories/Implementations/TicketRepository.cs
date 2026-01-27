@@ -329,7 +329,8 @@ namespace TicketsAPI.Repositories.Implementations
                 int? idSucursal,
                 int idPrioridad,
                 string contenido,
-                int idDepartamento)
+                int idDepartamento,
+                int idUsuarioActor)
             {
                 using var conn = CreateConnection();
                 var parameters = new DynamicParameters();
@@ -343,12 +344,13 @@ namespace TicketsAPI.Repositories.Implementations
                 parameters.Add("@w_id_prioridad", idPrioridad, DbType.Int32);
                 parameters.Add("@w_contenido", contenido, DbType.String);
                 parameters.Add("@w_id_departamento", idDepartamento, DbType.Int32);
+                parameters.Add("@w_id_usuario_actor", idUsuarioActor, DbType.Int32);
                 parameters.Add("@p_resultado", dbType: DbType.String, size: 255, direction: ParameterDirection.Output);
 
                 await conn.ExecuteAsync("sp_actualizar_tkt", parameters, commandType: CommandType.StoredProcedure);
             
                 var resultado = parameters.Get<string>("@p_resultado");
-                return !string.IsNullOrEmpty(resultado);
+                return resultado == "OK";
             }
 
         public async Task<TransicionResultDTO> TransicionarEstadoViaStoredProcedureAsync(
@@ -358,7 +360,8 @@ namespace TicketsAPI.Repositories.Implementations
             string? comentario = null,
             string? motivo = null,
             int? idAsignadoNuevo = null,
-            string? metaJson = null)
+            string? metaJson = null,
+            bool esSuperAdmin = false)
         {
             using var conn = CreateConnection();
             var parameters = new DynamicParameters();
@@ -369,6 +372,7 @@ namespace TicketsAPI.Repositories.Implementations
             parameters.Add("@p_motivo", motivo, DbType.String);
             parameters.Add("@p_id_asignado_nuevo", idAsignadoNuevo, DbType.Int32);
             parameters.Add("@p_meta_json", metaJson, DbType.String);
+            parameters.Add("@p_es_super_admin", esSuperAdmin ? 1 : 0, DbType.Int32);
 
             // sp_tkt_transicionar devuelve una fila con success, message, nuevo_estado, id_asignado
             var result = await conn.QuerySingleAsync<TransicionResultDTO>(

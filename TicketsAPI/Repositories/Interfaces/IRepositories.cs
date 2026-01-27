@@ -42,7 +42,7 @@ namespace TicketsAPI.Repositories.Interfaces
         [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
         Task<List<Models.Entities.Ticket>> GetByDepartamentoAsync(int idDepartamento);
         Task<TicketDTO?> GetDetailAsync(int id);
-            Task<bool> UpdateViaStoredProcedureAsync(long idTkt, int idEstado, int? idUsuario, int? idEmpresa, int? idPerfil, int? idMotivo, int? idSucursal, int idPrioridad, string contenido, int idDepartamento);
+            Task<bool> UpdateViaStoredProcedureAsync(long idTkt, int idEstado, int? idUsuario, int? idEmpresa, int? idPerfil, int? idMotivo, int? idSucursal, int idPrioridad, string contenido, int idDepartamento, int idUsuarioActor);
         Task<TransicionResultDTO> TransicionarEstadoViaStoredProcedureAsync(
             int idTkt,
             int estadoTo,
@@ -50,7 +50,8 @@ namespace TicketsAPI.Repositories.Interfaces
             string? comentario = null,
             string? motivo = null,
             int? idAsignadoNuevo = null,
-            string? metaJson = null);
+            string? metaJson = null,
+            bool esSuperAdmin = false);
         Task<List<HistorialTicketDTO>> GetHistorialViaStoredProcedureAsync(int idTkt);
     }
 

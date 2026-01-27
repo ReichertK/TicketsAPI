@@ -125,7 +125,8 @@ namespace TicketsAPI.Services.Implementations
                     idSucursal: ticket.Id_Sucursal,
                     idPrioridad: dto.Id_Prioridad,
                     contenido: dto.Contenido,
-                    idDepartamento: dto.Id_Departamento
+                    idDepartamento: dto.Id_Departamento,
+                    idUsuarioActor: idUsuarioActual
                 );
         }
 

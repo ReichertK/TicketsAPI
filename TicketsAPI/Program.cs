@@ -5,6 +5,7 @@ using Serilog;
 using System.Text;
 using TicketsAPI.Config;
 using TicketsAPI.Middleware;
+using MySqlConnector;
 using AspNetCoreRateLimit;
 using TicketsAPI.Models;
 using TicketsAPI.Models.Entities;
@@ -107,6 +108,18 @@ try
         ?? builder.Configuration.GetValue<string>("ConnectionString")
         ?? throw new InvalidOperationException("ConnectionString no configurada. Defina 'ConnectionStrings:DbTkt' o 'ConnectionStrings:DefaultConnection'.");
 
+    var csBuilder = new MySqlConnectionStringBuilder(connectionString);
+    var hasPassword = !string.IsNullOrWhiteSpace(csBuilder.Password);
+    var sanitizedConnectionString = csBuilder.ConnectionString;
+    if (hasPassword)
+    {
+        sanitizedConnectionString = sanitizedConnectionString.Replace(csBuilder.Password, "***", StringComparison.Ordinal);
+    }
+    Log.Information("Environment: {Environment}; Usando cadena de conexión (pwd presente: {HasPassword}): {ConnectionString}",
+        builder.Environment.EnvironmentName,
+        hasPassword,
+        sanitizedConnectionString);
+
     // Registrar repositorios (MySQL 5.5 compatible)
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IUsuarioRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.UsuarioRepository(connectionString));
@@ -130,8 +143,10 @@ try
         new TicketsAPI.Repositories.Implementations.PermisoRepository(connectionString));
     
     // Registrar repositorios adicionales (nuevos endpoints)
-    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Motivo>>(sp =>
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IMotivoRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.MotivoRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Motivo>>(sp =>
+        sp.GetRequiredService<TicketsAPI.Repositories.Interfaces.IMotivoRepository>());
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Aprobacion>>(sp =>
         new TicketsAPI.Repositories.Implementations.AprobacionRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Transicion>>(sp =>

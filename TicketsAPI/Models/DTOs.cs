@@ -179,6 +179,7 @@ namespace TicketsAPI.Models.DTOs
 
         public string? Comentario { get; set; }
         public string? Motivo { get; set; }
+        public int? Id_Usuario_Asignado_Nuevo { get; set; }
     }
 
     // ==================== STATUS & PRIORITY DTOs ====================
@@ -341,9 +342,7 @@ namespace TicketsAPI.Models.DTOs
     public class GrupoDTO
     {
         public int Id_Grupo { get; set; }
-        public string Nombre { get; set; } = string.Empty;
-        public string? Descripcion { get; set; }
-        public bool Activo { get; set; }
+        public string? Tipo_Grupo { get; set; }
     }
 
     // ==================== APROBACION DTOs ====================

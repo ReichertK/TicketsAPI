@@ -87,8 +87,8 @@ namespace TicketsAPI.Controllers
             {
                 var departamento = new Departamento
                 {
-                    Nombre = dto.Nombre,
-                    Descripcion = dto.Descripcion
+                    Nombre = dto.Nombre ?? string.Empty,
+                    Descripcion = dto.Descripcion ?? string.Empty
                 };
 
                 var id = await _departamentoRepository.CreateAsync(departamento);
@@ -116,8 +116,8 @@ namespace TicketsAPI.Controllers
                 if (departamento == null)
                     return NotFound(new { message = "Departamento no encontrado" });
 
-                departamento.Nombre = dto.Nombre;
-                departamento.Descripcion = dto.Descripcion;
+                departamento.Nombre = dto.Nombre ?? string.Empty;
+                departamento.Descripcion = dto.Descripcion ?? string.Empty;
 
                 await _departamentoRepository.UpdateAsync(departamento);
                 return Ok(new { message = "Departamento actualizado exitosamente" });

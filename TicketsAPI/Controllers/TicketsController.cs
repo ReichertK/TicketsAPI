@@ -166,13 +166,19 @@ namespace TicketsAPI.Controllers
                 if (userId <= 0)
                     return Unauthorized(new { message = "Usuario no autenticado" });
                 
+                // Verificar si es super admin (TKT_ADMIN o similar)
+                var esSuperAdmin = User.IsInRole("ADMIN") || User.HasClaim("permiso", "TKT_ADMIN");
+                
                 // Llamar directamente a sp_tkt_transicionar para validación de permisos
                 var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
                     idTkt: id,
                     estadoTo: dto.Id_Estado_Nuevo,
                     idUsuarioActor: userId,
                     comentario: dto.Comentario,
-                    motivo: dto.Motivo);
+                    motivo: dto.Motivo,
+                    idAsignadoNuevo: dto.Id_Usuario_Asignado_Nuevo,
+                    metaJson: null,
+                    esSuperAdmin: esSuperAdmin);
                 
                 if (result.Success != 1)
                 {
@@ -322,6 +328,7 @@ namespace TicketsAPI.Controllers
         {
             try
             {
+                await Task.CompletedTask;
                 // TODO: Implementar exportación a CSV
                 return Error<object>("Funcionalidad en desarrollo", statusCode: 501);
             }

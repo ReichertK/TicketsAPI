@@ -35,9 +35,7 @@ namespace TicketsAPI.Controllers
                 var dtos = grupos.Select(g => new GrupoDTO
                 {
                     Id_Grupo = g.Id_Grupo,
-                    Nombre = g.Nombre,
-                    Descripcion = g.Descripcion,
-                    Activo = g.Activo
+                    Tipo_Grupo = g.Tipo_Grupo
                 }).ToList();
 
                 return Ok(dtos);
@@ -64,9 +62,7 @@ namespace TicketsAPI.Controllers
                 var dto = new GrupoDTO
                 {
                     Id_Grupo = grupo.Id_Grupo,
-                    Nombre = grupo.Nombre,
-                    Descripcion = grupo.Descripcion,
-                    Activo = grupo.Activo
+                    Tipo_Grupo = grupo.Tipo_Grupo
                 };
 
                 return Ok(dto);
@@ -89,9 +85,7 @@ namespace TicketsAPI.Controllers
             {
                 var grupo = new Grupo
                 {
-                    Nombre = dto.Nombre,
-                    Descripcion = dto.Descripcion,
-                    Activo = dto.Activo
+                    Tipo_Grupo = dto.Tipo_Grupo
                 };
 
                 var id = await _grupoRepository.CreateAsync(grupo);
@@ -119,9 +113,7 @@ namespace TicketsAPI.Controllers
                 if (grupo == null)
                     return NotFound(new { message = "Grupo no encontrado" });
 
-                grupo.Nombre = dto.Nombre;
-                grupo.Descripcion = dto.Descripcion;
-                grupo.Activo = dto.Activo;
+                grupo.Tipo_Grupo = dto.Tipo_Grupo;
 
                 await _grupoRepository.UpdateAsync(grupo);
                 return Ok(new { message = "Grupo actualizado exitosamente" });
@@ -134,7 +126,7 @@ namespace TicketsAPI.Controllers
         }
 
         /// <summary>
-        /// Eliminar grupo (desactivar)
+        /// Eliminar grupo
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
@@ -142,12 +134,10 @@ namespace TicketsAPI.Controllers
         {
             try
             {
-                var grupo = await _grupoRepository.GetByIdAsync(id);
-                if (grupo == null)
+                var deleted = await _grupoRepository.DeleteAsync(id);
+                if (!deleted)
                     return NotFound(new { message = "Grupo no encontrado" });
 
-                grupo.Activo = false;
-                await _grupoRepository.UpdateAsync(grupo);
                 return Ok(new { message = "Grupo eliminado exitosamente" });
             }
             catch (Exception ex)

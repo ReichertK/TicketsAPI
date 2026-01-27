@@ -11,8 +11,8 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<int> CreateAsync(Grupo entity)
         {
             using var conn = CreateConnection();
-            const string sql = @"INSERT INTO grupo (Nombre, Descripcion, Activo)
-                                VALUES (@Nombre, @Descripcion, @Activo);
+            const string sql = @"INSERT INTO grupo (Tipo_Grupo)
+                                VALUES (@Tipo_Grupo);
                                 SELECT LAST_INSERT_ID();";
             return await conn.ExecuteScalarAsync<int>(sql, entity);
         }
@@ -28,7 +28,7 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<List<Grupo>> GetAllAsync()
         {
             using var conn = CreateConnection();
-            const string sql = "SELECT * FROM grupo WHERE Activo = 1 ORDER BY Nombre";
+            const string sql = "SELECT Id_Grupo, Tipo_Grupo FROM grupo ORDER BY Id_Grupo";
             var result = await conn.QueryAsync<Grupo>(sql);
             return result.ToList();
         }
@@ -43,7 +43,7 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<bool> UpdateAsync(Grupo entity)
         {
             using var conn = CreateConnection();
-            const string sql = @"UPDATE grupo SET Nombre = @Nombre, Descripcion = @Descripcion, Activo = @Activo 
+            const string sql = @"UPDATE grupo SET Tipo_Grupo = @Tipo_Grupo 
                                 WHERE Id_Grupo = @Id_Grupo";
             var rows = await conn.ExecuteAsync(sql, entity);
             return rows > 0;

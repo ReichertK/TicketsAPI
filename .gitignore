@@ -27,6 +27,25 @@ appsettings.*.json
 TestResults/
 *.trx
 
+# Test Outputs (Regenerables)
+# Archivos de salida de tests que se regeneran y no necesitan versionarse
+test_output.txt
+test_iteration*.txt
+quick_test*.txt
+suite_output.txt
+suite_results*.txt
+build_output.txt
+comprehensive_output.txt
+STATUS_FINAL_VISUAL.txt
+suite_run.log
+
+# Test Results JSON (Regenerables - Dejarlos fuera de git si se regeneran constantemente)
+# Descomenta si NO quieres trackear resultados de tests
+# COMPREHENSIVE_TEST_RESULTS.json
+# INTEGRATION_ENDPOINT_RESULTS.json
+# QA_TEST_REPORT.json
+# COMPLETE_ALL_ENDPOINTS_RESULTS.json
+
 # Certificados y keys
 *.pfx
 *.pem
@@ -65,3 +84,29 @@ PublishProfiles/
 
 # Estadísticas de cobertura
 coverage/
+
+# Python Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Archivos de cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg
+
+# Ambiente virtual conda
+conda-env/
+
+# DOCUMENTACIÓN (NO IGNORAR)
+# ===========================
+# La carpeta docs/ es versionada completamente incluyendo:
+# - Documentos MD de todas las fases
+# - Reportes técnicos
+# - Artefactos de testing históricos
+# !docs/ [implícito - se trackea por defecto]

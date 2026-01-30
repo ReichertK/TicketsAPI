@@ -1,0 +1,1397 @@
+{
+  "generatedAt": "2026-01-30T13:50:11.571927+00:00",
+  "mysqlVersion": "5.5.27",
+  "tableCount": 30,
+  "tables": [
+    "accion",
+    "departamento",
+    "empresa",
+    "estado",
+    "grupo",
+    "motivo",
+    "notificaciones",
+    "perfil",
+    "perfil_accion_sistema",
+    "permiso",
+    "prioridad",
+    "rol",
+    "rol_permiso",
+    "sistema",
+    "sucursal",
+    "tkt",
+    "tkt_aprobacion",
+    "tkt_comentario",
+    "tkt_permiso",
+    "tkt_rol",
+    "tkt_rol_permiso",
+    "tkt_search",
+    "tkt_suscriptor",
+    "tkt_transicion",
+    "tkt_transicion_regla",
+    "tkt_usuario_rol",
+    "usuario",
+    "usuario_empresa_sucursal_perfil_sistema",
+    "usuario_rol",
+    "usuario_tipo"
+  ],
+  "detail": {
+    "accion": {
+      "Columns": [
+        {
+          "Field": "idAccion",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "codigo",
+          "Type": "varchar(1)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(30)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `accion` (\n  `idAccion` bigint(20) NOT NULL AUTO_INCREMENT,\n  `codigo` varchar(1) NOT NULL,\n  `nombre` varchar(30) DEFAULT NULL,\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`idAccion`,`codigo`),\n  KEY `KEY_codigo` (`codigo`)\n) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "departamento": {
+      "Columns": [
+        {
+          "Field": "Id_Departamento",
+          "Type": "int(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "Nombre",
+          "Type": "varchar(50)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `departamento` (\n  `Id_Departamento` int(20) NOT NULL AUTO_INCREMENT,\n  `Nombre` varchar(50) NOT NULL,\n  PRIMARY KEY (`Id_Departamento`),\n  UNIQUE KEY `uq_depto_nombre` (`Nombre`)\n) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "empresa": {
+      "Columns": [
+        {
+          "Field": "idEmpresa",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "cuit",
+          "Type": "varchar(11)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "codigo",
+          "Type": "varchar(3)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `empresa` (\n  `idEmpresa` bigint(20) NOT NULL AUTO_INCREMENT,\n  `cuit` varchar(11) DEFAULT NULL COMMENT 'cuit de la empresa sin guion',\n  `nombre` varchar(50) DEFAULT NULL COMMENT 'descripcion o razon social',\n  `codigo` varchar(3) DEFAULT NULL COMMENT 'codigo de la empresa',\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`idEmpresa`),\n  KEY `KEY_cuit` (`cuit`)\n) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "estado": {
+      "Columns": [
+        {
+          "Field": "Id_Estado",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "TipoEstado",
+          "Type": "varchar(100)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `estado` (\n  `Id_Estado` int(11) NOT NULL AUTO_INCREMENT,\n  `TipoEstado` varchar(100) NOT NULL,\n  PRIMARY KEY (`Id_Estado`)\n) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "grupo": {
+      "Columns": [
+        {
+          "Field": "Id_Grupo",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "Tipo_Grupo",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `grupo` (\n  `Id_Grupo` int(11) NOT NULL AUTO_INCREMENT,\n  `Tipo_Grupo` varchar(50) DEFAULT NULL,\n  PRIMARY KEY (`Id_Grupo`)\n) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "motivo": {
+      "Columns": [
+        {
+          "Field": "Id_Motivo",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "Nombre",
+          "Type": "varchar(100)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Categoria",
+          "Type": "varchar(100)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `motivo` (\n  `Id_Motivo` int(11) NOT NULL AUTO_INCREMENT,\n  `Nombre` varchar(100) NOT NULL,\n  `Categoria` varchar(100) DEFAULT NULL,\n  PRIMARY KEY (`Id_Motivo`),\n  UNIQUE KEY `uq_motivo_nombre_cat` (`Nombre`,`Categoria`)\n) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "notificaciones": {
+      "Columns": [
+        {
+          "Field": "Id_Notificacion",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "Id_Usuario",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Mensaje",
+          "Type": "varchar(255)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Fecha_Creacion",
+          "Type": "datetime",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Leida",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `notificaciones` (\n  `Id_Notificacion` bigint(20) NOT NULL AUTO_INCREMENT,\n  `Id_Usuario` bigint(20) NOT NULL,\n  `Mensaje` varchar(255) NOT NULL,\n  `Fecha_Creacion` datetime NOT NULL,\n  `Leida` int(1) DEFAULT '0',\n  PRIMARY KEY (`Id_Notificacion`),\n  KEY `Id_Usuario` (`Id_Usuario`),\n  CONSTRAINT `notificaciones_ibfk_1` FOREIGN KEY (`Id_Usuario`) REFERENCES `usuario` (`idUsuario`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": [
+        {
+          "Constraint": "notificaciones_ibfk_1",
+          "Column": "Id_Usuario",
+          "ReferencedTable": "usuario",
+          "ReferencedColumn": "idUsuario"
+        }
+      ]
+    },
+    "perfil": {
+      "Columns": [
+        {
+          "Field": "idPerfil",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(30)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `perfil` (\n  `idPerfil` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id de perfil',\n  `nombre` varchar(30) NOT NULL COMMENT 'descripcion o nombre del perfil',\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`idPerfil`),\n  KEY `nombre` (`nombre`)\n) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "perfil_accion_sistema": {
+      "Columns": [
+        {
+          "Field": "ID",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "idPerfil",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "codigoAccion",
+          "Type": "varchar(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "idSistema",
+          "Type": "varchar(8)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `perfil_accion_sistema` (\n  `ID` bigint(20) NOT NULL AUTO_INCREMENT,\n  `idPerfil` bigint(20) DEFAULT '0' COMMENT 'idPerfil (Perfil)',\n  `codigoAccion` varchar(20) DEFAULT NULL COMMENT 'codigo (accion) concatenados por coma',\n  `idSistema` varchar(8) DEFAULT NULL COMMENT 'idSistema (sistema)',\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`ID`),\n  KEY `KEY_perfil` (`idPerfil`),\n  KEY `KEY_accion` (`codigoAccion`),\n  KEY `KEY_sistema` (`idSistema`)\n) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "permiso": {
+      "Columns": [
+        {
+          "Field": "idPermiso",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "codigo",
+          "Type": "varchar(64)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "descripcion",
+          "Type": "varchar(200)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `permiso` (\n  `idPermiso` int(11) NOT NULL AUTO_INCREMENT,\n  `codigo` varchar(64) NOT NULL,\n  `descripcion` varchar(200) DEFAULT NULL,\n  PRIMARY KEY (`idPermiso`),\n  UNIQUE KEY `uq_permiso_codigo` (`codigo`)\n) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "prioridad": {
+      "Columns": [
+        {
+          "Field": "Id_Prioridad",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "NombrePrioridad",
+          "Type": "varchar(100)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `prioridad` (\n  `Id_Prioridad` int(11) NOT NULL AUTO_INCREMENT,\n  `NombrePrioridad` varchar(100) NOT NULL,\n  PRIMARY KEY (`Id_Prioridad`),\n  UNIQUE KEY `uq_prioridad_nombre` (`NombrePrioridad`)\n) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "rol": {
+      "Columns": [
+        {
+          "Field": "idRol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(64)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `rol` (\n  `idRol` int(11) NOT NULL AUTO_INCREMENT,\n  `nombre` varchar(64) NOT NULL,\n  PRIMARY KEY (`idRol`),\n  UNIQUE KEY `uq_rol_nombre` (`nombre`)\n) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "rol_permiso": {
+      "Columns": [
+        {
+          "Field": "idRol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "idPermiso",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `rol_permiso` (\n  `idRol` int(11) NOT NULL,\n  `idPermiso` int(11) NOT NULL,\n  PRIMARY KEY (`idRol`,`idPermiso`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "sistema": {
+      "Columns": [
+        {
+          "Field": "idSistema",
+          "Type": "varchar(8)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `sistema` (\n  `idSistema` varchar(8) NOT NULL,\n  `nombre` varchar(50) DEFAULT NULL,\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`idSistema`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "sucursal": {
+      "Columns": [
+        {
+          "Field": "idSucursal",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "idEmpresa",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "descripcion",
+          "Type": "varchar(50)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "codigo",
+          "Type": "varchar(6)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "domicilio",
+          "Type": "varchar(150)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "telefono",
+          "Type": "varchar(60)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "email",
+          "Type": "varchar(60)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "afip",
+          "Type": "varchar(4)",
+          "Null": "NO",
+          "Key": "",
+          "Default": "1000",
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `sucursal` (\n  `idSucursal` bigint(20) NOT NULL AUTO_INCREMENT,\n  `idEmpresa` bigint(20) NOT NULL DEFAULT '0',\n  `descripcion` varchar(50) NOT NULL,\n  `codigo` varchar(6) DEFAULT NULL,\n  `domicilio` varchar(150) DEFAULT NULL,\n  `telefono` varchar(60) DEFAULT NULL,\n  `email` varchar(60) DEFAULT NULL,\n  `afip` varchar(4) NOT NULL DEFAULT '1000',\n  `habilitado` int(1) DEFAULT '0',\n  PRIMARY KEY (`idSucursal`),\n  UNIQUE KEY `uq_sucursal_desc` (`descripcion`),\n  KEY `KEY_empresa` (`idEmpresa`),\n  KEY `KEY_codigo` (`codigo`)\n) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "tkt": {
+      "Columns": [
+        {
+          "Field": "Id_Tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "Id_Estado",
+          "Type": "int(10)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "1",
+          "Extra": ""
+        },
+        {
+          "Field": "Date_Creado",
+          "Type": "datetime",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Date_Cierre",
+          "Type": "datetime",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Date_Asignado",
+          "Type": "datetime",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Date_Cambio_Estado",
+          "Type": "datetime",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Usuario",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Usuario_Asignado",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Empresa",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Perfil",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Motivo",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Sucursal",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Habilitado",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "1",
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Prioridad",
+          "Type": "int(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Contenido",
+          "Type": "text",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Id_Departamento",
+          "Type": "int(11)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt` (\n  `Id_Tkt` bigint(20) NOT NULL AUTO_INCREMENT,\n  `Id_Estado` int(10) DEFAULT '1',\n  `Date_Creado` datetime DEFAULT NULL,\n  `Date_Cierre` datetime DEFAULT NULL,\n  `Date_Asignado` datetime DEFAULT NULL,\n  `Date_Cambio_Estado` datetime DEFAULT NULL,\n  `Id_Usuario` int(20) DEFAULT NULL,\n  `Id_Usuario_Asignado` int(20) DEFAULT NULL,\n  `Id_Empresa` int(20) DEFAULT NULL,\n  `Id_Perfil` int(20) DEFAULT NULL,\n  `Id_Motivo` int(20) DEFAULT NULL,\n  `Id_Sucursal` int(20) DEFAULT NULL,\n  `Habilitado` int(20) DEFAULT '1',\n  `Id_Prioridad` int(20) DEFAULT NULL,\n  `Contenido` text,\n  `Id_Departamento` int(11) DEFAULT NULL,\n  PRIMARY KEY (`Id_Tkt`),\n  KEY `IX_tkt_Filtros` (`Id_Estado`,`Id_Prioridad`,`Id_Departamento`,`Date_Creado`),\n  KEY `IX_tkt_DateCreado` (`Date_Creado`),\n  KEY `IX_tkt_Usuario` (`Id_Usuario`),\n  KEY `idx_tkt_estado` (`Id_Estado`),\n  KEY `idx_tkt_prioridad` (`Id_Prioridad`),\n  KEY `idx_tkt_departamento` (`Id_Departamento`),\n  KEY `idx_tkt_usuario` (`Id_Usuario`),\n  KEY `idx_tkt_creado` (`Date_Creado`),\n  KEY `ix_tkt_estado_hab_fecha` (`Id_Estado`,`Habilitado`,`Date_Creado`),\n  KEY `ix_tkt_usuario_fecha` (`Id_Usuario`,`Date_Creado`),\n  KEY `ix_tkt_asignado_estado` (`Id_Usuario_Asignado`,`Id_Estado`),\n  KEY `ix_tkt_depto_fecha` (`Id_Departamento`,`Date_Creado`),\n  KEY `ix_tkt_prioridad_fecha` (`Id_Prioridad`,`Date_Creado`),\n  KEY `ix_tkt_motivo_fecha` (`Id_Motivo`,`Date_Creado`),\n  KEY `ix_tkt_estado_cierre` (`Id_Estado`,`Date_Cierre`),\n  KEY `idx_tkt_estado_fecha` (`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_asignado_estado_fecha` (`Id_Usuario_Asignado`,`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_usuario_estado_fecha` (`Id_Usuario`,`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_depto_estado_fecha` (`Id_Departamento`,`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_motivo_estado_fecha` (`Id_Motivo`,`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_prioridad_estado_fecha` (`Id_Prioridad`,`Id_Estado`,`Date_Creado`),\n  KEY `idx_tkt_contenido_prefix` (`Contenido`(50)),\n  CONSTRAINT `fk_tkt_depto` FOREIGN KEY (`Id_Departamento`) REFERENCES `departamento` (`Id_Departamento`),\n  CONSTRAINT `fk_tkt_estado` FOREIGN KEY (`Id_Estado`) REFERENCES `estado` (`Id_Estado`),\n  CONSTRAINT `fk_tkt_motivo` FOREIGN KEY (`Id_Motivo`) REFERENCES `motivo` (`Id_Motivo`),\n  CONSTRAINT `fk_tkt_prioridad` FOREIGN KEY (`Id_Prioridad`) REFERENCES `prioridad` (`Id_Prioridad`)\n) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1",
+      "ForeignKeys": [
+        {
+          "Constraint": "fk_tkt_depto",
+          "Column": "Id_Departamento",
+          "ReferencedTable": "departamento",
+          "ReferencedColumn": "Id_Departamento"
+        },
+        {
+          "Constraint": "fk_tkt_estado",
+          "Column": "Id_Estado",
+          "ReferencedTable": "estado",
+          "ReferencedColumn": "Id_Estado"
+        },
+        {
+          "Constraint": "fk_tkt_motivo",
+          "Column": "Id_Motivo",
+          "ReferencedTable": "motivo",
+          "ReferencedColumn": "Id_Motivo"
+        },
+        {
+          "Constraint": "fk_tkt_prioridad",
+          "Column": "Id_Prioridad",
+          "ReferencedTable": "prioridad",
+          "ReferencedColumn": "Id_Prioridad"
+        }
+      ]
+    },
+    "tkt_aprobacion": {
+      "Columns": [
+        {
+          "Field": "id_aprob",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "id_tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "solicitante_id",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "aprobador_id",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "estado",
+          "Type": "enum('pendiente','aprobado','rechazado')",
+          "Null": "NO",
+          "Key": "",
+          "Default": "pendiente",
+          "Extra": ""
+        },
+        {
+          "Field": "comentario",
+          "Type": "varchar(1000)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "fecha_solicitud",
+          "Type": "timestamp",
+          "Null": "NO",
+          "Key": "",
+          "Default": "CURRENT_TIMESTAMP",
+          "Extra": ""
+        },
+        {
+          "Field": "fecha_respuesta",
+          "Type": "datetime",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_aprobacion` (\n  `id_aprob` bigint(20) NOT NULL AUTO_INCREMENT,\n  `id_tkt` bigint(20) NOT NULL,\n  `solicitante_id` int(11) NOT NULL,\n  `aprobador_id` int(11) NOT NULL,\n  `estado` enum('pendiente','aprobado','rechazado') NOT NULL DEFAULT 'pendiente',\n  `comentario` varchar(1000) DEFAULT NULL,\n  `fecha_solicitud` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `fecha_respuesta` datetime DEFAULT NULL,\n  PRIMARY KEY (`id_aprob`),\n  KEY `idx_pendientes` (`aprobador_id`,`estado`),\n  KEY `idx_aprobacion_tkt_estado` (`id_tkt`,`estado`)\n) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_comentario": {
+      "Columns": [
+        {
+          "Field": "id_comentario",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "id_tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_usuario",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "comentario",
+          "Type": "text",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "fecha",
+          "Type": "timestamp",
+          "Null": "NO",
+          "Key": "",
+          "Default": "CURRENT_TIMESTAMP",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_comentario` (\n  `id_comentario` bigint(20) NOT NULL AUTO_INCREMENT,\n  `id_tkt` bigint(20) NOT NULL,\n  `id_usuario` int(11) NOT NULL,\n  `comentario` text NOT NULL,\n  `fecha` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id_comentario`),\n  KEY `idx_tkt_fecha` (`id_tkt`,`fecha`)\n) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_permiso": {
+      "Columns": [
+        {
+          "Field": "id_permiso",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "codigo",
+          "Type": "varchar(50)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "descripcion",
+          "Type": "varchar(200)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "tinyint(1)",
+          "Null": "NO",
+          "Key": "",
+          "Default": "1",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_permiso` (\n  `id_permiso` int(11) NOT NULL AUTO_INCREMENT,\n  `codigo` varchar(50) NOT NULL,\n  `descripcion` varchar(200) DEFAULT NULL,\n  `habilitado` tinyint(1) NOT NULL DEFAULT '1',\n  PRIMARY KEY (`id_permiso`),\n  UNIQUE KEY `codigo` (`codigo`)\n) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_rol": {
+      "Columns": [
+        {
+          "Field": "id_rol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(50)",
+          "Null": "NO",
+          "Key": "UNI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "descripcion",
+          "Type": "varchar(200)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "tinyint(1)",
+          "Null": "NO",
+          "Key": "",
+          "Default": "1",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_rol` (\n  `id_rol` int(11) NOT NULL AUTO_INCREMENT,\n  `nombre` varchar(50) NOT NULL,\n  `descripcion` varchar(200) DEFAULT NULL,\n  `habilitado` tinyint(1) NOT NULL DEFAULT '1',\n  PRIMARY KEY (`id_rol`),\n  UNIQUE KEY `nombre` (`nombre`)\n) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_rol_permiso": {
+      "Columns": [
+        {
+          "Field": "id_rol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_permiso",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_rol_permiso` (\n  `id_rol` int(11) NOT NULL,\n  `id_permiso` int(11) NOT NULL,\n  PRIMARY KEY (`id_rol`,`id_permiso`),\n  KEY `idx_trp_permiso` (`id_permiso`),\n  CONSTRAINT `fk_trp_perm` FOREIGN KEY (`id_permiso`) REFERENCES `tkt_permiso` (`id_permiso`),\n  CONSTRAINT `fk_trp_rol` FOREIGN KEY (`id_rol`) REFERENCES `tkt_rol` (`id_rol`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": [
+        {
+          "Constraint": "fk_trp_perm",
+          "Column": "id_permiso",
+          "ReferencedTable": "tkt_permiso",
+          "ReferencedColumn": "id_permiso"
+        },
+        {
+          "Constraint": "fk_trp_rol",
+          "Column": "id_rol",
+          "ReferencedTable": "tkt_rol",
+          "ReferencedColumn": "id_rol"
+        }
+      ]
+    },
+    "tkt_search": {
+      "Columns": [
+        {
+          "Field": "Id_Tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "Term",
+          "Type": "varchar(60)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_search` (\n  `Id_Tkt` bigint(20) NOT NULL,\n  `Term` varchar(60) NOT NULL,\n  PRIMARY KEY (`Id_Tkt`,`Term`),\n  KEY `idx_term` (`Term`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_suscriptor": {
+      "Columns": [
+        {
+          "Field": "id_tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_usuario",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_suscriptor` (\n  `id_tkt` bigint(20) NOT NULL,\n  `id_usuario` int(11) NOT NULL,\n  PRIMARY KEY (`id_tkt`,`id_usuario`),\n  KEY `idx_ts_usuario` (`id_usuario`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_transicion": {
+      "Columns": [
+        {
+          "Field": "id_transicion",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "id_tkt",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "estado_from",
+          "Type": "int(11)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "estado_to",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_usuario_actor",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_usuario_asignado_old",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_usuario_asignado_new",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "comentario",
+          "Type": "varchar(1000)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "motivo",
+          "Type": "varchar(255)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "meta_json",
+          "Type": "longtext",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "fecha",
+          "Type": "timestamp",
+          "Null": "NO",
+          "Key": "",
+          "Default": "CURRENT_TIMESTAMP",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_transicion` (\n  `id_transicion` bigint(20) NOT NULL AUTO_INCREMENT,\n  `id_tkt` bigint(20) NOT NULL,\n  `estado_from` int(11) DEFAULT NULL,\n  `estado_to` int(11) NOT NULL,\n  `id_usuario_actor` int(11) NOT NULL,\n  `id_usuario_asignado_old` bigint(20) DEFAULT NULL,\n  `id_usuario_asignado_new` bigint(20) DEFAULT NULL,\n  `comentario` varchar(1000) DEFAULT NULL,\n  `motivo` varchar(255) DEFAULT NULL,\n  `meta_json` longtext,\n  `fecha` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id_transicion`),\n  KEY `idx_tkt_fecha` (`id_tkt`,`fecha`),\n  KEY `idx_estado_to` (`estado_to`),\n  KEY `idx_transicion_tkt_fecha` (`id_tkt`,`fecha`)\n) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_transicion_regla": {
+      "Columns": [
+        {
+          "Field": "id",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "estado_from",
+          "Type": "int(11)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "estado_to",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "requiere_propietario",
+          "Type": "tinyint(1)",
+          "Null": "NO",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "permiso_requerido",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "requiere_aprobacion",
+          "Type": "tinyint(1)",
+          "Null": "NO",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_transicion_regla` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `estado_from` int(11) DEFAULT NULL,\n  `estado_to` int(11) NOT NULL,\n  `requiere_propietario` tinyint(1) NOT NULL DEFAULT '0',\n  `permiso_requerido` varchar(50) DEFAULT NULL,\n  `requiere_aprobacion` tinyint(1) NOT NULL DEFAULT '0',\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uq_regla` (`estado_from`,`estado_to`)\n) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "tkt_usuario_rol": {
+      "Columns": [
+        {
+          "Field": "idUsuario",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "id_rol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `tkt_usuario_rol` (\n  `idUsuario` bigint(20) NOT NULL,\n  `id_rol` int(11) NOT NULL,\n  PRIMARY KEY (`idUsuario`,`id_rol`),\n  KEY `IX_tur_usuario` (`idUsuario`),\n  KEY `IX_tur_rol` (`id_rol`),\n  KEY `idx_tur_usuario` (`idUsuario`),\n  CONSTRAINT `fk_tur_rol` FOREIGN KEY (`id_rol`) REFERENCES `tkt_rol` (`id_rol`),\n  CONSTRAINT `fk_tur_usuario` FOREIGN KEY (`idUsuario`) REFERENCES `usuario` (`idUsuario`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": [
+        {
+          "Constraint": "fk_tur_rol",
+          "Column": "id_rol",
+          "ReferencedTable": "tkt_rol",
+          "ReferencedColumn": "id_rol"
+        },
+        {
+          "Constraint": "fk_tur_usuario",
+          "Column": "idUsuario",
+          "ReferencedTable": "usuario",
+          "ReferencedColumn": "idUsuario"
+        }
+      ]
+    },
+    "usuario": {
+      "Columns": [
+        {
+          "Field": "idUsuario",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "nombre",
+          "Type": "varchar(40)",
+          "Null": "NO",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "telefono",
+          "Type": "varchar(40)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "email",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "nota",
+          "Type": "varchar(200)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "passwordUsuario",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "passwordUsuarioEnc",
+          "Type": "varchar(35)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "firma",
+          "Type": "varchar(40)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "firma_aclaracion",
+          "Type": "tinytext",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "fechaAlta",
+          "Type": "date",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "fechaBaja",
+          "Type": "date",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "tipo",
+          "Type": "varchar(3)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "INT",
+          "Extra": ""
+        },
+        {
+          "Field": "idCliente",
+          "Type": "bigint(10)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "idKine",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `usuario` (\n  `idUsuario` bigint(20) NOT NULL AUTO_INCREMENT,\n  `nombre` varchar(40) NOT NULL,\n  `telefono` varchar(40) DEFAULT NULL,\n  `email` varchar(50) DEFAULT NULL,\n  `nota` varchar(200) DEFAULT NULL,\n  `passwordUsuario` varchar(50) DEFAULT NULL,\n  `passwordUsuarioEnc` varchar(35) DEFAULT NULL COMMENT 'password de usuario encriptado md5',\n  `firma` varchar(40) DEFAULT NULL,\n  `firma_aclaracion` tinytext,\n  `fechaAlta` date DEFAULT NULL,\n  `fechaBaja` date DEFAULT NULL,\n  `tipo` varchar(3) DEFAULT 'INT' COMMENT 'INT: Interno cediac, CLI: Cliente proveedor',\n  `idCliente` bigint(10) DEFAULT '0',\n  `idKine` bigint(20) DEFAULT '0',\n  PRIMARY KEY (`idUsuario`),\n  KEY `KEY_cliente` (`idCliente`),\n  KEY `KEY_kinesiologo` (`idKine`),\n  KEY `KEY_tipo` (`tipo`),\n  KEY `KEY_nombre` (`nombre`),\n  KEY `idx_usuario_nombre` (`nombre`),\n  KEY `IX_usuario_idUsuario` (`idUsuario`)\n) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "usuario_empresa_sucursal_perfil_sistema": {
+      "Columns": [
+        {
+          "Field": "ID",
+          "Type": "bigint(20)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": "auto_increment"
+        },
+        {
+          "Field": "idUsuario",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "idEmpresa",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "idSucursal",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "idSistema",
+          "Type": "varchar(8)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "idPerfil",
+          "Type": "bigint(20)",
+          "Null": "YES",
+          "Key": "MUL",
+          "Default": "0",
+          "Extra": ""
+        },
+        {
+          "Field": "habilitado",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `usuario_empresa_sucursal_perfil_sistema` (\n  `ID` bigint(20) NOT NULL AUTO_INCREMENT,\n  `idUsuario` bigint(20) DEFAULT '0' COMMENT 'idUsuario (Usuario)',\n  `idEmpresa` bigint(20) DEFAULT '0' COMMENT 'idEmpresa (Empresa)',\n  `idSucursal` bigint(20) DEFAULT '0' COMMENT 'idSucursal (Sucursal)',\n  `idSistema` varchar(8) DEFAULT NULL COMMENT 'idSistema (cdk_usuarios.sistema)',\n  `idPerfil` bigint(20) DEFAULT '0' COMMENT 'idPerfil (cdk_usuario.perfil)',\n  `habilitado` int(1) DEFAULT '0' COMMENT '0 si, 1 no',\n  PRIMARY KEY (`ID`),\n  KEY `KEY_usuario` (`idUsuario`),\n  KEY `KEY_empresa` (`idEmpresa`),\n  KEY `KEY_sucursal` (`idSucursal`),\n  KEY `KEY_sistema` (`idSistema`),\n  KEY `KEY_perfil` (`idPerfil`)\n) ENGINE=InnoDB AUTO_INCREMENT=1033 DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    },
+    "usuario_rol": {
+      "Columns": [
+        {
+          "Field": "idUsuario",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "idRol",
+          "Type": "int(11)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `usuario_rol` (\n  `idUsuario` int(11) NOT NULL,\n  `idRol` int(11) NOT NULL,\n  PRIMARY KEY (`idUsuario`,`idRol`)\n) ENGINE=InnoDB DEFAULT CHARSET=latin1",
+      "ForeignKeys": []
+    },
+    "usuario_tipo": {
+      "Columns": [
+        {
+          "Field": "usuTipoId",
+          "Type": "varchar(4)",
+          "Null": "NO",
+          "Key": "PRI",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "usuTipoDesc",
+          "Type": "varchar(50)",
+          "Null": "YES",
+          "Key": "",
+          "Default": null,
+          "Extra": ""
+        },
+        {
+          "Field": "usuTipoHabil",
+          "Type": "int(1)",
+          "Null": "YES",
+          "Key": "",
+          "Default": "0",
+          "Extra": ""
+        }
+      ],
+      "CreateSql": "CREATE TABLE `usuario_tipo` (\n  `usuTipoId` varchar(4) NOT NULL,\n  `usuTipoDesc` varchar(50) DEFAULT NULL,\n  `usuTipoHabil` int(1) DEFAULT '0',\n  PRIMARY KEY (`usuTipoId`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      "ForeignKeys": []
+    }
+  }
+}

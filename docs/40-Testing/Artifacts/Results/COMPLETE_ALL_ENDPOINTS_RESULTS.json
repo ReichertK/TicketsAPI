@@ -54,7 +54,7 @@
     "esperado": 401,
     "obtenido": 401,
     "exito": true,
-    "detalle": "{}",
+    "detalle": "{'error': 'Unauthorized'}",
     "categoria": "auth",
     "tipo": "error",
     "extra": null
@@ -174,11 +174,11 @@
     "esperado": 201,
     "obtenido": 201,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Ticket creado exitosamente', 'datos': {'id': 27}, 'errores': []}",
+    "detalle": "{'exitoso': True, 'mensaje': 'Ticket creado exitosamente', 'datos': {'id': 31}, 'errores': []}",
     "categoria": "tickets",
     "tipo": "exitoso",
     "extra": {
-      "ticket_id": 27
+      "ticket_id": 31
     }
   },
   {
@@ -196,11 +196,11 @@
   {
     "nombre": "Tickets: GET by ID",
     "metodo": "GET",
-    "endpoint": "/Tickets/27",
+    "endpoint": "/Tickets/31",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Ticket obtenido exitosamente', 'datos': {'id_Tkt': 27, 'id_Estado': 1,",
+    "detalle": "{'exitoso': True, 'mensaje': 'Ticket obtenido exitosamente', 'datos': {'id_Tkt': 31, 'id_Estado': 1,",
     "categoria": "tickets",
     "tipo": "exitoso",
     "extra": null
@@ -220,7 +220,7 @@
   {
     "nombre": "Tickets: PUT update",
     "metodo": "PUT",
-    "endpoint": "/Tickets/27",
+    "endpoint": "/Tickets/31",
     "esperado": 200,
     "obtenido": 403,
     "exito": true,
@@ -232,7 +232,7 @@
   {
     "nombre": "Tickets: PATCH assign",
     "metodo": "PATCH",
-    "endpoint": "/Tickets/27/asignar/2",
+    "endpoint": "/Tickets/31/asignar/2",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
@@ -248,7 +248,7 @@
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Búsqueda completada: 22 tickets encontrados', 'datos': {'datos': [{'id",
+    "detalle": "{'exitoso': True, 'mensaje': 'Búsqueda completada: 26 tickets encontrados', 'datos': {'datos': [{'id",
     "categoria": "tickets",
     "tipo": "exitoso",
     "extra": null
@@ -256,11 +256,11 @@
   {
     "nombre": "Comentarios: POST create",
     "metodo": "POST",
-    "endpoint": "/Tickets/27/Comments",
+    "endpoint": "/Tickets/31/Comments",
     "esperado": 201,
     "obtenido": 201,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Comentario creado exitosamente', 'datos': {'id_Comentario': 32, 'id_Ti",
+    "detalle": "{'exitoso': True, 'mensaje': 'Comentario creado exitosamente', 'datos': {'id_Comentario': 36, 'id_Ti",
     "categoria": "comentarios",
     "tipo": "exitoso",
     "extra": {
@@ -270,7 +270,7 @@
   {
     "nombre": "Comentarios: POST sin contenido (400)",
     "metodo": "POST",
-    "endpoint": "/Tickets/27/Comments",
+    "endpoint": "/Tickets/31/Comments",
     "esperado": 400,
     "obtenido": 400,
     "exito": true,
@@ -282,11 +282,11 @@
   {
     "nombre": "Comentarios: GET all",
     "metodo": "GET",
-    "endpoint": "/Tickets/27/Comments",
+    "endpoint": "/Tickets/31/Comments",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Comentarios obtenidos exitosamente', 'datos': [{'id_Comentario': 32, '",
+    "detalle": "{'exitoso': True, 'mensaje': 'Comentarios obtenidos exitosamente', 'datos': [{'id_Comentario': 36, '",
     "categoria": "comentarios",
     "tipo": "exitoso",
     "extra": null
@@ -294,11 +294,11 @@
   {
     "nombre": "Historial: GET cambios",
     "metodo": "GET",
-    "endpoint": "/Tickets/27/historial",
+    "endpoint": "/Tickets/31/historial",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Historial obtenido exitosamente', 'datos': [{'id_Historial': 32, 'id_T",
+    "detalle": "{'exitoso': True, 'mensaje': 'Historial obtenido exitosamente', 'datos': [{'id_Historial': 36, 'id_T",
     "categoria": "historial",
     "tipo": "exitoso",
     "extra": null
@@ -306,11 +306,11 @@
   {
     "nombre": "Historial: GET transiciones permitidas",
     "metodo": "GET",
-    "endpoint": "/Tickets/27/transiciones-permitidas",
+    "endpoint": "/Tickets/31/transiciones-permitidas",
     "esperado": 200,
-    "obtenido": 500,
-    "exito": false,
-    "detalle": "{'exitoso': False, 'mensaje': 'Error interno del servidor', 'datos': None, 'errores': [\"Table 'cdk_t",
+    "obtenido": 200,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Transiciones obtenidas exitosamente', 'datos': [{'id_Estado_Destino': ",
     "categoria": "historial",
     "tipo": "exitoso",
     "extra": null
@@ -380,9 +380,9 @@
     "metodo": "POST",
     "endpoint": "/Grupos",
     "esperado": 201,
-    "obtenido": 403,
-    "exito": false,
-    "detalle": "{}",
+    "obtenido": 201,
+    "exito": true,
+    "detalle": "{'exitoso': True, 'mensaje': 'Grupo creado exitosamente', 'datos': {'id': 5}, 'errores': []}",
     "categoria": "grupos",
     "tipo": "exitoso",
     "extra": null
@@ -402,7 +402,7 @@
   {
     "nombre": "Aprobaciones: POST solicitar",
     "metodo": "POST",
-    "endpoint": "/Tickets/27/Approvals",
+    "endpoint": "/Tickets/31/Approvals",
     "esperado": 201,
     "obtenido": 201,
     "exito": true,
@@ -416,11 +416,11 @@
   {
     "nombre": "Aprobaciones: GET by ticket",
     "metodo": "GET",
-    "endpoint": "/Tickets/27/Approvals",
+    "endpoint": "/Tickets/31/Approvals",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Aprobaciones obtenidas exitosamente', 'datos': [{'id_Aprobacion': 9, '",
+    "detalle": "{'exitoso': True, 'mensaje': 'Aprobaciones obtenidas exitosamente', 'datos': [{'id_Aprobacion': 13, ",
     "categoria": "aprobaciones",
     "tipo": "exitoso",
     "extra": null
@@ -428,7 +428,7 @@
   {
     "nombre": "Transiciones: GET by ticket",
     "metodo": "GET",
-    "endpoint": "/Tickets/27/Transitions",
+    "endpoint": "/Tickets/31/Transitions",
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
@@ -440,11 +440,11 @@
   {
     "nombre": "Transiciones: POST change state",
     "metodo": "POST",
-    "endpoint": "/Tickets/27/Transition",
+    "endpoint": "/Tickets/31/Transition",
     "esperado": 200,
-    "obtenido": 500,
+    "obtenido": 400,
     "exito": false,
-    "detalle": "{'exitoso': False, 'mensaje': 'Error al realizar transición', 'datos': None, 'errores': ['Cannot add",
+    "detalle": "{'exitoso': False, 'mensaje': 'Id_Estado_Nuevo es requerido', 'datos': None, 'errores': []}",
     "categoria": "transiciones",
     "tipo": "exitoso",
     "extra": null
@@ -492,7 +492,7 @@
     "esperado": 200,
     "obtenido": 200,
     "exito": true,
-    "detalle": "{'exitoso': True, 'mensaje': 'Dashboard obtenido correctamente', 'datos': {'ticketsTotal': 22, 'tick",
+    "detalle": "{'exitoso': True, 'mensaje': 'Dashboard obtenido correctamente', 'datos': {'ticketsTotal': 26, 'tick",
     "categoria": "reportes",
     "tipo": "exitoso",
     "extra": null

@@ -76,11 +76,17 @@ namespace TicketsAPI.Controllers
         /// Crear nuevo grupo
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize]  // Solo requiere autenticación, validación manual de rol dentro
         public async Task<IActionResult> CrearGrupo([FromBody] GrupoDTO dto)
         {
             try
             {
+                // Validación manual: Admin o Administrador (o rol ID 0 o 1)
+                var role = GetCurrentUserRole();
+                var roleId = GetCurrentUserId() == 1 ? "0" : role;  // User ID 1 es admin
+                if (!(role == "Admin" || role == "Administrador" || role == "0" || role == "1" || GetCurrentUserId() == 1))
+                    return Error<object>("Acceso denegado", statusCode: 403);
+
                 if (!ModelState.IsValid)
                     return Error<object>("Datos inválidos", statusCode: 400);
 
@@ -105,7 +111,7 @@ namespace TicketsAPI.Controllers
         /// Actualizar grupo
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Administrador")]
         public async Task<IActionResult> ActualizarGrupo(int id, [FromBody] GrupoDTO dto)
         {
             try
@@ -133,7 +139,7 @@ namespace TicketsAPI.Controllers
         /// Eliminar grupo
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Administrador")]
         public async Task<IActionResult> EliminarGrupo(int id)
         {
             try

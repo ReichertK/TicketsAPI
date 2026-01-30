@@ -327,7 +327,16 @@ namespace TicketsAPI.Controllers
                     return Error<object>("Ticket no encontrado", statusCode: 404);
 
                 var userRole = GetCurrentUserRole();
-                var roleId = int.Parse(userRole ?? "0");
+                int roleId = 0;
+                if (!string.IsNullOrWhiteSpace(userRole))
+                {
+                    if (!int.TryParse(userRole, out roleId))
+                    {
+                        // Si el rol viene por nombre (p.ej. "Admin"/"Administrador"),
+                        // no forzamos parseo numérico; dejamos roleId=0 (no usado en consulta actual)
+                        roleId = 0;
+                    }
+                }
 
                 var transitions = await _estadoService.GetTransicionesPermitidas(ticket.Id_Estado ?? 1, roleId);
                 return Success(transitions, "Transiciones obtenidas exitosamente");

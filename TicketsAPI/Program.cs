@@ -11,6 +11,10 @@ using TicketsAPI.Models;
 using TicketsAPI.Models.Entities;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Repositories.Implementations;
+using FluentValidation;
+using TicketsAPI.Validators;
+using TicketsAPI.Services.Interfaces;
+using TicketsAPI.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -169,9 +173,13 @@ try
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IExportService, TicketsAPI.Services.Implementations.ExportService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IReporteService, TicketsAPI.Services.Implementations.ReporteService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Implementations.CacheService>();
+    builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
     // ==================== MEMORY CACHE ====================
     builder.Services.AddMemoryCache();
+
+    // ==================== FLUENT VALIDATION ====================
+    builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
     // ==================== AUTOMAPPER ====================
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -298,6 +306,12 @@ Ejemplo: 'Bearer {token}'
     }
 
     // ==================== MIDDLEWARE ====================
+    // Validation exception handler
+    app.UseValidationExceptionHandler();
+    
+    // Request correlation tracking
+    app.UseRequestCorrelation();
+    
     // Error handling
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 

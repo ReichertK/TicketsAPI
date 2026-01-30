@@ -14,8 +14,9 @@ namespace TicketsAPI.Repositories.Implementations
             using var conn = CreateConnection();
             const string sql = @"INSERT INTO tkt_comentario (id_tkt, id_usuario, comentario)
                                 VALUES (@Id_Ticket, @Id_Usuario, @Contenido);
-                                SELECT LAST_INSERT_ID();";
-            return await conn.ExecuteScalarAsync<int>(sql, entity);
+                                SELECT LAST_INSERT_ID() AS id;";
+            var result = await conn.QuerySingleAsync<dynamic>(sql, entity);
+            return Convert.ToInt32(result.id);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -98,49 +99,48 @@ namespace TicketsAPI.Repositories.Implementations
 
         /// <summary>
         /// Crea un comentario usando sp_tkt_comentar
-        /// SP no retorna id_comentario, por lo que usamos LAST_INSERT_ID() en la misma conexión
+        /// Usa parámetros de salida en lugar de LAST_INSERT_ID() para mayor seguridad
         /// </summary>
         public async Task<ComentarioResultDTO> CrearComentarioViaStoredProcedureAsync(int idTkt, int idUsuario, string comentario)
         {
             using var conn = CreateConnection();
 
-            // La SP retorna un SELECT con columnas success y mensaje; no usa parámetros OUT.
-            var result = await conn.QuerySingleAsync<dynamic>(
-                "sp_tkt_comentar",
-                new
-                {
-                    p_id_tkt = idTkt,
-                    p_id_usuario = idUsuario,
-                    p_comentario = comentario
-                },
-                commandType: System.Data.CommandType.StoredProcedure);
+            // Parámetros para la SP
+            var parameters = new DynamicParameters();
+            parameters.Add("p_id_tkt", idTkt);
+            parameters.Add("p_id_usuario", idUsuario);
+            parameters.Add("p_comentario", comentario);
+            parameters.Add("@p_resultado", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
+            parameters.Add("@p_mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+            parameters.Add("@p_id_comentario", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
 
-            int success = 0;
-            string? mensaje = null;
             try
             {
-                success = result.success is int s ? s : Convert.ToInt32(result.success);
-                mensaje = result.mensaje as string;
-            }
-            catch
-            {
-                // Fallback defensivo
-                success = 0;
-                mensaje = "Error al ejecutar sp_tkt_comentar";
-            }
+                await conn.ExecuteAsync(
+                    "sp_tkt_comentar",
+                    parameters,
+                    commandType: System.Data.CommandType.StoredProcedure);
 
-            int? idComentario = null;
-            if (success == 1)
-            {
-                idComentario = await conn.ExecuteScalarAsync<int>("SELECT LAST_INSERT_ID()");
-            }
+                var success = parameters.Get<int>("@p_resultado");
+                var mensaje = parameters.Get<string>("@p_mensaje");
+                var idComentario = success == 1 ? parameters.Get<int?>("@p_id_comentario") : null;
 
-            return new ComentarioResultDTO
+                return new ComentarioResultDTO
+                {
+                    Success = success,
+                    Message = mensaje,
+                    IdComentario = idComentario
+                };
+            }
+            catch (Exception ex)
             {
-                Success = success,
-                Message = mensaje,
-                IdComentario = idComentario
-            };
+                return new ComentarioResultDTO
+                {
+                    Success = 0,
+                    Message = $"Error al ejecutar sp_tkt_comentar: {ex.Message}",
+                    IdComentario = null
+                };
+            }
         }
     }
 }

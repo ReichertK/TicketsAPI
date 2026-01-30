@@ -12,14 +12,18 @@ from __future__ import annotations
 import json
 import os
 import time
+import ssl
+import urllib.request
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
 import mysql.connector
-import requests
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Disable SSL verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # ==================== CONFIGURACIÓN ====================
 API_BASE_URL = os.getenv("TICKETS_API_URL", "https://localhost:5001/api/v1")
@@ -57,27 +61,39 @@ class CompleteSuiteAllEndpoints:
         self.test_data: Dict[str, Any] = {}
 
     def request(self, method: str, endpoint: str, json_body=None, token=None, params=None):
-        """Ejecuta request HTTP contra API."""
+        """Ejecuta request HTTP contra API usando urllib."""
         # Si endpoint empieza con /api/, usar base URL sin /v1 (para admin, sp, etc.)
         if endpoint.startswith("/api/"):
             url = f"https://localhost:5001{endpoint}"
         else:
             url = f"{API_BASE_URL}{endpoint}"
+        
+        if params:
+            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+            url = f"{url}?{query_string}"
+        
         headers = {"Content-Type": "application/json"}
         if token:
             headers["Authorization"] = f"Bearer {token}"
         
         try:
-            resp = requests.request(
-                method=method.upper(),
-                url=url,
-                json=json_body,
-                params=params,
-                headers=headers,
-                verify=False,
-                timeout=10,
+            data = None
+            if json_body:
+                data = json.dumps(json_body).encode('utf-8')
+            
+            req = urllib.request.Request(
+                url, data=data, headers=headers, method=method.upper()
             )
-            return resp.status_code, resp.json() if resp.text else {}
+            
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                content = resp.read().decode('utf-8')
+                return resp.status, json.loads(content) if content else {}
+        except urllib.error.HTTPError as e:
+            content = e.read().decode('utf-8') if e.fp else '{}'
+            try:
+                return e.code, json.loads(content)
+            except:
+                return e.code, {"error": e.reason}
         except Exception as e:
             return 0, {"error": str(e)}
 

@@ -25,6 +25,9 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<List<Models.Entities.Usuario>> GetByDepartamentoAsync(int idDepartamento);
         Task<bool> UpdateLastSessionAsync(int idUsuario);
         Task<bool> ExistsAsync(int id);
+        Task<bool> SaveRefreshTokenAsync(int idUsuario, string refreshTokenHash, DateTime expiresAt);
+        Task<Models.Entities.Usuario?> GetByRefreshTokenAsync(string refreshTokenHash);
+        Task<bool> ClearRefreshTokenAsync(int idUsuario);
     }
 
     /// <summary>

@@ -16,17 +16,21 @@ namespace TicketsAPI.Services.Implementations
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IRolRepository _rolRepository;
         private readonly IPermisoRepository _permisoRepository;
+        private readonly ILogger<AuthService> _logger;
         private readonly JwtSettings _jwtSettings;
+        private const int RefreshTokenExpirationDays = 7;
 
         public AuthService(
             IUsuarioRepository usuarioRepository, 
             IRolRepository rolRepository,
             IPermisoRepository permisoRepository,
+            ILogger<AuthService> logger,
             IOptions<JwtSettings> jwtOptions)
         {
             _usuarioRepository = usuarioRepository;
             _rolRepository = rolRepository;
             _permisoRepository = permisoRepository;
+            _logger = logger;
             _jwtSettings = jwtOptions.Value;
         }
 
@@ -55,13 +59,22 @@ namespace TicketsAPI.Services.Implementations
 
             var roleValue = rol?.Nombre_Rol ?? usuario.Id_Rol.ToString();
             var token = GenerateJwtToken(usuario.Id_Usuario, usuario.Nombre, usuario.Email, roleValue);
+            
+            // Generar refresh token
+            var refreshToken = GenerateRefreshToken();
+            var refreshTokenHash = HashToken(refreshToken);
+            var refreshTokenExpires = DateTime.UtcNow.AddDays(RefreshTokenExpirationDays);
+            
+            // Guardar refresh token hash en BD
+            await _usuarioRepository.SaveRefreshTokenAsync(usuario.Id_Usuario, refreshTokenHash, refreshTokenExpires);
+            
             var response = new LoginResponse
             {
                 Id_Usuario = usuario.Id_Usuario,
                 Nombre = usuario.Nombre,
                 Email = usuario.Email,
                 Token = token,
-                RefreshToken = Guid.NewGuid().ToString(),
+                RefreshToken = refreshToken,
                 Rol = rol != null ? new RolDTO 
                 { 
                     Id_Rol = rol.Id_Rol,
@@ -76,22 +89,99 @@ namespace TicketsAPI.Services.Implementations
             return response;
         }
 
-        public Task<LoginResponse?> RefreshTokenAsync(string refreshToken)
+        public async Task<LoginResponse?> RefreshTokenAsync(string refreshToken)
         {
-            // Pendiente: validar refresh token y emitir nuevo JWT
-            return Task.FromResult<LoginResponse?>(null);
+            // Validar que el token no esté vacío
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                _logger.LogWarning("Intento de refresh con token vacío");
+                return null;
+            }
+
+            var refreshTokenHash = HashToken(refreshToken);
+            var usuario = await _usuarioRepository.GetByRefreshTokenAsync(refreshTokenHash);
+
+            if (usuario is null || !usuario.Activo)
+            {
+                _logger.LogWarning($"Refresh token inválido o usuario inactivo");
+                return null;
+            }
+
+            // Validar que el token no haya expirado
+            if (usuario.RefreshTokenExpires < DateTime.UtcNow)
+            {
+                _logger.LogWarning($"Refresh token expirado para usuario {usuario.Id_Usuario}");
+                // Limpiar token expirado
+                await _usuarioRepository.ClearRefreshTokenAsync(usuario.Id_Usuario);
+                return null;
+            }
+
+            // Cargar rol y permisos
+            var rol = usuario.Id_Rol > 0 
+                ? await _rolRepository.GetByIdAsync(usuario.Id_Rol) 
+                : null;
+
+            var permisos = usuario.Id_Rol > 0 
+                ? await _permisoRepository.GetByRolAsync(usuario.Id_Rol) 
+                : new List<Models.Entities.Permiso>();
+
+            // Generar nuevo JWT
+            var roleValue = rol?.Nombre_Rol ?? usuario.Id_Rol.ToString();
+            var newToken = GenerateJwtToken(usuario.Id_Usuario, usuario.Nombre, usuario.Email, roleValue);
+            
+            // Rotar refresh token (generar uno nuevo)
+            var newRefreshToken = GenerateRefreshToken();
+            var newRefreshTokenHash = HashToken(newRefreshToken);
+            var newRefreshTokenExpires = DateTime.UtcNow.AddDays(RefreshTokenExpirationDays);
+            
+            await _usuarioRepository.SaveRefreshTokenAsync(usuario.Id_Usuario, newRefreshTokenHash, newRefreshTokenExpires);
+
+            _logger.LogInformation($"Refresh token rotado exitosamente para usuario {usuario.Id_Usuario}");
+
+            return new LoginResponse
+            {
+                Id_Usuario = usuario.Id_Usuario,
+                Nombre = usuario.Nombre,
+                Email = usuario.Email,
+                Token = newToken,
+                RefreshToken = newRefreshToken,
+                Rol = rol != null ? new RolDTO 
+                { 
+                    Id_Rol = rol.Id_Rol,
+                    Nombre_Rol = rol.Nombre_Rol,
+                    Descripcion = rol.Descripcion,
+                    Activo = rol.Activo
+                } : new RolDTO { Id_Rol = usuario.Id_Rol },
+                Permisos = permisos.Select(p => p.Codigo).ToList()
+            };
         }
 
-        public Task LogoutAsync(int idUsuario)
+        public async Task LogoutAsync(int idUsuario)
         {
-            // Opcional: invalidar refresh tokens, registrar auditoría
-            return Task.CompletedTask;
+            // Invalidar refresh token
+            await _usuarioRepository.ClearRefreshTokenAsync(idUsuario);
+            _logger.LogInformation($"Logout realizado para usuario {idUsuario}");
         }
 
-        public Task<bool> ValidarPermisoAsync(int idUsuario, string codigoPermiso)
+        public async Task<bool> ValidarPermisoAsync(int idUsuario, string codigoPermiso)
         {
-            // Pendiente: integrar con repositorio/servicio de permisos
-            return Task.FromResult(false);
+            if (string.IsNullOrWhiteSpace(codigoPermiso))
+                return false;
+
+            var usuario = await _usuarioRepository.GetByIdAsync(idUsuario);
+            if (usuario is null || !usuario.Activo)
+                return false;
+
+            // Obtener permisos del rol del usuario
+            var permisos = await _permisoRepository.GetByRolAsync(usuario.Id_Rol);
+            var tienePermiso = permisos.Any(p => p.Codigo == codigoPermiso);
+
+            if (!tienePermiso)
+            {
+                _logger.LogWarning($"Usuario {idUsuario} intentó acceder a permiso no autorizado: {codigoPermiso}");
+            }
+
+            return tienePermiso;
         }
 
         private bool PasswordMatches(string stored, string provided)
@@ -109,6 +199,27 @@ namespace TicketsAPI.Services.Implementations
             var sb = new StringBuilder();
             foreach (var b in bytes) sb.Append(b.ToString("x2"));
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Genera un refresh token criptográficamente seguro
+        /// </summary>
+        private static string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        /// <summary>
+        /// Hashea un token para almacenamiento seguro (nunca guardar tokens en plano)
+        /// </summary>
+        private static string HashToken(string token)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+            return Convert.ToBase64String(hashedBytes);
         }
 
         private string GenerateJwtToken(int userId, string name, string email, string role)

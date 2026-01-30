@@ -16,6 +16,8 @@ namespace TicketsAPI.Models.Entities
         public bool Activo { get; set; } = true;
         public DateTime Fecha_Registro { get; set; }
         public DateTime? Ultima_Sesion { get; set; }
+        public string? RefreshTokenHash { get; set; }
+        public DateTime? RefreshTokenExpires { get; set; }
 
         // Navegación
         public virtual Rol? Rol { get; set; }

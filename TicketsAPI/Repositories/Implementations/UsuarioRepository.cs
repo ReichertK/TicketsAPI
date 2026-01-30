@@ -138,6 +138,45 @@ namespace TicketsAPI.Repositories.Implementations
             var count = await conn.ExecuteScalarAsync<int>(sql, new { id });
             return count > 0;
         }
+
+        public async Task<bool> SaveRefreshTokenAsync(int idUsuario, string refreshTokenHash, DateTime expiresAt)
+        {
+            using var conn = CreateConnection();
+            const string sql = @"UPDATE usuario SET 
+                                refresh_token_hash = @refreshTokenHash, 
+                                refresh_token_expires = @expiresAt,
+                                last_login = NOW()
+                                WHERE idUsuario = @idUsuario";
+            var rows = await conn.ExecuteAsync(sql, new { idUsuario, refreshTokenHash, expiresAt });
+            return rows > 0;
+        }
+
+        public async Task<Usuario?> GetByRefreshTokenAsync(string refreshTokenHash)
+        {
+            using var conn = CreateConnection();
+            const string sql = @"SELECT 
+                    idUsuario AS Id_Usuario,
+                    nombre AS Nombre,
+                    email AS Email,
+                    passwordUsuarioEnc AS Contraseña,
+                    idKine AS Id_Departamento,
+                    CAST(CASE WHEN tipo = 'ADM' THEN 1 WHEN tipo = 'TEC' THEN 2 WHEN tipo = 'USU' THEN 3 ELSE 0 END AS SIGNED) AS Id_Rol,
+                    refresh_token_hash AS RefreshTokenHash,
+                    refresh_token_expires AS RefreshTokenExpires
+                FROM usuario WHERE refresh_token_hash = @refreshTokenHash LIMIT 1";
+            return await conn.QuerySingleOrDefaultAsync<Usuario>(sql, new { refreshTokenHash });
+        }
+
+        public async Task<bool> ClearRefreshTokenAsync(int idUsuario)
+        {
+            using var conn = CreateConnection();
+            const string sql = @"UPDATE usuario SET 
+                                refresh_token_hash = NULL, 
+                                refresh_token_expires = NULL
+                                WHERE idUsuario = @idUsuario";
+            var rows = await conn.ExecuteAsync(sql, new { idUsuario });
+            return rows > 0;
+        }
     }
 }
 

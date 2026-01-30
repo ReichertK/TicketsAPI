@@ -17,18 +17,21 @@ namespace TicketsAPI.Controllers
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
         private readonly ITicketService _ticketService;
+        private readonly IEstadoService _estadoService;
 
         public TransicionesController(
             IBaseRepository<Transicion> transicionRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
             ITicketService ticketService,
+            IEstadoService estadoService,
             ILogger<TransicionesController> logger) : base(logger)
         {
             _transicionRepository = transicionRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
             _ticketService = ticketService;
+            _estadoService = estadoService;
         }
 
         /// <summary>
@@ -87,6 +90,21 @@ namespace TicketsAPI.Controllers
                 var usuarioId = GetCurrentUserId();
                 if (usuarioId <= 0)
                     return Error<object>("Usuario no autenticado", statusCode: 401);
+
+                if (dto == null || dto.Id_Estado_Nuevo <= 0)
+                    return Error<object>("Id_Estado_Nuevo es requerido", statusCode: 400);
+
+                // Validar transición con las reglas reales
+                int rolId = 0;
+                var userRole = GetCurrentUserRole();
+                if (!string.IsNullOrWhiteSpace(userRole))
+                {
+                    int.TryParse(userRole, out rolId);
+                }
+
+                var permitido = await _estadoService.ValidarTransicionAsync(ticket.Id_Estado ?? 1, dto.Id_Estado_Nuevo, rolId);
+                if (!permitido)
+                    return Error<object>("Transición no permitida", statusCode: 403);
 
                 // Crear DTO para transición
                 var transicionDto = new TransicionEstadoDTO

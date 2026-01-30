@@ -22,9 +22,9 @@ namespace TicketsAPI.Controllers
         }
 
         // Endpoint temporal de apoyo para pruebas locales: devuelve un usuario de muestra
-        // IMPORTANTE: No exponer en producción
+        // IMPORTANTE: No exponer en producción - Requiere rol Administrador
         [HttpGet("sample-user")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> GetSampleUser()
         {
             try
@@ -53,7 +53,7 @@ namespace TicketsAPI.Controllers
         }
 
         [HttpGet("db-audit")] // api/admin/db-audit?detalle=true
-        [AllowAnonymous]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> AuditDatabase([FromQuery] bool detalle = false)
         {
             try

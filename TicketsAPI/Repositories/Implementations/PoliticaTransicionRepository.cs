@@ -8,11 +8,16 @@ namespace TicketsAPI.Repositories.Implementations
     {
         public PoliticaTransicionRepository(string connectionString) : base(connectionString) { }
 
+        /// <summary>
+        /// DEPRECATED: No usar. Tabla PoliticasTransicion no existe en BD.
+        /// Usar métodos GetTransicionAsync y GetPosiblesTransicionesAsync que mapean a tkt_transicion_regla
+        /// </summary>
         public async Task<int> CreateAsync(PoliticaTransicion entity)
         {
             using var conn = CreateConnection();
-            var sql = @"INSERT INTO PoliticasTransicion (Id_Estado_Origen, Id_Estado_Destino, Id_Rol, Permitida)
-                        VALUES (@Id_Estado_Origen, @Id_Estado_Destino, @Id_Rol, @Permitida);
+            // Mapear a tkt_transicion_regla (tabla real)
+            var sql = @"INSERT INTO tkt_transicion_regla (estado_from, estado_to, permiso_requerido)
+                        VALUES (@Id_Estado_Origen, @Id_Estado_Destino, @Permitida);
                         SELECT LAST_INSERT_ID();";
             return await conn.ExecuteScalarAsync<int>(sql, entity);
         }
@@ -20,7 +25,8 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<bool> DeleteAsync(int id)
         {
             using var conn = CreateConnection();
-            var sql = "DELETE FROM PoliticasTransicion WHERE Id_Politica = @id";
+            // Eliminar de tabla real
+            var sql = "DELETE FROM tkt_transicion_regla WHERE id = @id";
             var rows = await conn.ExecuteAsync(sql, new { id });
             return rows > 0;
         }
@@ -28,7 +34,13 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<List<PoliticaTransicion>> GetAllAsync()
         {
             using var conn = CreateConnection();
-            var sql = "SELECT Id_Politica, Id_Estado_Origen, Id_Estado_Destino, Id_Rol, Permitida FROM PoliticasTransicion";
+            var sql = @"SELECT 
+                            id AS Id_Politica,
+                            estado_from AS Id_Estado_Origen,
+                            estado_to AS Id_Estado_Destino,
+                            0 AS Id_Rol,
+                            1 AS Permitida
+                        FROM tkt_transicion_regla";
             var list = await conn.QueryAsync<PoliticaTransicion>(sql);
             return list.ToList();
         }
@@ -36,42 +48,61 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<PoliticaTransicion?> GetByIdAsync(int id)
         {
             using var conn = CreateConnection();
-            var sql = "SELECT Id_Politica, Id_Estado_Origen, Id_Estado_Destino, Id_Rol, Permitida FROM PoliticasTransicion WHERE Id_Politica = @id";
+            var sql = @"SELECT 
+                            id AS Id_Politica,
+                            estado_from AS Id_Estado_Origen,
+                            estado_to AS Id_Estado_Destino,
+                            0 AS Id_Rol,
+                            1 AS Permitida
+                        FROM tkt_transicion_regla
+                        WHERE id = @id";
             return await conn.QueryFirstOrDefaultAsync<PoliticaTransicion>(sql, new { id });
         }
 
         public async Task<PoliticaTransicion?> GetTransicionAsync(int idEstadoOrigen, int idEstadoDestino, int idRol)
         {
             using var conn = CreateConnection();
-            var sql = @"SELECT Id_Politica, Id_Estado_Origen, Id_Estado_Destino, Id_Rol, Permitida
-                        FROM PoliticasTransicion
-                        WHERE Id_Estado_Origen = @idEstadoOrigen AND Id_Estado_Destino = @idEstadoDestino AND Id_Rol = @idRol";
-            return await conn.QueryFirstOrDefaultAsync<PoliticaTransicion>(sql, new { idEstadoOrigen, idEstadoDestino, idRol });
+            // Mapear a la tabla real: tkt_transicion_regla
+            // Nota: Esta tabla no tiene columna de rol, por lo que todas las reglas aplican a todos los roles
+            var sql = @"SELECT 
+                            id AS Id_Politica,
+                            estado_from AS Id_Estado_Origen,
+                            estado_to AS Id_Estado_Destino,
+                            0 AS Id_Rol,
+                            1 AS Permitida
+                        FROM tkt_transicion_regla
+                        WHERE estado_from = @idEstadoOrigen 
+                          AND estado_to = @idEstadoDestino
+                        LIMIT 1";
+            return await conn.QueryFirstOrDefaultAsync<PoliticaTransicion>(sql, 
+                new { idEstadoOrigen, idEstadoDestino });
         }
 
         public async Task<List<PoliticaTransicion>> GetPosiblesTransicionesAsync(int idEstadoActual, int idRol)
         {
             using var conn = CreateConnection();
-            var sql = @"SELECT pt.Id_Politica, pt.Id_Estado_Origen, pt.Id_Estado_Destino, pt.Id_Rol, pt.Permitida,
-                               ed.Id_Estado as Id_Estado, ed.Nombre_Estado as Nombre_Estado, ed.Color as Color, ed.Orden as Orden, ed.Activo as Activo
-                        FROM PoliticasTransicion pt
-                        INNER JOIN Estados ed ON ed.Id_Estado = pt.Id_Estado_Destino
-                        WHERE pt.Id_Estado_Origen = @idEstadoActual AND pt.Id_Rol = @idRol AND pt.Permitida = 1";
-            var dict = new Dictionary<int, PoliticaTransicion>();
-            var list = await conn.QueryAsync<PoliticaTransicion, Estado, PoliticaTransicion>(sql,
-                (pt, destino) =>
-                {
-                    pt.EstadoDestino = destino;
-                    return pt;
-                }, new { idEstadoActual, idRol });
+            // Obtener todas las transiciones posibles desde el estado actual
+            var sql = @"SELECT DISTINCT 
+                            id AS Id_Politica,
+                            estado_from AS Id_Estado_Origen,
+                            estado_to AS Id_Estado_Destino,
+                            0 AS Id_Rol,
+                            1 AS Permitida
+                       FROM tkt_transicion_regla
+                       WHERE estado_from = @idEstadoActual
+                       ORDER BY estado_to";
+            var list = await conn.QueryAsync<PoliticaTransicion>(sql, new { idEstadoActual });
             return list.ToList();
         }
 
         public async Task<bool> UpdateAsync(PoliticaTransicion entity)
         {
             using var conn = CreateConnection();
-            var sql = @"UPDATE PoliticasTransicion SET Id_Estado_Origen=@Id_Estado_Origen, Id_Estado_Destino=@Id_Estado_Destino,
-                        Id_Rol=@Id_Rol, Permitida=@Permitida WHERE Id_Politica=@Id_Politica";
+            var sql = @"UPDATE tkt_transicion_regla SET 
+                        estado_from = @Id_Estado_Origen,
+                        estado_to = @Id_Estado_Destino,
+                        permiso_requerido = @Permitida
+                        WHERE id = @Id_Politica";
             var rows = await conn.ExecuteAsync(sql, entity);
             return rows > 0;
         }

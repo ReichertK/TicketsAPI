@@ -83,6 +83,19 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Departamento { get; set; }
     }
 
+    /// <summary>
+    /// DTO para cambiar contraseña
+    /// </summary>
+    public class ChangePasswordDTO
+    {
+        [Required(ErrorMessage = "La contraseña actual es requerida")]
+        public string PasswordActual { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La nueva contraseña es requerida")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 100 caracteres")]
+        public string PasswordNueva { get; set; } = string.Empty;
+    }
+
     // ==================== ROLE & PERMISSION DTOs ====================
     /// <summary>
     /// DTO para rol
@@ -265,11 +278,17 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Usuario { get; set; }
         public DateTime? Fecha_Desde { get; set; }
         public DateTime? Fecha_Hasta { get; set; }
+        
+        [StringLength(500, ErrorMessage = "La búsqueda no puede exceder 500 caracteres")]
+        [RegularExpression(@"^[^;'""]*$", ErrorMessage = "La búsqueda contiene caracteres no permitidos")]
         public string? Busqueda { get; set; }
         
         // Opciones de búsqueda avanzada
         public bool? BuscarEnComentarios { get; set; } = false;
         public bool? BuscarEnContenido { get; set; } = true;
+        
+        [StringLength(20)]
+        [RegularExpression(@"^(contiene|exacta|comienza|termina)$", ErrorMessage = "TipoBusqueda inválido")]
         public string? TipoBusqueda { get; set; } = "contiene"; // "contiene", "exacta", "comienza", "termina"
         
         public string? Ordenar_Por { get; set; }

@@ -14,7 +14,7 @@
 ┌─────────────────────┬──────────┬─────────┬──────────┐
 │ Operación           │  ADMIN   │ TÉCNICO │ USUARIO  │
 ├─────────────────────┼──────────┼─────────┼──────────┤
-│ Ver Todos (sin filtro)  │   ✅    │   ❌    │    ❌    │
+│ Ver Todos sin filtro│   ✅    │   ❌    │    ❌    │
 │ Ver Sus Tickets     │   ✅    │   ✅    │    ✅    │
 │ Ver Depto Asignado  │   ✅    │   ✅    │    ❌    │
 │ Crear Ticket        │   ✅    │   ✅    │    ✅    │

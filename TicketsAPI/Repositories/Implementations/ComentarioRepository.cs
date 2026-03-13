@@ -105,32 +105,25 @@ namespace TicketsAPI.Repositories.Implementations
         {
             using var conn = CreateConnection();
 
-            // Parámetros para la SP
-            var parameters = new DynamicParameters();
-            parameters.Add("p_id_tkt", idTkt);
-            parameters.Add("p_id_usuario", idUsuario);
-            parameters.Add("p_comentario", comentario);
-            parameters.Add("@p_resultado", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
-            parameters.Add("@p_mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
-            parameters.Add("@p_id_comentario", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
-
             try
             {
-                await conn.ExecuteAsync(
+                var parameters = new DynamicParameters();
+                parameters.Add("p_id_tkt", idTkt);
+                parameters.Add("p_id_usuario", idUsuario);
+                parameters.Add("p_comentario", comentario);
+
+                var result = await conn.QuerySingleAsync<ComentarioResultDTO>(
                     "sp_tkt_comentar",
                     parameters,
                     commandType: System.Data.CommandType.StoredProcedure);
 
-                var success = parameters.Get<int>("@p_resultado");
-                var mensaje = parameters.Get<string>("@p_mensaje");
-                var idComentario = success == 1 ? parameters.Get<int?>("@p_id_comentario") : null;
-
-                return new ComentarioResultDTO
+                if (result.Success == 1)
                 {
-                    Success = success,
-                    Message = mensaje,
-                    IdComentario = idComentario
-                };
+                    var lastId = await conn.ExecuteScalarAsync<int>("SELECT LAST_INSERT_ID();");
+                    result.IdComentario = lastId;
+                }
+
+                return result;
             }
             catch (Exception ex)
             {

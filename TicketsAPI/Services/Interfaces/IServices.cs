@@ -19,13 +19,12 @@ namespace TicketsAPI.Services.Interfaces
     public interface ITicketService
     {
         Task<TicketDTO?> GetByIdAsync(int id);
-        Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro);
+        Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro, int idUsuarioActual);
         Task<int> CreateAsync(CreateUpdateTicketDTO dto, int idUsuarioCreador);
-            Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto, int idUsuarioActual);
+        Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto, int idUsuarioActual);
         Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario);
-        Task<bool> AsignarAsync(int id, int idUsuario);
-        Task<bool> CloseAsync(int id, int idUsuario);
-        Task<DashboardDTO> GetDashboardAsync(int idUsuario);
+        Task<bool> AsignarAsync(int id, int idUsuarioAsignado, int idUsuarioActor, string? comentario);
+        Task<bool> CloseAsync(int id, int idUsuario, string? comentario = null);
     }
 
     /// <summary>
@@ -46,11 +45,16 @@ namespace TicketsAPI.Services.Interfaces
     {
         Task<UsuarioDTO?> GetByIdAsync(int id);
         Task<List<UsuarioDTO>> GetAllAsync();
+        Task<List<UsuarioDTO>> GetFilteredAsync(string? nombre, string? email, string? tipo, int? habilitado);
         Task<List<UsuarioDTO>> GetByRolAsync(int idRol);
         Task<int> CreateAsync(CreateUpdateUsuarioDTO dto);
         Task<bool> UpdateAsync(int id, CreateUpdateUsuarioDTO dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ChangePasswordAsync(int id, string passwordActual, string passwordNueva);
+        /// <summary>
+        /// Restablecer contraseña de un usuario (desde panel Admin).
+        /// </summary>
+        Task<bool> ResetPasswordAsync(int idUsuarioTarget, int idUsuarioAdmin, string nuevaPassword);
     }
 
     /// <summary>
@@ -91,6 +95,14 @@ namespace TicketsAPI.Services.Interfaces
         Task TransicionEstadoAsync(int idTicket, int idUsuario, int idEstadoNuevo);
         Task NotificarNuevoComentarioAsync(int idTicket);
         Task NuevoComentarioAsync(int idTicket, int idUsuario, string comentario);
+        /// <summary>
+        /// Enviar alerta de mención (@usuario) a un usuario específico vía SignalR.
+        /// </summary>
+        Task MencionUsuarioAsync(int idUsuarioDestino, int idTicket, long idComentario, string mensaje);
+        /// <summary>
+        /// Notificar a un usuario que le asignaron un ticket vía SignalR.
+        /// </summary>
+        Task AsignacionTicketAsync(int idUsuarioDestino, int idTicket, string mensaje);
     }
 
     /// <summary>
@@ -129,5 +141,8 @@ namespace TicketsAPI.Services.Interfaces
         public int Id_Estado_Destino { get; set; }
         public string Nombre_Estado { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;
+        public string? Permiso_Requerido { get; set; }
+        public bool Requiere_Propietario { get; set; }
+        public bool Requiere_Aprobacion { get; set; }
     }
 }

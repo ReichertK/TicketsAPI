@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MySqlConnector;
+using Dapper;
+using System.Data;
+using System.Text.RegularExpressions;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
@@ -16,16 +20,24 @@ namespace TicketsAPI.Controllers
         private readonly IComentarioRepository _comentarioRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
+        private readonly string _connectionString;
+
+        // Regex para detectar @menciones (nombre con letras, espacios internos, acentos)
+        private static readonly Regex MentionRegex = new(@"@([\w\sáéíóúñÁÉÍÓÚÑ]+?)(?=\s|$|[.,;!?])", RegexOptions.Compiled);
 
         public ComentariosController(
             IComentarioRepository comentarioRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
+            IConfiguration configuration,
             ILogger<ComentariosController> logger) : base(logger)
         {
             _comentarioRepository = comentarioRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
+            _connectionString = configuration.GetConnectionString("DbTkt")
+                ?? configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
         /// <summary>
@@ -40,11 +52,8 @@ namespace TicketsAPI.Controllers
                 if (ticket == null)
                     return Error<object>("Ticket no encontrado", statusCode: 404);
 
-                var comentarios = await _comentarioRepository.GetAllAsync();
-                var comentariosTicket = comentarios
-                    .Where(c => c.Id_Ticket == ticketId)
-                    .OrderByDescending(c => c.Fecha_Creacion)
-                    .ToList();
+                // D1: Filtrado directo en DB con WHERE id_tkt, elimina carga completa de tabla
+                var comentariosTicket = await _comentarioRepository.GetByTicketAsync(ticketId);
 
                 var dtos = comentariosTicket.Select(c => new ComentarioDTO
                 {
@@ -61,7 +70,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener comentarios");
-                return Error<object>("Error al obtener comentarios", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener comentarios", statusCode: 500);
             }
         }
 
@@ -98,6 +107,22 @@ namespace TicketsAPI.Controllers
                 // Notificar nuevo comentario
                 await _notificacionService.NuevoComentarioAsync(ticketId, usuarioId, dto.Contenido);
 
+                // ── Procesar @menciones ──────────────────────────────
+                if (result.IdComentario.HasValue && result.IdComentario > 0)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await ProcesarMencionesAsync(dto.Contenido, ticketId, result.IdComentario.Value, usuarioId);
+                        }
+                        catch (Exception exMention)
+                        {
+                            _logger.LogWarning(exMention, "Error al procesar @menciones en comentario {IdComentario}", result.IdComentario);
+                        }
+                    });
+                }
+
                 // Retornar el comentario creado
                 // result.IdComentario ahora contiene el ID obtenido vía LAST_INSERT_ID()
                 if (!result.IdComentario.HasValue || result.IdComentario <= 0)
@@ -122,7 +147,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear comentario");
-                return Error<object>("Error al crear comentario", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al crear comentario", statusCode: 500);
             }
         }
 
@@ -153,7 +178,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener comentario");
-                return Error<object>("Error al obtener comentario", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener comentario", statusCode: 500);
             }
         }
 
@@ -161,7 +186,8 @@ namespace TicketsAPI.Controllers
         /// Actualizar comentario
         /// </summary>
         [HttpPut("Comments/{id}")]
-        public async Task<IActionResult> ActualizarComentario(int id, [FromBody] CreateUpdateComentarioDTO dto)
+        [HttpPut("Tickets/{ticketId}/Comments/{id}")]
+        public async Task<IActionResult> ActualizarComentario(int id, [FromBody] CreateUpdateComentarioDTO dto, int? ticketId = null)
         {
             try
             {
@@ -186,7 +212,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al actualizar comentario");
-                return Error<object>("Error al actualizar comentario", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al actualizar comentario", statusCode: 500);
             }
         }
 
@@ -212,7 +238,60 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar comentario");
-                return Error<object>("Error al eliminar comentario", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al eliminar comentario", statusCode: 500);
+            }
+        }
+
+        /// <summary>
+        /// Busca @menciones en el texto del comentario, resuelve los nombres a idUsuario,
+        /// persiste la alerta en notificacion_alerta (vía SP) y envía SignalR al destino.
+        /// </summary>
+        private async Task ProcesarMencionesAsync(string contenido, int idTicket, long idComentario, int idUsuarioAutor)
+        {
+            if (string.IsNullOrWhiteSpace(contenido)) return;
+
+            var matches = MentionRegex.Matches(contenido);
+            if (matches.Count == 0) return;
+
+            // Extraer nombres únicos mencionados (trim y lowercase para comparar)
+            var nombres = matches
+                .Select(m => m.Groups[1].Value.Trim())
+                .Where(n => n.Length >= 2)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(10) // Limitar a 10 menciones por comentario
+                .ToList();
+
+            if (!nombres.Any()) return;
+
+            using var conn = new MySqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            foreach (var nombre in nombres)
+            {
+                // Buscar usuario activo por nombre (case-insensitive)
+                var usuario = await conn.QueryFirstOrDefaultAsync<(long IdUsuario, string Nombre)>(
+                    "SELECT idUsuario, nombre FROM usuario WHERE nombre LIKE @Nombre AND fechaBaja IS NULL LIMIT 1",
+                    new { Nombre = $"%{nombre}%" });
+
+                if (usuario.IdUsuario <= 0 || usuario.IdUsuario == idUsuarioAutor) continue;
+
+                // Persistir alerta con SP
+                var pAlerta = new DynamicParameters();
+                pAlerta.Add("p_id_usuario_destino", usuario.IdUsuario);
+                pAlerta.Add("p_id_ticket", idTicket);
+                pAlerta.Add("p_id_comentario", idComentario);
+                pAlerta.Add("p_mensaje", $"Te mencionaron en el ticket #{idTicket}");
+                pAlerta.Add("p_id_alerta", dbType: System.Data.DbType.Int64, direction: System.Data.ParameterDirection.Output);
+
+                await conn.ExecuteAsync("sp_crear_alerta_mencion", pAlerta, commandType: CommandType.StoredProcedure);
+
+                // Enviar notificación SignalR al usuario mencionado
+                await _notificacionService.MencionUsuarioAsync(
+                    (int)usuario.IdUsuario, idTicket, idComentario,
+                    $"Te mencionaron en el ticket #{idTicket}");
+
+                _logger.LogInformation("@Mención: {NombreMencionado} (id={IdUsuario}) en ticket #{TicketId}",
+                    usuario.Nombre, usuario.IdUsuario, idTicket);
             }
         }
     }

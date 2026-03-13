@@ -41,7 +41,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener grupos");
-                return Error<object>("Error al obtener grupos", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener grupos", statusCode: 500);
             }
         }
 
@@ -68,7 +68,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener grupo");
-                return Error<object>("Error al obtener grupo", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener grupo", statusCode: 500);
             }
         }
 
@@ -103,7 +103,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear grupo");
-                return Error<object>("Error al crear grupo", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al crear grupo", statusCode: 500);
             }
         }
 
@@ -131,7 +131,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al actualizar grupo");
-                return Error<object>("Error al actualizar grupo", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al actualizar grupo", statusCode: 500);
             }
         }
 
@@ -153,7 +153,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar grupo");
-                return Error<object>("Error al eliminar grupo", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al eliminar grupo", statusCode: 500);
             }
         }
     }

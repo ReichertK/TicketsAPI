@@ -92,6 +92,7 @@ namespace TicketsAPI.Models.Entities
     {
         public int Id_Estado { get; set; }
         public string Nombre_Estado { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
         public string Color { get; set; } = "#6c757d"; // Color por defecto gris
         public int Orden { get; set; }
         public bool Activo { get; set; } = true;
@@ -107,6 +108,7 @@ namespace TicketsAPI.Models.Entities
     {
         public int Id_Prioridad { get; set; }
         public string Nombre_Prioridad { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
         public int Valor { get; set; } // 1: Baja, 2: Media, 3: Alta, 4: Crítica
         public string Color { get; set; } = "#6c757d";
         public bool Activo { get; set; } = true;
@@ -197,6 +199,11 @@ namespace TicketsAPI.Models.Entities
         public int Id_Estado_Destino { get; set; }
         public int Id_Rol { get; set; }
         public bool Permitida { get; set; } = true;
+        public string? Permiso_Requerido { get; set; }
+        public bool Requiere_Propietario { get; set; }
+        public bool Requiere_Aprobacion { get; set; }
+        public string? Descripcion { get; set; }
+        public bool Habilitado { get; set; } = true;
 
         // Navegación
         public virtual Estado? EstadoOrigen { get; set; }
@@ -211,7 +218,9 @@ namespace TicketsAPI.Models.Entities
     {
         public int Id_Motivo { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
         public string? Categoria { get; set; }
+        public bool Activo { get; set; } = true;
     }
 
     /// <summary>

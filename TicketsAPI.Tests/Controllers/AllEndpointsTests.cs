@@ -86,6 +86,8 @@ namespace TicketsAPI.Tests.Controllers
             private readonly Mock<INotificacionService> _notificacionService = new();
             private readonly Mock<ITicketRepository> _ticketRepository = new();
             private readonly Mock<IExportService> _exportService = new();
+            private readonly Mock<INotificacionLecturaRepository> _notificacionLecturaRepo = new();
+            private readonly Mock<IAuthService> _authService = new();
             private readonly Mock<ILogger<TicketsController>> _mockLogger = ControllerTestHelper.CreateMockLogger<TicketsController>();
             private readonly TicketsController _controller;
 
@@ -97,14 +99,16 @@ namespace TicketsAPI.Tests.Controllers
                     _estadoService.Object,
                     _notificacionService.Object,
                     _ticketRepository.Object,
-                    _exportService.Object);
+                    _exportService.Object,
+                    _notificacionLecturaRepo.Object,
+                    _authService.Object);
             }
 
             [Fact]
             public async Task GetTickets_ConFiltros_RetornaPaginatedResponse()
             {
                 var paginatedResp = new PaginatedResponse<TicketDTO> { Datos = new(), TotalRegistros = 0 };
-                _ticketService.Setup(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>())).ReturnsAsync(paginatedResp);
+                _ticketService.Setup(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>(), It.IsAny<int>())).ReturnsAsync(paginatedResp);
                 ControllerTestHelper.SetupAuthenticatedUser(_controller, 1);
 
                 var result = await _controller.GetTickets(new TicketFiltroDTO());

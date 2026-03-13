@@ -23,11 +23,27 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Usuario?> GetByUsuarioAsync(string usuario);
         Task<List<Models.Entities.Usuario>> GetByRolAsync(int idRol);
         Task<List<Models.Entities.Usuario>> GetByDepartamentoAsync(int idDepartamento);
+        Task<List<Models.Entities.Usuario>> GetFilteredAsync(string? nombre, string? email, string? tipo, int? habilitado);
         Task<bool> UpdateLastSessionAsync(int idUsuario);
         Task<bool> ExistsAsync(int id);
         Task<bool> SaveRefreshTokenAsync(int idUsuario, string refreshTokenHash, DateTime expiresAt);
         Task<Models.Entities.Usuario?> GetByRefreshTokenAsync(string refreshTokenHash);
         Task<bool> ClearRefreshTokenAsync(int idUsuario);
+        Task<bool> UpdatePasswordHashAsync(int idUsuario, string newHash);
+        /// <summary>
+        /// Obtiene todos los usuarios con Rol y Departamento en una sola consulta JOIN (elimina N+1).
+        /// </summary>
+        Task<List<Models.Entities.Usuario>> GetAllWithRelationsAsync();
+        /// <summary>
+        /// Toggle soft-delete: si fechaBaja IS NULL → pone CURDATE(); si tiene fecha → la limpia.
+        /// Retorna true si se logró la operación.
+        /// </summary>
+        Task<bool> ToggleActiveAsync(int idUsuario);
+        Task<(int idEmpresa, int idSucursal, int idPerfil)?> GetUsuarioContextoAsync(int idUsuario);
+        /// <summary>
+        /// Restablecer contraseña via SP sp_usuario_reset_password (Admin-only, con audit_log).
+        /// </summary>
+        Task<bool> ResetPasswordAsync(int idUsuarioTarget, string nuevoPasswordHash, int idUsuarioAdmin);
     }
 
     /// <summary>
@@ -37,16 +53,9 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro);
         Task<PaginatedResponse<TicketDTO>> GetFilteredAdvancedAsync(TicketFiltroDTO filtro);
-        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
-        Task<List<Models.Entities.Ticket>> GetByUsuarioCreadorAsync(int idUsuario);
-        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
-        Task<List<Models.Entities.Ticket>> GetByUsuarioAsignadoAsync(int idUsuario);
-        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
-        Task<List<Models.Entities.Ticket>> GetByEstadoAsync(int idEstado);
-        [System.Obsolete("No usar: bypass de stored procedures y validaciones de permisos. Usar GetFilteredAsync (sp_listar_tkts).")]
-        Task<List<Models.Entities.Ticket>> GetByDepartamentoAsync(int idDepartamento);
         Task<TicketDTO?> GetDetailAsync(int id);
             Task<bool> UpdateViaStoredProcedureAsync(long idTkt, int idEstado, int? idUsuario, int? idEmpresa, int? idPerfil, int? idMotivo, int? idSucursal, int idPrioridad, string contenido, int idDepartamento, int idUsuarioActor);
+        Task<bool> AssignViaStoredProcedureAsync(long idTkt, int idUsuarioAsignado, int idUsuarioActor, string? comentario);
         Task<TransicionResultDTO> TransicionarEstadoViaStoredProcedureAsync(
             int idTkt,
             int estadoTo,
@@ -57,6 +66,16 @@ namespace TicketsAPI.Repositories.Interfaces
             string? metaJson = null,
             bool esSuperAdmin = false);
         Task<List<HistorialTicketDTO>> GetHistorialViaStoredProcedureAsync(int idTkt);
+
+        // ── Vistas de listado (SPs dedicados) ─────────────────────────
+        Task<PaginatedResponse<TicketDTO>> GetMisTicketsAsync(int idUsuario, TicketFiltroDTO filtro);
+        Task<PaginatedResponse<TicketDTO>> GetColaTrabajoAsync(int idUsuarioActor, TicketFiltroDTO filtro);
+        Task<PaginatedResponse<TicketDTO>> GetTodosTicketsAsync(int idUsuarioActor, TicketFiltroDTO filtro);
+
+        // ── Suscripciones ─────────────────────────────────────────────
+        Task<SuscripcionResultDTO> GestionarSuscripcionAsync(int idTkt, int idUsuario, string accion);
+        Task<List<SuscriptorDTO>> GetSuscriptoresAsync(int idTkt);
+        Task<bool> EstaSuscritoAsync(int idTkt, int idUsuario);
     }
 
     /// <summary>
@@ -66,6 +85,12 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<Models.Entities.Estado?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Estado>> GetAllActiveAsync();
+        Task<bool> ExistsAsync(int id);
+        /// <summary>
+        /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
+        /// Protege estados críticos (Abierto, Cerrado) de ser desactivados.
+        /// </summary>
+        Task<bool> ToggleStatusAsync(int id);
     }
 
     /// <summary>
@@ -76,6 +101,10 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Prioridad?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Prioridad>> GetAllActiveAsync();
         Task<bool> ExistsAsync(int id);
+        /// <summary>
+        /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
+        /// </summary>
+        Task<bool> ToggleStatusAsync(int id);
     }
 
     /// <summary>
@@ -86,6 +115,10 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Departamento?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Departamento>> GetAllActiveAsync();
         Task<bool> ExistsAsync(int id);
+        /// <summary>
+        /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
+        /// </summary>
+        Task<bool> ToggleStatusAsync(int id);
     }
 
     /// <summary>
@@ -114,6 +147,11 @@ namespace TicketsAPI.Repositories.Interfaces
     {
         Task<Models.Entities.Rol?> GetByNombreAsync(string nombre);
         Task<Models.Entities.Rol?> GetWithPermisosAsync(int id);
+        Task<List<RolListDTO>> ListarRolesAsync();
+        Task<int> GuardarRolAsync(int? idRol, string nombre);
+        Task EliminarRolAsync(int idRol);
+        Task<int> GestionarPermisosAsync(int idRol, string permisosCsv);
+        Task AsignarRolAUsuarioAsync(int idUsuario, int idRol);
     }
 
     /// <summary>
@@ -124,6 +162,9 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Permiso?> GetByCodigoAsync(string codigo);
         Task<List<Models.Entities.Permiso>> GetByModuloAsync(string modulo);
         Task<List<Models.Entities.Permiso>> GetByRolAsync(int idRol);
+        Task<List<string>> GetCodigosByUsuarioAsync(int idUsuario);
+        Task<List<PermisoListDTO>> ListarPermisosAsync();
+        Task<PermisoListDTO> GuardarPermisoAsync(int? idPermiso, string codigo, string descripcion);
     }
 
     /// <summary>
@@ -141,5 +182,33 @@ namespace TicketsAPI.Repositories.Interfaces
     public interface IMotivoRepository : IBaseRepository<Models.Entities.Motivo>
     {
         Task<bool> ExistsAsync(int id);
+        Task<Models.Entities.Motivo?> GetByNombreAsync(string nombre);
+        Task<List<Models.Entities.Motivo>> GetAllActiveAsync();
+        /// <summary>
+        /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
+        /// </summary>
+        Task<bool> ToggleStatusAsync(int id);
+        /// <summary>
+        /// Obtener motivos activos filtrados por departamento (para selector dinámico en frontend).
+        /// </summary>
+        Task<List<Models.Entities.Motivo>> GetByDepartamentoAsync(int idDepartamento);
+    }
+
+    /// <summary>
+    /// Interfaz para repositorio de reportes
+    /// </summary>
+    public interface IReporteRepository
+    {
+        Task<DashboardDTO> GetDashboardAsync(int? idUsuario, int? idDepartamento);
+    }
+
+    /// <summary>
+    /// Interfaz para repositorio de notificaciones de lectura
+    /// </summary>
+    public interface INotificacionLecturaRepository
+    {
+        Task<NotificacionResumenDTO> GetResumenAsync(int idUsuario);
+        Task MarcarLeidoAsync(int idTicket, int idUsuario);
+        Task MarcarTodosLeidosAsync(int idUsuario);
     }
 }

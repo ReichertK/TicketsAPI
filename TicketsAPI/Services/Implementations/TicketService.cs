@@ -2,6 +2,7 @@ using TicketsAPI.Models.DTOs;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Services.Interfaces;
 using TicketsAPI.Exceptions;
+using TicketsAPI.Config;
 
 namespace TicketsAPI.Services.Implementations
 {
@@ -36,21 +37,39 @@ namespace TicketsAPI.Services.Implementations
             return await _ticketRepository.GetDetailAsync(id);
         }
 
-        public async Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro)
+        public async Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro, int idUsuarioActual)
         {
-            // Si se usa búsqueda avanzada (en comentarios o tipo de búsqueda diferente), usar método avanzado
-            if ((filtro.BuscarEnComentarios ?? false) || 
-                (!string.IsNullOrWhiteSpace(filtro.TipoBusqueda) && filtro.TipoBusqueda != "contiene"))
+            // Ruteo por Vista: cada vista tiene su propio SP que aplica reglas de negocio
+            switch (filtro.Vista?.ToLowerInvariant())
             {
-                return await _ticketRepository.GetFilteredAdvancedAsync(filtro);
-            }
+                case "mis-tickets":
+                    return await _ticketRepository.GetMisTicketsAsync(idUsuarioActual, filtro);
 
-            // Caso normal: usar SP existente
-            return await _ticketRepository.GetFilteredAsync(filtro);
+                case "cola":
+                    return await _ticketRepository.GetColaTrabajoAsync(idUsuarioActual, filtro);
+
+                case "todos":
+                    return await _ticketRepository.GetTodosTicketsAsync(idUsuarioActual, filtro);
+
+                default:
+                    // Backward compatibility: sin Vista → lógica de permisos legacy
+                    var tieneListAll = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_LIST_ALL");
+                    if (!tieneListAll)
+                    {
+                        filtro.VistaUsuarioId = idUsuarioActual;
+                        filtro.Id_Usuario = null;
+                    }
+                    return await _ticketRepository.GetFilteredAdvancedAsync(filtro);
+            }
         }
 
         public async Task<int> CreateAsync(CreateUpdateTicketDTO dto, int idUsuarioCreador)
         {
+            // Validar permisos: TKT_CREATE
+            var tienePermisoCrear = await _authService.ValidarPermisoAsync(idUsuarioCreador, "TKT_CREATE");
+            if (!tienePermisoCrear)
+                throw new UnauthorizedException("No tienes permisos para crear tickets");
+
             // Validar FK de Prioridad
             if (!await _prioridadRepository.ExistsAsync(dto.Id_Prioridad))
                 throw new ValidationException($"La prioridad con ID {dto.Id_Prioridad} no existe");
@@ -67,15 +86,23 @@ namespace TicketsAPI.Services.Implementations
             if (dto.Id_Usuario_Asignado.HasValue && !await _usuarioRepository.ExistsAsync(dto.Id_Usuario_Asignado.Value))
                 throw new ValidationException($"El usuario asignado con ID {dto.Id_Usuario_Asignado} no existe");
 
+            // Obtener contexto del usuario (empresa, sucursal, perfil) desde su sesión
+            var contexto = await _usuarioRepository.GetUsuarioContextoAsync(idUsuarioCreador);
+            if (contexto == null)
+                throw new ValidationException($"No se pudo obtener el contexto (empresa/sucursal/perfil) del usuario {idUsuarioCreador}");
+
             var ticket = new Models.Entities.Ticket
             {
                 Contenido = dto.Contenido,
-                Id_Estado = 1, // Estado inicial "Nuevo" o "Abierto"
+                Id_Estado = TicketStates.Abierto,
                 Id_Prioridad = dto.Id_Prioridad,
                 Id_Departamento = dto.Id_Departamento,
                 Id_Usuario = idUsuarioCreador,
                 Id_Usuario_Asignado = dto.Id_Usuario_Asignado,
                 Id_Motivo = dto.Id_Motivo,
+                Id_Empresa = contexto.Value.idEmpresa,
+                Id_Perfil = contexto.Value.idPerfil,
+                Id_Sucursal = contexto.Value.idSucursal,
                 Habilitado = 1
             };
 
@@ -88,6 +115,15 @@ namespace TicketsAPI.Services.Implementations
             var ticket = await _ticketRepository.GetByIdAsync(id);
                 if (ticket == null) 
                     throw new NotFoundException($"El ticket con ID {id} no existe");
+
+                // FIX: Bloquear edición de tickets cerrados (estado 3) para no-admins
+                var esCerrado = ticket.Id_Estado == TicketStates.Cerrado;
+                if (esCerrado)
+                {
+                    var esAdmin = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_EDIT_ANY");
+                    if (!esAdmin)
+                        throw new ValidationException("No se puede modificar un ticket en estado Cerrado. Solo un Administrador puede editar tickets cerrados.");
+                }
 
                 // Validar permisos: TKT_EDIT_ANY (4) o TKT_EDIT_ASSIGNED (5)
                 var tienePermisoEditarCualquiera = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_EDIT_ANY");
@@ -140,57 +176,46 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario)
         {
-            var ticket = await _ticketRepository.GetByIdAsync(id);
-            if (ticket == null) return false;
+            // F2: Delegamos exclusivamente al SP que valida permisos, registra historial y notifica
+            var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
+                idTkt: id,
+                estadoTo: dto.Id_Estado_Nuevo,
+                idUsuarioActor: idUsuario,
+                comentario: dto.Comentario,
+                motivo: dto.Motivo,
+                idAsignadoNuevo: dto.Id_Usuario_Asignado_Nuevo);
 
-            ticket.Id_Estado = dto.Id_Estado_Nuevo;
-
-            return await _ticketRepository.UpdateAsync(ticket);
+            return result.Success == 1;
         }
 
-        public async Task<bool> AsignarAsync(int id, int idUsuario)
+        public async Task<bool> AsignarAsync(int id, int idUsuarioAsignado, int idUsuarioActor, string? comentario)
         {
             var ticket = await _ticketRepository.GetByIdAsync(id);
             if (ticket == null)
                 throw new NotFoundException($"El ticket con ID {id} no existe");
 
-            ticket.Id_Usuario_Asignado = idUsuario;
-            ticket.Date_Asignado = DateTime.UtcNow;
+            if (!await _usuarioRepository.ExistsAsync(idUsuarioAsignado))
+                throw new ValidationException($"El usuario asignado con ID {idUsuarioAsignado} no existe");
 
-            return await _ticketRepository.UpdateAsync(ticket);
+            return await _ticketRepository.AssignViaStoredProcedureAsync(id, idUsuarioAsignado, idUsuarioActor, comentario);
         }
 
-        public async Task<bool> CloseAsync(int id, int idUsuario)
+        public async Task<bool> CloseAsync(int id, int idUsuario, string? comentario = null)
         {
             var ticket = await _ticketRepository.GetByIdAsync(id);
             if (ticket == null)
                 throw new NotFoundException($"El ticket con ID {id} no existe");
 
-            ticket.Id_Estado = 5; // Estado cerrado
-            ticket.Date_Cierre = DateTime.UtcNow;
-            ticket.Id_Usuario = idUsuario;
+            // F2+F5: Delegamos al SP que usa NOW() de MySQL para la fecha de cierre,
+            // evitando discrepancias de timezone con DateTime.UtcNow de C#.
+            var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
+                idTkt: id,
+                estadoTo: TicketStates.Cerrado,
+                idUsuarioActor: idUsuario,
+                comentario: string.IsNullOrWhiteSpace(comentario) ? "Ticket cerrado" : comentario);
 
-            return await _ticketRepository.UpdateAsync(ticket);
+            return result.Success == 1;
         }
 
-        public async Task<DashboardDTO> GetDashboardAsync(int idUsuario)
-        {
-            // Implementación básica - se puede expandir con más métricas
-            var tickets = await _ticketRepository.GetAllAsync();
-            
-            return new DashboardDTO
-            {
-                TicketsTotal = tickets.Count(),
-                TicketsAbiertos = tickets.Count(t => t.Id_Estado != 5), // Asumiendo que 5 es "Cerrado"
-                TicketsCerrados = tickets.Count(t => t.Id_Estado == 5),
-                TicketsEnProceso = tickets.Count(t => t.Id_Estado == 2), // Asumiendo que 2 es "En Proceso"
-                TicketsAsignadosAMi = tickets.Count(t => t.Id_Usuario_Asignado == idUsuario),
-                TicketsPorEstado = new Dictionary<string, int>(),
-                TicketsPorPrioridad = new Dictionary<string, int>(),
-                TicketsPorDepartamento = new Dictionary<string, int>(),
-                TiempoPromedioResolucion = 0,
-                TasaCumplimientoSLA = 0
-            };
-        }
     }
 }

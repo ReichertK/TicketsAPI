@@ -34,7 +34,7 @@ namespace TicketsAPI.Controllers
         /// </summary>
         protected string? GetCurrentUserRole()
         {
-            return User.FindFirst("role")?.Value;
+            return User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
         }
 
         /// <summary>

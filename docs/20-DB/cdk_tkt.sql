@@ -571,6 +571,8 @@ CREATE TABLE `tkt_transicion_regla` (
   `requiere_propietario` tinyint(1) NOT NULL DEFAULT '0',
   `permiso_requerido` varchar(50) DEFAULT NULL,
   `requiere_aprobacion` tinyint(1) NOT NULL DEFAULT '0',
+  `habilitado` tinyint(1) NOT NULL DEFAULT '1',
+  `descripcion` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_regla` (`estado_from`,`estado_to`)
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=latin1;
@@ -579,7 +581,24 @@ CREATE TABLE `tkt_transicion_regla` (
 
 LOCK TABLES `tkt_transicion_regla` WRITE;
 
-insert  into `tkt_transicion_regla`(`id`,`estado_from`,`estado_to`,`requiere_propietario`,`permiso_requerido`,`requiere_aprobacion`) values (1,1,2,0,'TKT_ASSIGN',0),(2,2,3,1,'TKT_START',0),(3,3,4,1,'TKT_WAIT',0),(4,4,3,1,'TKT_WAIT',0),(5,3,5,1,'TKT_REQUEST_APPROVAL',1),(6,5,3,0,'TKT_APPROVE',0),(7,5,6,0,'TKT_APPROVE',0),(8,3,6,1,'TKT_RESOLVE',0),(9,6,7,0,'TKT_CLOSE',0),(38,2,4,1,'TKT_WAIT',0),(39,4,2,1,'TKT_WAIT',0),(40,2,5,1,'TKT_REQUEST_APPROVAL',1),(41,5,2,0,'TKT_APPROVE',0),(43,2,6,1,'TKT_RESOLVE',0),(44,6,3,0,'TKT_CLOSE',0),(45,3,7,0,'TKT_REOPEN',0),(46,7,2,0,'TKT_START',0);
+insert  into `tkt_transicion_regla`(`id`,`estado_from`,`estado_to`,`requiere_propietario`,`permiso_requerido`,`requiere_aprobacion`,`habilitado`,`descripcion`) values
+(1,1,2,0,'TKT_ASSIGN',0,1,NULL),
+(2,2,3,1,'TKT_START',0,1,NULL),
+(3,3,4,1,'TKT_WAIT',0,1,NULL),
+(4,4,3,1,'TKT_WAIT',0,1,NULL),
+(5,3,5,1,'TKT_REQUEST_APPROVAL',1,1,NULL),
+(6,5,3,0,'TKT_APPROVE',0,1,NULL),
+(7,5,6,0,'TKT_APPROVE',0,1,NULL),
+(8,3,6,1,'TKT_RESOLVE',0,1,NULL),
+(9,6,7,0,'TKT_CLOSE',0,1,NULL),
+(38,2,4,1,'TKT_WAIT',0,1,NULL),
+(39,4,2,1,'TKT_WAIT',0,1,NULL),
+(40,2,5,1,'TKT_REQUEST_APPROVAL',1,1,NULL),
+(41,5,2,0,'TKT_APPROVE',0,1,NULL),
+(43,2,6,1,'TKT_RESOLVE',0,0,'DESHABILITADA - requiere flujo de aprobacion (2->5->6). Solo bypass via super_admin'),
+(44,6,3,0,'TKT_CLOSE',0,1,NULL),
+(45,3,7,0,'TKT_REOPEN',0,1,NULL),
+(46,7,2,0,'TKT_START',0,1,NULL);
 
 UNLOCK TABLES;
 
@@ -2924,69 +2943,167 @@ DELIMITER $$
     IN p_es_super_admin TINYINT(1)
 )
 proc: BEGIN
-    DECLARE v_estado_from INT;
-    DECLARE v_asignado_actual INT;
-    DECLARE v_requiere_propietario TINYINT(1);
-    DECLARE v_permiso VARCHAR(50);
-    DECLARE v_requiere_aprob TINYINT(1);
-    DECLARE v_msg VARCHAR(255);
-    DECLARE v_meta LONGTEXT;
-    
-    SET v_meta = p_meta_json;
-    
-    SELECT Id_Estado, Id_Usuario_Asignado INTO v_estado_from, v_asignado_actual
-    FROM tkt WHERE Id_Tkt = p_id_tkt FOR UPDATE;
-    
-    IF v_estado_from IS NULL THEN
-        SELECT 0 success, 'Ticket no encontrado' message, NULL nuevo_estado, NULL id_asignado;
-        LEAVE proc;
-    END IF;
-    
+    DECLARE v_estado_from INT DEFAULT NULL;
+    DECLARE v_asignado_actual INT DEFAULT NULL;
+    DECLARE v_regla_id INT DEFAULT NULL;
+    DECLARE v_requiere_propietario TINYINT(1) DEFAULT 0;
+    DECLARE v_permiso_requerido VARCHAR(50) DEFAULT NULL;
+    DECLARE v_requiere_aprob TINYINT(1) DEFAULT 0;
+    DECLARE v_tiene_permiso INT DEFAULT 0;
+    DECLARE v_estado_destino_valido INT DEFAULT 0;
+    DECLARE v_es_aprobador INT DEFAULT 0;
+    DECLARE v_aprob_existente INT DEFAULT 0;
+    DECLARE v_nombre_actor VARCHAR(100) DEFAULT NULL;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    -- Obtener nombre del actor para audit_log
+    SELECT nombre INTO v_nombre_actor FROM usuario WHERE idUsuario = p_id_usuario_actor LIMIT 1;
+
+    -- Comentario obligatorio
     IF p_comentario IS NULL OR TRIM(p_comentario) = '' THEN
-        SELECT 0 success, 'Comentario requerido' message, NULL nuevo_estado, NULL id_asignado;
-        LEAVE proc;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El comentario es obligatorio para cambiar de estado';
     END IF;
-    
-    SELECT requiere_propietario, permiso_requerido, requiere_aprobacion
-      INTO v_requiere_propietario, v_permiso, v_requiere_aprob
+
+    -- Estado destino válido
+    SELECT COUNT(*) INTO v_estado_destino_valido
+    FROM estado WHERE Id_Estado = p_estado_to AND Habilitado = 1;
+    IF v_estado_destino_valido = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estado destino no valido o deshabilitado';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT Id_Estado, Id_Usuario_Asignado
+    INTO v_estado_from, v_asignado_actual
+    FROM tkt WHERE Id_Tkt = p_id_tkt FOR UPDATE;
+
+    IF v_estado_from IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ticket no encontrado';
+    END IF;
+
+    IF v_estado_from = p_estado_to THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ticket ya se encuentra en ese estado';
+    END IF;
+
+    -- FIX BUG #2: Consultar SIEMPRE la regla de transición (antes estaba dentro del IF p_es_super_admin = 0)
+    -- Garantiza que v_requiere_aprob se setee para TODOS los usuarios, incluido super_admin.
+    SELECT id, requiere_propietario, permiso_requerido, requiere_aprobacion
+    INTO v_regla_id, v_requiere_propietario, v_permiso_requerido, v_requiere_aprob
     FROM tkt_transicion_regla
-    WHERE (estado_from IS NULL OR estado_from = v_estado_from)
-      AND estado_to = p_estado_to
+    WHERE estado_from = v_estado_from AND estado_to = p_estado_to AND habilitado = 1
     LIMIT 1;
-    
-    IF v_requiere_propietario IS NULL AND v_permiso IS NULL THEN
-        SELECT 0 success, 'Transicion no permitida' message, NULL nuevo_estado, NULL id_asignado;
-        LEAVE proc;
-    END IF;
-    
-    -- SUPER ADMIN BYPASS: Si p_es_super_admin = 1, saltar validacion de propietario
-    IF v_requiere_propietario = 1 AND p_es_super_admin = 0 THEN
-        IF v_asignado_actual IS NULL OR v_asignado_actual <> p_id_usuario_actor THEN
-            SELECT 0 success, 'Solo el asignado puede realizar esta transicion' message, NULL nuevo_estado, NULL id_asignado;
-            LEAVE proc;
+
+    -- Validaciones solo para NO super_admin
+    IF p_es_super_admin = 0 THEN
+
+        IF v_asignado_actual IS NOT NULL AND v_asignado_actual <> p_id_usuario_actor THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Solo el usuario asignado al ticket puede cambiar su estado';
+        END IF;
+
+        IF v_regla_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Transicion de estado no permitida';
+        END IF;
+
+        IF v_permiso_requerido IS NOT NULL THEN
+            SELECT COUNT(*) INTO v_tiene_permiso
+            FROM usuario_rol ur
+            JOIN rol_permiso rp ON ur.idRol = rp.idRol
+            JOIN permiso p ON rp.idPermiso = p.idPermiso
+            WHERE ur.idUsuario = p_id_usuario_actor AND p.codigo = v_permiso_requerido;
+            IF v_tiene_permiso = 0 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Permiso insuficiente para esta transicion';
+            END IF;
+        END IF;
+
+        IF v_requiere_propietario = 1 THEN
+            IF v_asignado_actual IS NULL OR v_asignado_actual <> p_id_usuario_actor THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Solo el usuario asignado puede realizar esta transicion';
+            END IF;
+        END IF;
+
+        IF v_estado_from = 5 THEN
+            SELECT COUNT(*) INTO v_es_aprobador
+            FROM usuario_rol ur
+            JOIN rol_permiso rp ON ur.idRol = rp.idRol
+            JOIN permiso p ON rp.idPermiso = p.idPermiso
+            WHERE ur.idUsuario = p_id_usuario_actor AND p.codigo = 'TKT_APPROVE';
+            IF v_es_aprobador = 0 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere permiso de aprobador para esta transicion';
+            END IF;
+        END IF;
+
+        -- FIX BUG #1: Bloquear bypass 2→6 sin aprobación previa
+        IF v_estado_from = 2 AND p_estado_to = 6 THEN
+            SELECT COUNT(*) INTO v_aprob_existente
+            FROM tkt_aprobacion
+            WHERE id_tkt = p_id_tkt AND estado = 'aprobado';
+            IF v_aprob_existente = 0 THEN
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Este ticket requiere aprobacion previa antes de ser resuelto. Use el flujo: En Proceso -> Pendiente Aprobacion -> Resuelto';
+            END IF;
+        END IF;
+
+    ELSE
+        -- SUPER ADMIN: bypass 2→6 permitido, pero se registra en audit_log
+        IF v_estado_from = 2 AND p_estado_to = 6 THEN
+            SELECT COUNT(*) INTO v_aprob_existente
+            FROM tkt_aprobacion
+            WHERE id_tkt = p_id_tkt AND estado = 'aprobado';
+            IF v_aprob_existente = 0 THEN
+                INSERT INTO audit_log (tabla, id_registro, accion, usuario_id, usuario_nombre, descripcion)
+                VALUES ('tkt', p_id_tkt, 'UPDATE', p_id_usuario_actor, v_nombre_actor,
+                    CONCAT('ADMIN BYPASS: Ticket ', p_id_tkt, ' resuelto sin aprobacion previa por super_admin ', v_nombre_actor));
+            END IF;
         END IF;
     END IF;
-    
+
+    -- FIX BUG #2: Insertar registro de aprobación SIEMPRE que la regla lo requiera
     IF v_requiere_aprob = 1 THEN
         INSERT INTO tkt_aprobacion(id_tkt, solicitante_id, aprobador_id, comentario)
         VALUES(p_id_tkt, p_id_usuario_actor, COALESCE(p_id_asignado_nuevo, p_id_usuario_actor), p_comentario);
     END IF;
-    
+
     IF p_id_asignado_nuevo IS NOT NULL THEN
         SET v_asignado_actual = p_id_asignado_nuevo;
     END IF;
-    
+
     UPDATE tkt
-       SET Id_Estado = p_estado_to,
-           Id_Usuario_Asignado = v_asignado_actual,
-           Date_Cambio_Estado = NOW(),
-           Date_Asignado = IF(p_id_asignado_nuevo IS NOT NULL AND p_id_asignado_nuevo <> v_asignado_actual, NOW(), Date_Asignado)
+    SET Id_Estado = p_estado_to,
+        Id_Usuario_Asignado = v_asignado_actual,
+        Date_Cambio_Estado = NOW(),
+        Date_Cierre = IF(p_estado_to = 3, NOW(), Date_Cierre),
+        Date_Asignado = IF(p_id_asignado_nuevo IS NOT NULL, NOW(), Date_Asignado)
     WHERE Id_Tkt = p_id_tkt;
-    
+
     INSERT INTO tkt_transicion(id_tkt, estado_from, estado_to, id_usuario_actor, comentario, motivo, meta_json)
-    VALUES(p_id_tkt, v_estado_from, p_estado_to, p_id_usuario_actor, p_comentario, p_motivo, v_meta);
-    
-    SELECT 1 success, 'OK' message, p_estado_to nuevo_estado, v_asignado_actual id_asignado;
+    VALUES(p_id_tkt, v_estado_from, p_estado_to, p_id_usuario_actor, p_comentario, p_motivo, p_meta_json);
+
+    IF v_asignado_actual IS NOT NULL AND v_asignado_actual <> p_id_usuario_actor THEN
+        INSERT INTO tkt_notificacion_lectura (id_ticket, id_usuario, leido, fecha_cambio)
+        VALUES (p_id_tkt, v_asignado_actual, 0, NOW())
+        ON DUPLICATE KEY UPDATE leido = 0, fecha_cambio = NOW();
+    END IF;
+
+    INSERT INTO tkt_notificacion_lectura (id_ticket, id_usuario, leido, fecha_cambio)
+    SELECT p_id_tkt, s.id_usuario, 0, NOW()
+    FROM tkt_suscriptor s
+    WHERE s.id_tkt = p_id_tkt AND s.id_usuario <> p_id_usuario_actor
+    ON DUPLICATE KEY UPDATE leido = 0, fecha_cambio = NOW();
+
+    INSERT INTO tkt_notificacion_lectura (id_ticket, id_usuario, leido, fecha_cambio)
+    SELECT p_id_tkt, t.Id_Usuario, 0, NOW()
+    FROM tkt t
+    WHERE t.Id_Tkt = p_id_tkt AND t.Id_Usuario <> p_id_usuario_actor
+    ON DUPLICATE KEY UPDATE leido = 0, fecha_cambio = NOW();
+
+    COMMIT;
+
+    SELECT 1 AS success, 'OK' AS message, p_estado_to AS nuevo_estado, v_asignado_actual AS id_asignado;
 END */$$
 DELIMITER ;
 
@@ -3032,3 +3149,185 @@ DELIMITER ;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- ═══════════════════════════════════════════════════════════════
+-- AUDIT RBAC SESSION - Fixes & New Objects (2025-01)
+-- ═══════════════════════════════════════════════════════════════
+
+-- FIX: Ampliar passwordUsuarioEnc para soportar BCrypt (60 chars)
+ALTER TABLE usuario MODIFY passwordUsuarioEnc VARCHAR(255);
+
+-- FIX: Agregar columna id_departamento a motivo (selector dinámico)
+ALTER TABLE motivo ADD COLUMN id_departamento INT DEFAULT NULL;
+CREATE INDEX idx_motivo_depto ON motivo(id_departamento);
+
+-- ═══════════════════════════════════════════════════════════════
+-- Tabla: error_log
+-- ═══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS error_log (
+    id_error BIGINT AUTO_INCREMENT PRIMARY KEY,
+    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    origen VARCHAR(200) NOT NULL COMMENT 'Clase/método o endpoint donde ocurrió',
+    severidad ENUM('DEBUG','INFO','WARNING','ERROR','CRITICAL') NOT NULL DEFAULT 'ERROR',
+    codigo_error VARCHAR(50) DEFAULT NULL,
+    mensaje VARCHAR(500) NOT NULL,
+    detalle TEXT DEFAULT NULL,
+    usuario_id INT DEFAULT NULL,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    KEY idx_el_fecha (fecha),
+    KEY idx_el_severidad (severidad, fecha),
+    KEY idx_el_usuario (usuario_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ═══════════════════════════════════════════════════════════════
+-- Tabla: audit_config
+-- ═══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS audit_config (
+    id_audit_config BIGINT AUTO_INCREMENT PRIMARY KEY,
+    entidad VARCHAR(50) NOT NULL COMMENT 'departamento, motivo, rol, permiso, etc.',
+    id_entidad INT NOT NULL,
+    accion ENUM('INSERT','UPDATE','DELETE','TOGGLE','ASSIGN','REVOKE') NOT NULL,
+    campo_modificado VARCHAR(100) DEFAULT NULL,
+    valor_anterior VARCHAR(500) DEFAULT NULL,
+    valor_nuevo VARCHAR(500) DEFAULT NULL,
+    usuario_id INT NOT NULL,
+    usuario_nombre VARCHAR(100) DEFAULT NULL,
+    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    descripcion VARCHAR(500) DEFAULT NULL,
+    PRIMARY KEY (id_audit_config),
+    KEY idx_ac_entidad (entidad, id_entidad),
+    KEY idx_ac_usuario (usuario_id, fecha),
+    KEY idx_ac_fecha (fecha)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ═══════════════════════════════════════════════════════════════
+-- SP: sp_agregar_usuario (Fix BCrypt - p_password VARCHAR(255))
+-- ═══════════════════════════════════════════════════════════════
+DROP PROCEDURE IF EXISTS sp_agregar_usuario;
+DELIMITER $$
+CREATE PROCEDURE sp_agregar_usuario(
+    IN p_nombre VARCHAR(40),
+    IN p_telefono VARCHAR(40),
+    IN p_email VARCHAR(50),
+    IN p_password VARCHAR(255),
+    IN p_nota VARCHAR(200),
+    IN p_firma VARCHAR(40),
+    IN p_tipo VARCHAR(3),
+    IN p_idCliente BIGINT,
+    IN p_idKine BIGINT,
+    IN p_idRol INT,
+    OUT p_resultado VARCHAR(200)
+)
+BEGIN
+    DECLARE v_new_id BIGINT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = CONCAT('Error: ', @err_msg);
+        ROLLBACK;
+    END;
+
+    -- Validate email not empty
+    IF p_email IS NULL OR TRIM(p_email) = '' THEN
+        SET p_resultado = 'Error: El email es requerido';
+    ELSE
+        -- Check duplicate email
+        IF EXISTS (SELECT 1 FROM usuario WHERE email = p_email AND fechaBaja IS NULL) THEN
+            SET p_resultado = 'Error: El email ya esta registrado';
+        ELSE
+            START TRANSACTION;
+            INSERT INTO usuario (nombre, telefono, email, passwordUsuarioEnc, nota, firma, tipo, idCliente, idKine, fechaAlta)
+            VALUES (p_nombre, p_telefono, p_email, p_password, p_nota, p_firma, p_tipo, p_idCliente, p_idKine, CURDATE());
+            SET v_new_id = LAST_INSERT_ID();
+
+            IF p_idRol IS NOT NULL AND p_idRol > 0 THEN
+                INSERT INTO usuario_rol (idUsuario, idRol) VALUES (v_new_id, p_idRol);
+            END IF;
+
+            COMMIT;
+            SET p_resultado = CONCAT('OK:', v_new_id);
+        END IF;
+    END IF;
+END$$
+DELIMITER ;
+
+-- ═══════════════════════════════════════════════════════════════
+-- SP: sp_editar_usuario (Fix BCrypt - p_password VARCHAR(255))
+-- ═══════════════════════════════════════════════════════════════
+DROP PROCEDURE IF EXISTS sp_editar_usuario;
+DELIMITER $$
+CREATE PROCEDURE sp_editar_usuario(
+    IN p_id BIGINT,
+    IN p_nombre VARCHAR(40),
+    IN p_telefono VARCHAR(40),
+    IN p_email VARCHAR(50),
+    IN p_password VARCHAR(255),
+    IN p_nota VARCHAR(200),
+    IN p_firma VARCHAR(40),
+    IN p_tipo VARCHAR(3),
+    IN p_idCliente BIGINT,
+    IN p_idKine BIGINT,
+    IN p_idRol INT,
+    OUT p_resultado VARCHAR(200)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = CONCAT('Error: ', @err_msg);
+        ROLLBACK;
+    END;
+
+    IF NOT EXISTS (SELECT 1 FROM usuario WHERE idUsuario = p_id) THEN
+        SET p_resultado = 'Error: Usuario no encontrado';
+    ELSE
+        START TRANSACTION;
+        UPDATE usuario SET
+            nombre = COALESCE(p_nombre, nombre),
+            telefono = COALESCE(p_telefono, telefono),
+            email = COALESCE(p_email, email),
+            passwordUsuarioEnc = CASE WHEN p_password IS NOT NULL AND p_password != '' THEN p_password ELSE passwordUsuarioEnc END,
+            nota = COALESCE(p_nota, nota),
+            firma = COALESCE(p_firma, firma),
+            tipo = COALESCE(p_tipo, tipo),
+            idCliente = COALESCE(p_idCliente, idCliente),
+            idKine = COALESCE(p_idKine, idKine)
+        WHERE idUsuario = p_id;
+
+        IF p_idRol IS NOT NULL AND p_idRol > 0 THEN
+            INSERT INTO usuario_rol (idUsuario, idRol) VALUES (p_id, p_idRol)
+            ON DUPLICATE KEY UPDATE idRol = p_idRol;
+        END IF;
+
+        COMMIT;
+        SET p_resultado = 'OK';
+    END IF;
+END$$
+DELIMITER ;
+
+-- ═══════════════════════════════════════════════════════════════
+-- SP: sp_usuario_reset_password (New - Admin reset with audit)
+-- ═══════════════════════════════════════════════════════════════
+DROP PROCEDURE IF EXISTS sp_usuario_reset_password;
+DELIMITER $$
+CREATE PROCEDURE sp_usuario_reset_password(
+    IN p_id_usuario_target INT,
+    IN p_nuevo_password_hash VARCHAR(255),
+    IN p_id_usuario_admin INT,
+    OUT p_resultado VARCHAR(200)
+)
+BEGIN
+    DECLARE v_nombre_target VARCHAR(40);
+    DECLARE v_nombre_admin VARCHAR(40);
+
+    SELECT nombre INTO v_nombre_target FROM usuario WHERE idUsuario = p_id_usuario_target;
+    IF v_nombre_target IS NULL THEN
+        SET p_resultado = 'Error: Usuario objetivo no encontrado';
+    ELSE
+        SELECT nombre INTO v_nombre_admin FROM usuario WHERE idUsuario = p_id_usuario_admin;
+        UPDATE usuario SET passwordUsuarioEnc = p_nuevo_password_hash WHERE idUsuario = p_id_usuario_target;
+        INSERT INTO audit_log (tabla, id_registro, accion, usuario_id, usuario_nombre, descripcion)
+        VALUES ('usuario', p_id_usuario_target, 'UPDATE', p_id_usuario_admin, v_nombre_admin,
+                CONCAT('Password reset para usuario ', v_nombre_target, ' (id=', p_id_usuario_target, ') por admin ', v_nombre_admin));
+        SET p_resultado = 'success';
+    END IF;
+END$$
+DELIMITER ;

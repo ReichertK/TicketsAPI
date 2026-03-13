@@ -18,6 +18,8 @@ namespace TicketsAPI.Tests.Controllers
         private readonly Mock<INotificacionService> _notificacionService = new();
         private readonly Mock<ITicketRepository> _ticketRepository = new();
         private readonly Mock<IExportService> _exportService = new();
+        private readonly Mock<INotificacionLecturaRepository> _notificacionLecturaRepo = new();
+        private readonly Mock<IAuthService> _authService = new();
         private readonly Mock<ILogger<TicketsController>> _logger = ControllerTestHelper.CreateMockLogger<TicketsController>();
         private readonly TicketsController _controller;
 
@@ -29,7 +31,9 @@ namespace TicketsAPI.Tests.Controllers
                 _estadoService.Object,
                 _notificacionService.Object,
                 _ticketRepository.Object,
-                _exportService.Object);
+                _exportService.Object,
+                _notificacionLecturaRepo.Object,
+                _authService.Object);
         }
 
         [Fact]
@@ -63,9 +67,8 @@ namespace TicketsAPI.Tests.Controllers
             };
 
             _ticketService
-                .Setup(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>()))
-                .ReturnsAsync(paginated)
-                .Callback<TicketFiltroDTO>(f => f.Id_Usuario.Should().Be(userId));
+                .Setup(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>(), It.IsAny<int>()))
+                .ReturnsAsync(paginated);
 
             ControllerTestHelper.SetupAuthenticatedUser(_controller, userId);
 
@@ -76,7 +79,7 @@ namespace TicketsAPI.Tests.Controllers
             result.Should().BeOfType<ObjectResult>();
             var objectResult = result as ObjectResult;
             objectResult!.StatusCode.Should().Be(200);
-            _ticketService.Verify(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>()), Times.Once);
+            _ticketService.Verify(s => s.GetFilteredAsync(It.IsAny<TicketFiltroDTO>(), userId), Times.Once);
         }
     }
 }

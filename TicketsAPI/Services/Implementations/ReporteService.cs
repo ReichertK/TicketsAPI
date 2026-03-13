@@ -11,6 +11,7 @@ namespace TicketsAPI.Services.Implementations
     public class ReporteService : IReporteService
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly IReporteRepository _reporteRepository;
         private readonly IEstadoRepository _estadoRepository;
         private readonly IPrioridadRepository _prioridadRepository;
         private readonly IDepartamentoRepository _departamentoRepository;
@@ -18,12 +19,14 @@ namespace TicketsAPI.Services.Implementations
 
         public ReporteService(
             ITicketRepository ticketRepository,
+            IReporteRepository reporteRepository,
             IEstadoRepository estadoRepository,
             IPrioridadRepository prioridadRepository,
             IDepartamentoRepository departamentoRepository,
             ILogger<ReporteService> logger)
         {
             _ticketRepository = ticketRepository;
+            _reporteRepository = reporteRepository;
             _estadoRepository = estadoRepository;
             _prioridadRepository = prioridadRepository;
             _departamentoRepository = departamentoRepository;
@@ -32,50 +35,7 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<DashboardDTO> GetDashboardAsync(int? idUsuario = null, int? idDepartamento = null)
         {
-            var filtro = new TicketFiltroDTO
-            {
-                Id_Usuario = idUsuario,
-                Id_Departamento = idDepartamento,
-                Pagina = 1,
-                TamañoPagina = int.MaxValue
-            };
-
-            var tickets = await _ticketRepository.GetFilteredAsync(filtro);
-
-            var ticketsPorEstado = tickets.Datos
-                .GroupBy(t => t.Estado?.Nombre_Estado ?? "Sin Estado")
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            var ticketsPorPrioridad = tickets.Datos
-                .GroupBy(t => t.Prioridad?.Nombre_Prioridad ?? "Sin Prioridad")
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            var ticketsPorDepartamento = tickets.Datos
-                .GroupBy(t => t.Departamento?.Nombre ?? "Sin Departamento")
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            // Calcular tiempo promedio de resolución (tickets cerrados con fecha)
-            var ticketsCerrados = tickets.Datos
-                .Where(t => t.Date_Cierre.HasValue && t.Date_Creado.HasValue)
-                .ToList();
-
-            var tiempoPromedioHoras = ticketsCerrados.Any()
-                ? ticketsCerrados.Average(t => (t.Date_Cierre!.Value - t.Date_Creado!.Value).TotalHours)
-                : 0;
-
-            return new DashboardDTO
-            {
-                TicketsTotal = tickets.TotalRegistros,
-                TicketsAbiertos = tickets.Datos.Count(t => t.Date_Cierre == null),
-                TicketsCerrados = tickets.Datos.Count(t => t.Date_Cierre != null),
-                TicketsEnProceso = tickets.Datos.Count(t => t.Estado?.Nombre_Estado?.Contains("Progreso") ?? false),
-                TicketsAsignadosAMi = idUsuario.HasValue ? tickets.Datos.Count(t => t.Id_Usuario_Asignado == idUsuario) : 0,
-                TicketsPorEstado = ticketsPorEstado,
-                TicketsPorPrioridad = ticketsPorPrioridad,
-                TicketsPorDepartamento = ticketsPorDepartamento,
-                TiempoPromedioResolucion = (decimal)Math.Round(tiempoPromedioHoras, 2),
-                TasaCumplimientoSLA = 0 // TODO: Implementar cálculo de SLA
-            };
+            return await _reporteRepository.GetDashboardAsync(idUsuario, idDepartamento);
         }
 
         public async Task<List<ReporteEstadoDTO>> GetReportePorEstadoAsync(FiltroReporteDTO? filtro = null)

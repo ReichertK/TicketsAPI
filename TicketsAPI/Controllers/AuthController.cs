@@ -38,7 +38,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en login");
-                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+                return Error<object>("Error interno del servidor", statusCode: 500);
             }
         }
 
@@ -63,7 +63,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al renovar token");
-                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+                return Error<object>("Error interno del servidor", statusCode: 500);
             }
         }
 
@@ -83,7 +83,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en logout");
-                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+                return Error<object>("Error interno del servidor", statusCode: 500);
             }
         }
 
@@ -104,7 +104,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener usuario actual");
-                return Error<object>("Error interno del servidor", new List<string> { ex.Message }, 500);
+                return Error<object>("Error interno del servidor", statusCode: 500);
             }
         }
     }

@@ -8,7 +8,7 @@ class Program
     {
         var connectionString = args.Length > 0 && !string.IsNullOrWhiteSpace(args[0])
             ? args[0]
-            : "Server=localhost;Port=3306;Database=cdk_tkt;Uid=root;Pwd=1346;SslMode=None";
+            : "Server=localhost;Port=3306;Database=tickets_db;Uid=YOUR_DB_USER;Pwd=YOUR_DB_PASSWORD;SslMode=None";
 
         var outputPath = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1])
             ? args[1]

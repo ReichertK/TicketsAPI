@@ -20,7 +20,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ==================== LOGGING ====================
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.File(
         path: builder.Configuration["Logging:FileLogging:Path"] ?? "logs/tickets-api-.txt",
@@ -45,7 +48,7 @@ try
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            var defaults = new[] { "http://localhost:3000", "http://localhost:5173", "https://localhost:5001", "http://localhost:5000" };
+            var defaults = new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://localhost:5001", "http://localhost:5000" };
             policy.WithOrigins(allowedOrigins ?? defaults)
                   .WithMethods(allowedMethods ?? new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" })
                   .WithHeaders(allowedHeaders ?? new[] { "*" })
@@ -61,13 +64,19 @@ try
     var issuer = jwtSettings["Issuer"];
     var audience = jwtSettings["Audience"];
 
+    // ── SEGURIDAD: La SecretKey DEBE estar configurada y NO ser el valor por defecto ──
+    if (string.IsNullOrWhiteSpace(secretKey))
+        throw new InvalidOperationException("JwtSettings:SecretKey no está configurada. Defínela en appsettings.json o en variables de entorno.");
+    if (secretKey.StartsWith("your-super-secret-key", StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException("JwtSettings:SecretKey sigue siendo el valor por defecto. Cámbiala por una clave segura de al menos 32 caracteres.");
+
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey ?? "your-super-secret-key-min-32-chars-required-for-production")),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 ValidateIssuer = true,
                 ValidIssuer = issuer,
                 ValidateAudience = true,
@@ -129,6 +138,8 @@ try
         new TicketsAPI.Repositories.Implementations.UsuarioRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.ITicketRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.TicketRepository(connectionString));
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IReporteRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.ReporteRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Ticket>>(sp =>
         sp.GetRequiredService<TicketsAPI.Repositories.Interfaces.ITicketRepository>());
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IEstadoRepository>(sp =>
@@ -163,17 +174,33 @@ try
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Comentario>>(comentarioRepository);
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IComentarioRepository>(comentarioRepository);
 
+    // Registrar NotificacionLecturaRepository
+    builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.INotificacionLecturaRepository>(sp =>
+        new TicketsAPI.Repositories.Implementations.NotificacionLecturaRepository(connectionString));
+
     // Registrar servicios
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IPasswordService, TicketsAPI.Services.Implementations.PasswordService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Implementations.BruteForceProtectionService>(sp =>
+        new TicketsAPI.Services.Implementations.BruteForceProtectionService(
+            connectionString,
+            sp.GetRequiredService<ILogger<TicketsAPI.Services.Implementations.BruteForceProtectionService>>()));
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IAuthService, TicketsAPI.Services.Implementations.AuthService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.ITicketService, TicketsAPI.Services.Implementations.TicketService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IEstadoService, TicketsAPI.Services.Implementations.EstadoService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IPrioridadService, TicketsAPI.Services.Implementations.PrioridadService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IDepartamentoService, TicketsAPI.Services.Implementations.DepartamentoService>();
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.INotificationProvider, TicketsAPI.Services.Implementations.SignalRNotificationProvider>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.INotificacionService, TicketsAPI.Services.Implementations.NotificacionService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IExportService, TicketsAPI.Services.Implementations.ExportService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IReporteService, TicketsAPI.Services.Implementations.ReporteService>();
     builder.Services.AddSingleton<TicketsAPI.Services.Implementations.CacheService>();
     builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+
+    // Registrar servicio de auditoría de configuración
+    builder.Services.AddSingleton<TicketsAPI.Services.Interfaces.IConfigAuditService>(sp =>
+        new TicketsAPI.Services.Implementations.ConfigAuditService(
+            connectionString,
+            sp.GetRequiredService<ILogger<TicketsAPI.Services.Implementations.ConfigAuditService>>()));
 
     // ==================== MEMORY CACHE ====================
     builder.Services.AddMemoryCache();
@@ -185,8 +212,42 @@ try
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
     // ==================== CONTROLLERS & API ====================
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            // Forzar camelCase explícito para garantizar contrato con el frontend
+            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            // Permitir caracteres Unicode (emoji, kanji, acentos) sin escapar a \uXXXX
+            options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
+        });
     builder.Services.AddEndpointsApiExplorer();
+
+    // ==================== MODEL VALIDATION LOGGING ====================
+    builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            Log.Warning("400 ModelState invalid for {Method} {Path}: {@Errors}",
+                context.HttpContext.Request.Method,
+                context.HttpContext.Request.Path + context.HttpContext.Request.QueryString,
+                errors);
+
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+                new Microsoft.AspNetCore.Mvc.ValidationProblemDetails(context.ModelState)
+                {
+                    Status = 400
+                });
+        };
+    });
 
     // ==================== SWAGGER ====================
     builder.Services.AddSwaggerGen(c =>
@@ -276,12 +337,18 @@ Ejemplo: 'Bearer {token}'
     var enableSwaggerSetting = builder.Configuration.GetValue<bool>("ApiSettings:EnableSwagger", builder.Environment.IsDevelopment());
 
     // ==================== SIGNALR ====================
-    builder.Services.AddSignalR()
+    builder.Services.AddSignalR(options =>
+    {
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+        options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    })
         .AddMessagePackProtocol();
 
     // ==================== HEALTH CHECK ====================
     builder.Services.AddHealthChecks()
-        .AddCheck<DatabaseHealthCheck>("Database");
+        .AddCheck<DatabaseHealthCheck>("Database")
+        .AddCheck<DashboardWarmupHealthCheck>("DashboardWarmup");
 
     // ==================== BUILD ====================
     var app = builder.Build();
@@ -303,6 +370,20 @@ Ejemplo: 'Bearer {token}'
         {
             logger.LogWarning(ex, "Error en cache warmup - continuando sin cache precargado");
         }
+
+        // Dashboard warmup: calentar InnoDB buffer pool y JIT
+        try
+        {
+            logger.LogInformation("Iniciando dashboard warmup...");
+            var healthCheckService = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckService>();
+            var report = await healthCheckService.CheckHealthAsync(
+                predicate: reg => reg.Name == "DashboardWarmup");
+            logger.LogInformation("Dashboard warmup: {Status}", report.Status);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error en dashboard warmup - continuando sin precarga");
+        }
     }
 
     // ==================== MIDDLEWARE ====================
@@ -318,6 +399,9 @@ Ejemplo: 'Bearer {token}'
     // CORS
     app.UseCors("AllowFrontend");
 
+    // WebSockets (required for SignalR WebSocket transport)
+    app.UseWebSockets();
+
 
     // Swagger
     if (enableSwaggerSetting)
@@ -330,33 +414,27 @@ Ejemplo: 'Bearer {token}'
         });
     }
 
-    app.UseHttpsRedirection();
+    // HTTPS redirection deshabilitado temporalmente para desarrollo local
+    // app.UseHttpsRedirection();
+
+    // Servir archivos estáticos del SPA (wwwroot/)
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+
     // Aplicar rate limiting antes de auth para proteger endpoints de SP
     app.UseIpRateLimiting();
     app.UseAuthentication();
+    app.UseUserActiveValidation();
     app.UseAuthorization();
 
     // ==================== ENDPOINTS ====================
-    // Página de bienvenida mínima en '/'
-    app.MapGet("/", () =>
-    {
-        var html = @"<!doctype html>
-        <html lang='es'>
-        <head><meta charset='utf-8'><title>TicketsAPI</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.6}a{color:#0b5cff;text-decoration:none}a:hover{text-decoration:underline}.tag{display:inline-block;background:#eef3ff;border:1px solid #cfe0ff;color:#0b5cff;border-radius:6px;padding:2px 8px;font-size:12px;margin-left:8px}</style></head>
-        <body>
-        <h1>TicketsAPI</h1>
-        <p>Bienvenido. Recursos útiles:</p>
-        <ul>
-            <li><a href='/swagger'>Swagger UI</a> <span class='tag'>API Docs</span></li>
-            <li><a href='/health'>/health</a> <span class='tag'>Health</span></li>
-            <li><a href='/api/sp'>/api/sp</a> <span class='tag'>JWT + 60/min</span></li>
-        </ul>
-        </body></html>";
-        return Results.Content(html, "text/html");
-    });
     app.MapControllers();
     app.MapHealthChecks("/health");
     app.MapHub<TicketHub>("/hubs/tickets");
+
+    // SPA Fallback: cualquier ruta no manejada por la API → index.html
+    // Esto permite que React Router maneje rutas como /tickets, /ayuda, etc.
+    app.MapFallbackToFile("index.html");
 
     // ==================== RUN ====================
     await app.RunAsync();

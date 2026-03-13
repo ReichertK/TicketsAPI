@@ -49,7 +49,10 @@ namespace TicketsAPI.Services.Implementations
             {
                 Id_Estado_Destino = t.Id_Estado_Destino,
                 Nombre_Estado = t.EstadoDestino?.Nombre_Estado ?? string.Empty,
-                Color = t.EstadoDestino?.Color ?? string.Empty
+                Color = t.EstadoDestino?.Color ?? string.Empty,
+                Permiso_Requerido = t.Permiso_Requerido,
+                Requiere_Propietario = t.Requiere_Propietario,
+                Requiere_Aprobacion = t.Requiere_Aprobacion
             }).ToList();
         }
 

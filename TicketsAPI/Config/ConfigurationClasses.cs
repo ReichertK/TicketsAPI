@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySqlConnector;
+using Dapper;
 
 namespace TicketsAPI.Config
 {
@@ -12,7 +13,8 @@ namespace TicketsAPI.Config
 
         public DatabaseHealthCheck(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _connectionString = configuration.GetConnectionString("DbTkt")
+                ?? configuration.GetConnectionString("DefaultConnection");
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
@@ -33,6 +35,47 @@ namespace TicketsAPI.Config
             catch (Exception ex)
             {
                 return HealthCheckResult.Unhealthy($"Error: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Health check que ejecuta una consulta liviana al dashboard para calentar
+    /// el buffer pool de InnoDB, el connection pool de .NET y el JIT del endpoint.
+    /// </summary>
+    public class DashboardWarmupHealthCheck : IHealthCheck
+    {
+        private readonly string? _connectionString;
+
+        public DashboardWarmupHealthCheck(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DbTkt")
+                ?? configuration.GetConnectionString("DefaultConnection");
+        }
+
+        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
+                    return HealthCheckResult.Degraded("Connection string no configurada para warmup");
+
+                using var conn = new MySqlConnection(_connectionString);
+                await conn.OpenAsync(cancellationToken);
+
+                // Warmup: consultas representativas del dashboard para calentar InnoDB buffer pool
+                var totalTickets = await conn.QuerySingleAsync<int>(
+                    "SELECT COUNT(*) FROM tkt WHERE Habilitado = 1", cancellationToken);
+
+                var porEstado = await conn.QueryAsync(
+                    "SELECT Id_Estado, COUNT(*) as total FROM tkt WHERE Habilitado = 1 GROUP BY Id_Estado",
+                    cancellationToken);
+
+                return HealthCheckResult.Healthy($"Dashboard warmup OK — {totalTickets} tickets en cache de InnoDB");
+            }
+            catch (Exception ex)
+            {
+                return HealthCheckResult.Degraded($"Warmup parcial: {ex.Message}");
             }
         }
     }

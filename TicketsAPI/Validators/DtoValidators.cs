@@ -100,7 +100,7 @@ namespace TicketsAPI.Validators
             RuleFor(x => x.Contenido)
                 .NotEmpty().WithMessage("El contenido es requerido")
                 .Length(10, 10000).WithMessage("El contenido debe tener entre 10 y 10000 caracteres")
-                .Must(c => !ContainsSqlInjectionPatterns(c)).WithMessage("El contenido contiene caracteres no permitidos");
+                .Must(c => IsSafeFromSqlInjection(c)).WithMessage("El contenido contiene caracteres no permitidos");
 
             RuleFor(x => x.Id_Prioridad)
                 .GreaterThan(0).WithMessage("La prioridad es inválida");
@@ -117,10 +117,13 @@ namespace TicketsAPI.Validators
                 .When(x => x.Id_Motivo.HasValue);
         }
 
-        private bool ContainsSqlInjectionPatterns(string content)
+        /// <summary>
+        /// Devuelve true si el texto NO contiene patrones de SQL injection.
+        /// </summary>
+        private static bool IsSafeFromSqlInjection(string content)
         {
             if (string.IsNullOrEmpty(content))
-                return false;
+                return true;
 
             var sqlPatterns = new[] { "';", "--", "/*", "*/", "xp_", "sp_", "DROP", "DELETE", "UPDATE", "INSERT" };
             var upperContent = content.ToUpperInvariant();
@@ -138,7 +141,7 @@ namespace TicketsAPI.Validators
         {
             RuleFor(x => x.Busqueda)
                 .MaximumLength(500).WithMessage("La búsqueda no puede exceder 500 caracteres")
-                .Must(b => !ContainsSqlInjectionPatterns(b)).WithMessage("La búsqueda contiene caracteres no permitidos")
+                .Must(b => IsSafeFromSqlInjection(b)).WithMessage("La búsqueda contiene caracteres no permitidos")
                 .When(x => !string.IsNullOrEmpty(x.Busqueda));
 
             RuleFor(x => x.TipoBusqueda)
@@ -158,10 +161,13 @@ namespace TicketsAPI.Validators
                 .When(x => x.Fecha_Desde.HasValue && x.Fecha_Hasta.HasValue);
         }
 
-        private bool ContainsSqlInjectionPatterns(string? text)
+        /// <summary>
+        /// Devuelve true si el texto NO contiene patrones de SQL injection.
+        /// </summary>
+        private static bool IsSafeFromSqlInjection(string? text)
         {
             if (string.IsNullOrEmpty(text))
-                return false;
+                return true;
 
             var sqlPatterns = new[] { "';", "--", "/*", "*/", "xp_", "sp_" };
             var upperText = text.ToUpperInvariant();

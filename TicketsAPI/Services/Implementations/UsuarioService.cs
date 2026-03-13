@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
 using TicketsAPI.Repositories.Interfaces;
@@ -12,17 +10,20 @@ namespace TicketsAPI.Services.Implementations
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IRolRepository _rolRepository;
         private readonly IDepartamentoRepository _departamentoRepository;
+        private readonly IPasswordService _passwordService;
         private readonly ILogger<UsuarioService> _logger;
 
         public UsuarioService(
             IUsuarioRepository usuarioRepository,
             IRolRepository rolRepository,
             IDepartamentoRepository departamentoRepository,
+            IPasswordService passwordService,
             ILogger<UsuarioService> logger)
         {
             _usuarioRepository = usuarioRepository;
             _rolRepository = rolRepository;
             _departamentoRepository = departamentoRepository;
+            _passwordService = passwordService;
             _logger = logger;
         }
 
@@ -41,15 +42,23 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<List<UsuarioDTO>> GetAllAsync()
         {
-            var usuarios = await _usuarioRepository.GetAllAsync();
+            // D2: Una sola consulta JOIN en lugar de N+1 (1 + N*rol + N*depto)
+            var usuarios = await _usuarioRepository.GetAllWithRelationsAsync();
+
+            return usuarios.Select(u => MapToDTO(u, u.Rol, u.Departamento)).ToList();
+        }
+
+        public async Task<List<UsuarioDTO>> GetFilteredAsync(string? nombre, string? email, string? tipo, int? habilitado)
+        {
+            var usuarios = await _usuarioRepository.GetFilteredAsync(nombre, email, tipo, habilitado);
             var dtos = new List<UsuarioDTO>();
 
             foreach (var usuario in usuarios)
             {
                 var rol = usuario.Id_Rol > 0 ? await _rolRepository.GetByIdAsync(usuario.Id_Rol) : null;
-                var departamento = usuario.Id_Departamento.HasValue ? 
+                var departamento = usuario.Id_Departamento.HasValue ?
                     await _departamentoRepository.GetByIdAsync(usuario.Id_Departamento.Value) : null;
-                
+
                 dtos.Add(MapToDTO(usuario, rol, departamento));
             }
 
@@ -94,7 +103,9 @@ namespace TicketsAPI.Services.Implementations
                 Apellido = dto.Apellido,
                 Email = dto.Email,
                 Usuario_Correo = dto.Usuario_Correo,
-                Contraseña = HashPassword(dto.Contraseña ?? ""),
+                Contraseña = !string.IsNullOrWhiteSpace(dto.Contraseña) 
+                    ? _passwordService.Hash(dto.Contraseña) 
+                    : string.Empty,
                 Id_Rol = dto.Id_Rol,
                 Id_Departamento = dto.Id_Departamento,
                 Activo = true,
@@ -138,7 +149,7 @@ namespace TicketsAPI.Services.Implementations
             // Solo actualizar contraseña si se proporciona
             if (!string.IsNullOrWhiteSpace(dto.Contraseña))
             {
-                usuario.Contraseña = HashPassword(dto.Contraseña);
+                usuario.Contraseña = _passwordService.Hash(dto.Contraseña);
             }
 
             var success = await _usuarioRepository.UpdateAsync(usuario);
@@ -154,12 +165,16 @@ namespace TicketsAPI.Services.Implementations
             if (usuario is null)
                 return false;
 
-            // Soft delete: marcar como inactivo
-            usuario.Activo = false;
-            var success = await _usuarioRepository.UpdateAsync(usuario);
+            // Soft delete / reactivación: toggle fechaBaja en la BD
+            var success = await _usuarioRepository.ToggleActiveAsync(id);
             
             if (success)
-                _logger.LogInformation($"Usuario {id} marcado como inactivo");
+            {
+                // Determinar estado nuevo consultando tras el toggle
+                var actualizado = await _usuarioRepository.GetByIdAsync(id);
+                var accion = actualizado?.Activo == false ? "marcado como inactivo" : "reactivado";
+                _logger.LogInformation("Usuario {Id} {Accion}", id, accion);
+            }
 
             return success;
         }
@@ -170,19 +185,19 @@ namespace TicketsAPI.Services.Implementations
             if (usuario is null)
                 return false;
 
-            // Verificar que la contraseña actual es correcta
-            if (!VerifyPassword(usuario.Contraseña, passwordActual))
+            // Verificar que la contraseña actual es correcta (soporta legacy + BCrypt)
+            if (!_passwordService.Verify(usuario.Contraseña, passwordActual))
             {
-                _logger.LogWarning($"Intento fallido de cambio de contraseña para usuario {id}");
+                _logger.LogWarning("Intento fallido de cambio de contraseña para usuario {UserId}", id);
                 return false;
             }
 
-            // Actualizar contraseña
-            usuario.Contraseña = HashPassword(passwordNueva);
+            // Actualizar contraseña siempre con BCrypt
+            usuario.Contraseña = _passwordService.Hash(passwordNueva);
             var success = await _usuarioRepository.UpdateAsync(usuario);
 
             if (success)
-                _logger.LogInformation($"Contraseña actualizada para usuario {id}");
+                _logger.LogInformation("Contraseña actualizada (BCrypt) para usuario {UserId}", id);
 
             return success;
         }
@@ -217,32 +232,11 @@ namespace TicketsAPI.Services.Implementations
             };
         }
 
-        /// <summary>
-        /// Hashea una contraseña usando SHA256 (simple, para compatibilidad con BD existente)
-        /// En producción, considerar usar BCrypt o Argon2
-        /// </summary>
-        private static string HashPassword(string password)
+        public async Task<bool> ResetPasswordAsync(int idUsuarioTarget, int idUsuarioAdmin, string nuevaPassword)
         {
-            if (string.IsNullOrWhiteSpace(password))
-                return string.Empty;
-
-            using var sha256 = SHA256.Create();
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
+            var hash = _passwordService.Hash(nuevaPassword);
+            return await _usuarioRepository.ResetPasswordAsync(idUsuarioTarget, hash, idUsuarioAdmin);
         }
 
-        /// <summary>
-        /// Verifica una contraseña contra su hash
-        /// </summary>
-        private static bool VerifyPassword(string storedHash, string providedPassword)
-        {
-            // Aceptar coincidencia directa (para usuarios sin hashear en BD)
-            if (string.Equals(storedHash, providedPassword))
-                return true;
-
-            // Verificar hash SHA256
-            var providedHash = HashPassword(providedPassword);
-            return string.Equals(storedHash, providedHash);
-        }
     }
 }

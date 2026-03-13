@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace TicketsAPI.Models.DTOs
 {
@@ -13,6 +14,16 @@ namespace TicketsAPI.Models.DTOs
 
         [Required(ErrorMessage = "La contraseña es requerida")]
         public string Contraseña { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO para restablecer contraseña (admin)
+    /// </summary>
+    public class ResetPasswordRequest
+    {
+        [Required(ErrorMessage = "La nueva contraseña es requerida")]
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+        public string NuevaPassword { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -65,15 +76,16 @@ namespace TicketsAPI.Models.DTOs
         [Required(ErrorMessage = "El nombre es requerido")]
         public string Nombre { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El apellido es requerido")]
         public string Apellido { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El email es requerido")]
         [EmailAddress(ErrorMessage = "Email inválido")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El usuario es requerido")]
         public string Usuario_Correo { get; set; } = string.Empty;
+
+        [JsonPropertyName("password")]
+        public string? Password { get; set; }
 
         public string? Contraseña { get; set; }
 
@@ -177,6 +189,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime? Date_Cambio_Estado { get; set; }
         public string? Contenido { get; set; }
         public int? Id_Motivo { get; set; }
+        public string? MotivoNombre { get; set; }
         public int? Habilitado { get; set; }
         public List<ComentarioDTO>? Comentarios { get; set; }
         public List<HistorialTicketDTO>? Historial { get; set; }
@@ -187,8 +200,10 @@ namespace TicketsAPI.Models.DTOs
     /// </summary>
     public class TransicionEstadoDTO
     {
-        [Required(ErrorMessage = "El nuevo estado es requerido")]
         public int Id_Estado_Nuevo { get; set; }
+
+        [JsonPropertyName("id_Estado_Destino")]
+        public int? Id_Estado_Destino { get; set; }
 
         public string? Comentario { get; set; }
         public string? Motivo { get; set; }
@@ -288,13 +303,46 @@ namespace TicketsAPI.Models.DTOs
         public bool? BuscarEnContenido { get; set; } = true;
         
         [StringLength(20)]
-        [RegularExpression(@"^(contiene|exacta|comienza|termina)$", ErrorMessage = "TipoBusqueda inválido")]
         public string? TipoBusqueda { get; set; } = "contiene"; // "contiene", "exacta", "comienza", "termina"
         
         public string? Ordenar_Por { get; set; }
         public bool? Orden_Descendente { get; set; }
         public int Pagina { get; set; } = 1;
         public int TamañoPagina { get; set; } = 20;
+
+        /// <summary>
+        /// Tipo de vista: "mis-tickets", "cola", "todos".
+        /// Se pasa como query param. El servicio selecciona el SP correcto.
+        /// </summary>
+        public string? Vista { get; set; }
+
+        /// <summary>
+        /// Filtro "sin asignar" para la cola de trabajo (legacy, ahora se usa Vista=cola).
+        /// </summary>
+        public bool? SinAsignar { get; set; }
+
+        /// <summary>
+        /// ID del usuario que visualiza. Cuando está seteado, el filtro se comporta como:
+        /// (creador = VistaUsuarioId) OR (asignado = VistaUsuarioId) OR (sin asignar)
+        /// Esto permite a agentes/operadores ver su cola personal + tickets liberados.
+        /// Se setea automáticamente en TicketService si el usuario NO tiene TKT_LIST_ALL.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int? VistaUsuarioId { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para asignación de ticket
+    /// </summary>
+    public class AsignarTicketDTO
+    {
+        [Required(ErrorMessage = "El ID de usuario es requerido")]
+        public int Id_Usuario_Asignado { get; set; }
+
+        /// <summary>
+        /// Comentario obligatorio al reasignar (cuando el ticket ya tenía dueño)
+        /// </summary>
+        public string? Comentario { get; set; }
     }
 
     /// <summary>
@@ -347,7 +395,9 @@ namespace TicketsAPI.Models.DTOs
     {
         public int Id_Motivo { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
         public string? Categoria { get; set; }
+        public bool Activo { get; set; }
     }
 
     /// <summary>
@@ -355,9 +405,31 @@ namespace TicketsAPI.Models.DTOs
     /// </summary>
     public class CreateUpdateMotivoDTO
     {
-        [Required]
         public string Nombre { get; set; } = string.Empty;
+        [JsonPropertyName("descripcion")]
+        public string? Descripcion { get; set; }
         public string? Categoria { get; set; }
+    }
+
+    // ==================== ESTADO / PRIORIDAD ADMIN DTOs ====================
+    /// <summary>
+    /// DTO para crear/actualizar estado
+    /// </summary>
+    public class CreateUpdateEstadoDTO
+    {
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para crear/actualizar prioridad
+    /// </summary>
+    public class CreateUpdatePrioridadDTO
+    {
+        [Required(ErrorMessage = "El nombre es requerido")]
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
     }
 
     // ==================== GRUPO DTOs ====================
@@ -510,5 +582,221 @@ namespace TicketsAPI.Models.DTOs
         public int? IdEstado { get; set; }
         public int? IdPrioridad { get; set; }
         public string? AgrupacionPeriodo { get; set; } = "dia"; // "dia", "semana", "mes"
+    }
+
+    // ==================== SUSCRIPCION DTOs ====================
+    /// <summary>
+    /// Resultado de sp_tkt_gestionar_suscripcion
+    /// </summary>
+    public class SuscripcionResultDTO
+    {
+        public int Success { get; set; }
+        public string? Message { get; set; }
+        public int Total { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para un suscriptor de ticket
+    /// </summary>
+    public class SuscriptorDTO
+    {
+        public int Id_Usuario { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public DateTime Fecha_Registro { get; set; }
+    }
+
+    // ==================== NOTIFICACION LECTURA DTOs ====================
+    /// <summary>
+    /// Resumen de notificaciones no leídas
+    /// </summary>
+    public class NotificacionResumenDTO
+    {
+        public int TotalNoLeidos { get; set; }
+        public int PendientesAsignados { get; set; }
+        public List<NotificacionTicketDTO> UltimosNoLeidos { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Ticket no leído en dropdown de notificaciones
+    /// </summary>
+    public class NotificacionTicketDTO
+    {
+        public long Id_Ticket { get; set; }
+        public string? Contenido { get; set; }
+        public int Id_Estado { get; set; }
+        public string Estado_Nombre { get; set; } = string.Empty;
+        public string? Prioridad_Nombre { get; set; }
+        public DateTime? Fecha_Cambio { get; set; }
+        public bool Es_Asignado_A_Mi { get; set; }
+    }
+
+    // ==================== RBAC (Roles & Permisos) DTOs ====================
+
+    public class RolListDTO
+    {
+        public int IdRol { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public int TotalPermisos { get; set; }
+    }
+
+    public class PermisoListDTO
+    {
+        public int IdPermiso { get; set; }
+        public string Codigo { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    public class CreateUpdateRolDTO
+    {
+        [Required(ErrorMessage = "El nombre del rol es requerido")]
+        [StringLength(64)]
+        public string Nombre { get; set; } = string.Empty;
+    }
+
+    public class CreateUpdatePermisoDTO
+    {
+        [Required(ErrorMessage = "El código del permiso es requerido")]
+        [StringLength(64)]
+        public string Codigo { get; set; } = string.Empty;
+        [StringLength(200)]
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    public class AsignarPermisosRolDTO
+    {
+        [Required]
+        public List<int> PermisoIds { get; set; } = new();
+    }
+
+    public class AsignarRolUsuarioDTO
+    {
+        [Required]
+        public int IdRol { get; set; }
+    }
+
+    // ==================== AUDIT LOG DTOs ====================
+    /// <summary>
+    /// DTO para registros de auditoría (audit_log)
+    /// </summary>
+    public class AuditLogDTO
+    {
+        public long IdAuditoria { get; set; }
+        public string Tabla { get; set; } = string.Empty;
+        public int? IdRegistro { get; set; }
+        public string Accion { get; set; } = string.Empty;
+        public int? UsuarioId { get; set; }
+        public string? UsuarioNombre { get; set; }
+        public string? ValoresAntiguos { get; set; }
+        public string? ValoresNuevos { get; set; }
+        public string? IpAddress { get; set; }
+        public DateTime Fecha { get; set; }
+        public string? Descripcion { get; set; }
+    }
+
+    /// <summary>
+    /// Filtros para consultar audit_log
+    /// </summary>
+    public class AuditLogFiltroDTO
+    {
+        public string? Tabla { get; set; }
+        public string? Accion { get; set; }
+        public int? UsuarioId { get; set; }
+        public string? Busqueda { get; set; }
+        public DateTime? FechaDesde { get; set; }
+        public DateTime? FechaHasta { get; set; }
+        public int Pagina { get; set; } = 1;
+        public int PorPagina { get; set; } = 50;
+    }
+
+    /// <summary>
+    /// Resumen de estadísticas del audit_log
+    /// </summary>
+    public class AuditLogStatsDTO
+    {
+        public long TotalEstimado { get; set; }
+        public Dictionary<string, long> PorAccion { get; set; } = new();
+        public Dictionary<string, long> PorTabla { get; set; } = new();
+        public DateTime? PrimeraFecha { get; set; }
+        public DateTime? UltimaFecha { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para historial de transiciones de un ticket (datos enriquecidos).
+    /// </summary>
+    public class TransicionHistorialDTO
+    {
+        public long IdTransicion { get; set; }
+        public long IdTkt { get; set; }
+        public int? EstadoFromId { get; set; }
+        public string? EstadoFromNombre { get; set; }
+        public int EstadoToId { get; set; }
+        public string EstadoToNombre { get; set; } = string.Empty;
+        public long? UsuarioActorId { get; set; }
+        public string? UsuarioActorNombre { get; set; }
+        public long? UsuarioAsignadoOldId { get; set; }
+        public long? UsuarioAsignadoNewId { get; set; }
+        public string? Comentario { get; set; }
+        public string? Motivo { get; set; }
+        public DateTime Fecha { get; set; }
+    }
+
+    // ==================== GLOBAL SEARCH DTOs ====================
+    /// <summary>
+    /// Resultado individual de la búsqueda global
+    /// </summary>
+    public class GlobalSearchItemDTO
+    {
+        public string Categoria { get; set; } = string.Empty;
+        public long Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public string? Extra { get; set; }
+    }
+
+    /// <summary>
+    /// Resultado agrupado de la búsqueda global
+    /// </summary>
+    public class GlobalSearchResultDTO
+    {
+        public List<GlobalSearchItemDTO> Tickets { get; set; } = new();
+        public List<GlobalSearchItemDTO> Usuarios { get; set; } = new();
+        public List<GlobalSearchItemDTO> Departamentos { get; set; } = new();
+    }
+
+    // ==================== TICKET STATS DTOs ====================
+    /// <summary>
+    /// Estadísticas rápidas de tickets para el mini-dashboard
+    /// </summary>
+    public class TicketStatsDTO
+    {
+        public int Abiertos { get; set; }
+        public int SinAsignar { get; set; }
+        public int Vencidos { get; set; }
+        public int TotalFiltro { get; set; }
+    }
+
+    // ==================== ALERTAS / MENCIONES DTOs ====================
+    /// <summary>
+    /// Alerta de mención (@usuario)
+    /// </summary>
+    public class AlertaDTO
+    {
+        public long IdAlerta { get; set; }
+        public string Tipo { get; set; } = string.Empty;
+        public long? IdTicket { get; set; }
+        public long? IdComentario { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public bool Leida { get; set; }
+        public DateTime Fecha { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para respuesta de exportación
+    /// </summary>
+    public class ExportResultDTO
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string ContentType { get; set; } = string.Empty;
+        public byte[] Data { get; set; } = Array.Empty<byte>();
     }
 }

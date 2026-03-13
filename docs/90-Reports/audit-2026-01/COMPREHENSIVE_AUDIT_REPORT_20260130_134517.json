@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-01-30T13:45:17.885399",
+  "database": {
+    "name": "cdk_tkt_dev",
+    "tables_total": 33,
+    "tables_with_data": 29,
+    "total_records": 1070,
+    "foreign_keys_active": 30,
+    "triggers_active": 4,
+    "referential_integrity_issues": 1
+  },
+  "test_data_extracted": {
+    "tickets": 5,
+    "usuarios": 3,
+    "comentarios": 5,
+    "estados": 7,
+    "departamentos": 5,
+    "transiciones": 5
+  },
+  "endpoints_tested": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "results": []
+  },
+  "bd_vs_api_comparisons": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "details": []
+  },
+  "summary": {
+    "database_healthy": false,
+    "api_responsive": true,
+    "data_integrity": "NOT_TESTED"
+  }
+}

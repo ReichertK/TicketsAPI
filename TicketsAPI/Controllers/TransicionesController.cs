@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Dapper;
+using MySqlConnector;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
@@ -68,7 +70,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener transiciones");
-                return Error<object>("Error al obtener transiciones", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener transiciones", statusCode: 500);
             }
         }
 
@@ -80,9 +82,6 @@ namespace TicketsAPI.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return Error<object>("Datos inválidos", statusCode: 400);
-
                 var ticket = await _ticketRepository.GetByIdAsync(ticketId);
                 if (ticket == null)
                     return Error<object>("Ticket no encontrado", statusCode: 404);
@@ -91,7 +90,11 @@ namespace TicketsAPI.Controllers
                 if (usuarioId <= 0)
                     return Error<object>("Usuario no autenticado", statusCode: 401);
 
-                if (dto == null || dto.Id_Estado_Nuevo <= 0)
+                if (dto == null)
+                    return Error<object>("Datos inválidos", statusCode: 400);
+
+                var estadoNuevo = dto.Id_Estado_Nuevo > 0 ? dto.Id_Estado_Nuevo : (dto.Id_Estado_Destino ?? 0);
+                if (estadoNuevo <= 0)
                     return Error<object>("Id_Estado_Nuevo es requerido", statusCode: 400);
 
                 // Validar transición con las reglas reales
@@ -102,14 +105,15 @@ namespace TicketsAPI.Controllers
                     int.TryParse(userRole, out rolId);
                 }
 
-                var permitido = await _estadoService.ValidarTransicionAsync(ticket.Id_Estado ?? 1, dto.Id_Estado_Nuevo, rolId);
+                var permitido = User.IsInRole("Administrador") || User.IsInRole("Admin") ||
+                                await _estadoService.ValidarTransicionAsync(ticket.Id_Estado ?? 1, estadoNuevo, rolId);
                 if (!permitido)
                     return Error<object>("Transición no permitida", statusCode: 403);
 
                 // Crear DTO para transición
                 var transicionDto = new TransicionEstadoDTO
                 {
-                    Id_Estado_Nuevo = dto.Id_Estado_Nuevo,
+                    Id_Estado_Nuevo = estadoNuevo,
                     Comentario = dto.Comentario
                 };
 
@@ -121,7 +125,7 @@ namespace TicketsAPI.Controllers
                 {
                     Id_Tkt = ticketId,
                     Id_Estado_Anterior = ticket.Id_Estado ?? 1,
-                    Id_Estado_Nuevo = dto.Id_Estado_Nuevo,
+                    Id_Estado_Nuevo = estadoNuevo,
                     Id_Usuario = usuarioId,
                     Comentario = dto.Comentario,
                     Fecha = DateTime.Now
@@ -130,14 +134,14 @@ namespace TicketsAPI.Controllers
                 var id = await _transicionRepository.CreateAsync(transicion);
 
                 // Notificar transición de estado
-                await _notificacionService.TransicionEstadoAsync(ticketId, usuarioId, dto.Id_Estado_Nuevo);
+                await _notificacionService.TransicionEstadoAsync(ticketId, usuarioId, estadoNuevo);
 
                 return Success(new { id }, "Transición realizada exitosamente");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al realizar transición");
-                return Error<object>("Error al realizar transición", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al realizar transición", statusCode: 500);
             }
         }
 
@@ -169,7 +173,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener transición");
-                return Error<object>("Error al obtener transición", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener transición", statusCode: 500);
             }
         }
 
@@ -203,7 +207,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener transiciones del usuario");
-                return Error<object>("Error al obtener transiciones del usuario", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener transiciones del usuario", statusCode: 500);
             }
         }
     }

@@ -16,16 +16,19 @@ namespace TicketsAPI.Controllers
         private readonly IBaseRepository<Aprobacion> _aprobacionRepository;
         private readonly IBaseRepository<Ticket> _ticketRepository;
         private readonly INotificacionService _notificacionService;
+        private readonly IAuthService _authService;
 
         public AprobacionesController(
             IBaseRepository<Aprobacion> aprobacionRepository,
             IBaseRepository<Ticket> ticketRepository,
             INotificacionService notificacionService,
+            IAuthService authService,
             ILogger<AprobacionesController> logger) : base(logger)
         {
             _aprobacionRepository = aprobacionRepository;
             _ticketRepository = ticketRepository;
             _notificacionService = notificacionService;
+            _authService = authService;
         }
 
         /// <summary>
@@ -39,6 +42,10 @@ namespace TicketsAPI.Controllers
                 var usuarioId = GetCurrentUserId();
                 if (usuarioId <= 0)
                     return Error<object>("Usuario no autenticado", statusCode: 401);
+
+                var tienePermiso = await _authService.ValidarPermisoAsync(usuarioId, "TKT_APPROVE");
+                if (!tienePermiso)
+                    return Error<object>("No tienes permisos para aprobar tickets", statusCode: 403);
 
                 var aprobaciones = await _aprobacionRepository.GetAllAsync();
 
@@ -63,7 +70,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener aprobaciones");
-                return Error<object>("Error al obtener aprobaciones", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener aprobaciones", statusCode: 500);
             }
         }
 
@@ -105,7 +112,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al solicitar aprobación");
-                return Error<object>("Error al solicitar aprobación", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al solicitar aprobación", statusCode: 500);
             }
         }
 
@@ -137,7 +144,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener aprobación");
-                return Error<object>("Error al obtener aprobación", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener aprobación", statusCode: 500);
             }
         }
 
@@ -159,6 +166,9 @@ namespace TicketsAPI.Controllers
                 var usuarioId = GetCurrentUserId();
                 if (usuarioId <= 0)
                     return Error<object>("Usuario no autenticado", statusCode: 401);
+                var tienePermiso = await _authService.ValidarPermisoAsync(usuarioId, "TKT_APPROVE");
+                if (!tienePermiso)
+                    return Error<object>("No tienes permisos para aprobar tickets", statusCode: 403);
                 if (aprobacion.Id_Usuario_Aprobador != usuarioId)
                     return Error<object>("No tiene permiso para responder esta aprobación", statusCode: 403);
 
@@ -173,7 +183,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al responder aprobación");
-                return Error<object>("Error al responder aprobación", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al responder aprobación", statusCode: 500);
             }
         }
 
@@ -211,7 +221,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener aprobaciones del ticket");
-                return Error<object>("Error al obtener aprobaciones del ticket", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener aprobaciones del ticket", statusCode: 500);
             }
         }
     }

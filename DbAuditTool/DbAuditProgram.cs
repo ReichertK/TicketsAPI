@@ -9,14 +9,14 @@ namespace DbAuditTool
     {
         static void Main(string[] args)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdk_tkt_dev;Uid=root;Pwd=1346;ConvertZeroDateTime=true;SslMode=none";
+            string connStr = "Server=localhost;Port=3306;Database=tickets_db;Uid=YOUR_DB_USER;Pwd=YOUR_DB_PASSWORD;ConvertZeroDateTime=true;SslMode=none";
             
-            Console.WriteLine("🔍 AUDITORÍA DB - Tablas sin uso");
+            Console.WriteLine("\ud83d\udd0d AUDITOR\u00cdA DB - Tablas sin uso");
             Console.WriteLine("=================================\n");
 
             using var conn = new MySqlConnection(connStr);
             conn.Open();
-            Console.WriteLine("✅ Conexión establecida a cdk_tkt_dev\n");
+            Console.WriteLine("\u2705 Conexi\u00f3n establecida a tickets_db\n");
 
             // 1. Conteo de filas
             Console.WriteLine("📊 CONTEO DE FILAS:\n");

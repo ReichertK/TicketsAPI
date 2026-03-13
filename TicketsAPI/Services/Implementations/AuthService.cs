@@ -16,6 +16,8 @@ namespace TicketsAPI.Services.Implementations
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IRolRepository _rolRepository;
         private readonly IPermisoRepository _permisoRepository;
+        private readonly IPasswordService _passwordService;
+        private readonly BruteForceProtectionService _bruteForce;
         private readonly ILogger<AuthService> _logger;
         private readonly JwtSettings _jwtSettings;
         private const int RefreshTokenExpirationDays = 7;
@@ -24,28 +26,68 @@ namespace TicketsAPI.Services.Implementations
             IUsuarioRepository usuarioRepository, 
             IRolRepository rolRepository,
             IPermisoRepository permisoRepository,
+            IPasswordService passwordService,
+            BruteForceProtectionService bruteForce,
             ILogger<AuthService> logger,
             IOptions<JwtSettings> jwtOptions)
         {
             _usuarioRepository = usuarioRepository;
             _rolRepository = rolRepository;
             _permisoRepository = permisoRepository;
+            _passwordService = passwordService;
+            _bruteForce = bruteForce;
             _logger = logger;
             _jwtSettings = jwtOptions.Value;
         }
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
+            // ── Protección contra fuerza bruta ──
+            var (bloqueado, intentosRestantes, bloqueadoHasta) = await _bruteForce.VerificarBloqueoAsync(request.Usuario);
+            if (bloqueado)
+            {
+                _logger.LogWarning("Intento de login para cuenta bloqueada: {User} (hasta {Hasta})",
+                    request.Usuario, bloqueadoHasta?.ToString("HH:mm:ss"));
+                return null; // Cuenta bloqueada temporalmente
+            }
+
             var isEmail = request.Usuario.Contains('@');
             var usuario = isEmail
                 ? await _usuarioRepository.GetByEmailAsync(request.Usuario)
                 : await _usuarioRepository.GetByUsuarioAsync(request.Usuario);
 
             if (usuario is null || !usuario.Activo)
+            {
+                // Registrar intento fallido incluso si el usuario no existe (evitar enumeración)
+                await _bruteForce.RegistrarIntentoFallidoAsync(request.Usuario, "127.0.0.1");
                 return null;
+            }
 
-            if (!PasswordMatches(usuario.Contraseña, request.Contraseña))
+            // Verificar contraseña con soporte multi-formato (BCrypt, MD5, SHA256, plaintext)
+            if (!_passwordService.Verify(usuario.Contraseña, request.Contraseña))
+            {
+                await _bruteForce.RegistrarIntentoFallidoAsync(request.Usuario, "127.0.0.1");
                 return null;
+            }
+
+            // Login exitoso → limpiar contador de intentos
+            await _bruteForce.LimpiarIntentosAsync(request.Usuario);
+
+            // ── Migración progresiva: si el hash NO es BCrypt, actualizarlo silenciosamente ──
+            if (!_passwordService.IsBCrypt(usuario.Contraseña))
+            {
+                try
+                {
+                    var bcryptHash = _passwordService.Hash(request.Contraseña);
+                    await _usuarioRepository.UpdatePasswordHashAsync(usuario.Id_Usuario, bcryptHash);
+                    _logger.LogInformation("Contraseña migrada a BCrypt para usuario {UserId}", usuario.Id_Usuario);
+                }
+                catch (Exception ex)
+                {
+                    // Si la migración falla, loguear pero dejar entrar al usuario
+                    _logger.LogError(ex, "Error al migrar contraseña a BCrypt para usuario {UserId}", usuario.Id_Usuario);
+                }
+            }
 
             // Cargar rol desde BD usando el Id_Rol del usuario
             var rol = usuario.Id_Rol > 0 
@@ -172,9 +214,23 @@ namespace TicketsAPI.Services.Implementations
             if (usuario is null || !usuario.Activo)
                 return false;
 
-            // Obtener permisos del rol del usuario
-            var permisos = await _permisoRepository.GetByRolAsync(usuario.Id_Rol);
-            var tienePermiso = permisos.Any(p => p.Codigo == codigoPermiso);
+            // Bypass para administrador
+            if (usuario.Id_Rol > 0)
+            {
+                var rol = await _rolRepository.GetByIdAsync(usuario.Id_Rol);
+                if (rol != null && string.Equals(rol.Nombre_Rol, "Administrador", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            // Obtener permisos del usuario (SP) con fallback al rol
+            var codigos = await _permisoRepository.GetCodigosByUsuarioAsync(idUsuario);
+            if (codigos == null || codigos.Count == 0)
+            {
+                var permisos = await _permisoRepository.GetByRolAsync(usuario.Id_Rol);
+                codigos = permisos.Select(p => p.Codigo).ToList();
+            }
+
+            var tienePermiso = codigos.Any(c => string.Equals(c, codigoPermiso, StringComparison.OrdinalIgnoreCase));
 
             if (!tienePermiso)
             {
@@ -184,21 +240,29 @@ namespace TicketsAPI.Services.Implementations
             return tienePermiso;
         }
 
-        private bool PasswordMatches(string stored, string provided)
+        private string GenerateJwtToken(int userId, string name, string email, string role)
         {
-            // Acepta coincidencia directa o coincidencia con MD5
-            if (string.Equals(stored, provided)) return true;
-            var providedMd5 = ComputeMd5(provided);
-            return string.Equals(stored, providedMd5, StringComparison.OrdinalIgnoreCase);
-        }
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, name),
+                new Claim(JwtRegisteredClaimNames.Email, email),
+                new Claim(ClaimTypes.Role, role)
+            };
 
-        private static string ComputeMd5(string input)
-        {
-            using var md5 = MD5.Create();
-            var bytes = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
-            var sb = new StringBuilder();
-            foreach (var b in bytes) sb.Append(b.ToString("x2"));
-            return sb.ToString();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes > 0 ? _jwtSettings.ExpirationMinutes : 60);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
+                claims: claims,
+                expires: expires,
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         /// <summary>
@@ -217,37 +281,9 @@ namespace TicketsAPI.Services.Implementations
         /// </summary>
         private static string HashToken(string token)
         {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
             return Convert.ToBase64String(hashedBytes);
-        }
-
-        private string GenerateJwtToken(int userId, string name, string email, string role)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, name),
-                new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Role, role)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                string.IsNullOrWhiteSpace(_jwtSettings.SecretKey)
-                    ? "your-super-secret-key-min-32-chars-required-for-production"
-                    : _jwtSettings.SecretKey));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes > 0 ? _jwtSettings.ExpirationMinutes : 60);
-
-            var token = new JwtSecurityToken(
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
-                claims: claims,
-                expires: expires,
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

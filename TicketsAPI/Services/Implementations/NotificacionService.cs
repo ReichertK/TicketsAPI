@@ -1,141 +1,111 @@
-using Microsoft.AspNetCore.SignalR;
-using TicketsAPI.Config;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
+    /// <summary>
+    /// Servicio de notificaciones refactorizado para usar INotificationProvider.
+    /// Ya no depende directamente de SignalR — se puede inyectar cualquier proveedor.
+    /// </summary>
     public class NotificacionService : INotificacionService
     {
-        private readonly IHubContext<TicketHub> _hubContext;
+        private readonly INotificationProvider _provider;
         private readonly ILogger<NotificacionService> _logger;
 
         public NotificacionService(
-            IHubContext<TicketHub> hubContext,
+            INotificationProvider provider,
             ILogger<NotificacionService> logger)
         {
-            _hubContext = hubContext;
+            _provider = provider;
             _logger = logger;
+            _logger.LogInformation("NotificacionService inicializado con proveedor: {Provider}", _provider.ProviderName);
         }
 
         // Métodos antiguos para compatibilidad
         public async Task NotificarNuevoTicketAsync(int idTicket)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("NuevoTicket", idTicket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar nuevo ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("NuevoTicket", idTicket);
         }
 
         // Nuevos métodos con parámetros extendidos
         public async Task NotificarNuevoTicketAsync(int idTicket, int idUsuarioCreador)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("NuevoTicket", new { idTicket, idUsuarioCreador });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar nuevo ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("NuevoTicket", new { idTicket, idUsuarioCreador });
         }
 
         public async Task NotificarActualizacionTicketAsync(int idTicket)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("ActualizacionTicket", idTicket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar actualización de ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("ActualizacionTicket", idTicket);
         }
 
         public async Task ActualizacionTicketAsync(int idTicket, int idUsuarioActualizador)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("ActualizacionTicket", new { idTicket, idUsuarioActualizador });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar actualización de ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("ActualizacionTicket", new { idTicket, idUsuarioActualizador });
         }
 
         public async Task NotificarSolicitudAprobacionAsync(int idTicket)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("SolicitudAprobacion", idTicket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar solicitud de aprobación {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("SolicitudAprobacion", idTicket);
         }
 
         public async Task SolicitudAprobacionAsync(int idTicket, int idUsuarioSolicitante, int idUsuarioAprobador)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("SolicitudAprobacion", new { idTicket, idUsuarioSolicitante, idUsuarioAprobador });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar solicitud de aprobación {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("SolicitudAprobacion", new { idTicket, idUsuarioSolicitante, idUsuarioAprobador });
         }
 
         public async Task NotificarTransicionEstadoAsync(int idTicket, string nuevoEstado)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("TransicionEstado", new { idTicket, nuevoEstado });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar transición de estado del ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("TransicionEstado", new { idTicket, nuevoEstado });
         }
 
         public async Task TransicionEstadoAsync(int idTicket, int idUsuario, int idEstadoNuevo)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("TransicionEstado", new { idTicket, idUsuario, idEstadoNuevo });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar transición de estado del ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("TransicionEstado", new { idTicket, idUsuario, idEstadoNuevo });
         }
 
         public async Task NotificarNuevoComentarioAsync(int idTicket)
         {
-            try
-            {
-                await _hubContext.Clients.All.SendAsync("NuevoComentario", idTicket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al notificar nuevo comentario en ticket {IdTicket}", idTicket);
-            }
+            await _provider.BroadcastAsync("NuevoComentario", idTicket);
         }
 
         public async Task NuevoComentarioAsync(int idTicket, int idUsuario, string comentario)
         {
+            await _provider.BroadcastAsync("NuevoComentario", new { idTicket, idUsuario, comentario });
+        }
+
+        public async Task MencionUsuarioAsync(int idUsuarioDestino, int idTicket, long idComentario, string mensaje)
+        {
             try
             {
-                await _hubContext.Clients.All.SendAsync("NuevoComentario", new { idTicket, idUsuario, comentario });
+                await _provider.SendToUserAsync(idUsuarioDestino, "MencionUsuario", new
+                {
+                    idTicket,
+                    idComentario,
+                    mensaje,
+                    fecha = DateTime.UtcNow
+                });
+                _logger.LogInformation("[Mención] Alerta enviada a user_{UserId} para ticket #{TicketId}", idUsuarioDestino, idTicket);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al notificar nuevo comentario en ticket {IdTicket}", idTicket);
+                _logger.LogError(ex, "[Mención] Error al enviar alerta a user_{UserId}", idUsuarioDestino);
+            }
+        }
+
+        public async Task AsignacionTicketAsync(int idUsuarioDestino, int idTicket, string mensaje)
+        {
+            try
+            {
+                await _provider.SendToUserAsync(idUsuarioDestino, "TicketAssigned", new
+                {
+                    idTicket,
+                    mensaje,
+                    fecha = DateTime.UtcNow
+                });
+                _logger.LogInformation("[Asignación] Alerta enviada a user_{UserId} para ticket #{TicketId}", idUsuarioDestino, idTicket);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Asignación] Error al enviar alerta a user_{UserId}", idUsuarioDestino);
             }
         }
     }

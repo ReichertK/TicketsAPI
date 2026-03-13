@@ -55,5 +55,21 @@ namespace TicketsAPI.Config
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             _logger.LogInformation($"Usuario suscrito a notificaciones de aprobación");
         }
+
+        /// <summary>
+        /// Permite que el usuario se suscriba a sus propias alertas/menciones personales.
+        /// El cliente debe invocar esto al conectarse para recibir eventos dirigidos.
+        /// </summary>
+        public async Task SubscribeToUser()
+        {
+            var userId = Context.User?.FindFirst("sub")?.Value 
+                ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var groupName = $"user_{userId}";
+                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+                _logger.LogInformation("Usuario {UserId} suscrito a grupo personal {Group}", userId, groupName);
+            }
+        }
     }
 }

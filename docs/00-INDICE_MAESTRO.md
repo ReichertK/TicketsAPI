@@ -38,12 +38,17 @@ docs/
 ├── 06-Roadmap/             🗺️ ROADMAP - Planificación estratégica
 ├── 10-API/                 🌐 API - Documentación de endpoints
 ├── 20-DB/                  💾 DATABASE - Esquema y auditoría
+│   ├── scripts/            📝 Scripts SQL de corrección/mantenimiento
+│   ├── backups/            💾 Backups de seguridad
+│   └── audit/              🔍 Reportes de auditoría de BD
 ├── 30-Auth/                🔐 SEGURIDAD - Autenticación y permisos
 ├── 40-Testing/             🧪 TESTING - Reportes y planes de prueba
 │   └── Artifacts/          📁 Outputs (txt) y Results (json) de tests
 ├── 90-Reports/             📊 REPORTES - Informes y checklists
-│   └── Analisis/           🔬 Análisis técnicos (SLA, Tendencias)
+│   ├── Analisis/           🔬 Análisis técnicos (SLA, Tendencias)
+│   └── audit-2026-01/      🔍 Auditoría y correcciones (Enero 2026)
 └── 99-Archivo/             📦 ARCHIVO - Documentos antiguos/archivados
+    └── audit-session-2026-01/  📦 Docs de auditoría archivados
 ```
 
 ---
@@ -178,6 +183,20 @@ docs/
 
 **Propósito:** Documentación de esquema, auditoría y migraciones
 
+### 🆕 Auditoría Completa (2025-01-15)
+| Documento | Propósito | Audiencia |
+|-----------|-----------|-----------|
+| [DB_AUDIT_ANALYSIS.md](20-DB/DB_AUDIT_ANALYSIS.md) | **🆕 Análisis exhaustivo de integridad BD** | Tech Lead, DBAs |
+| [AUDIT_IMPLEMENTATION_SUMMARY.md](20-DB/AUDIT_IMPLEMENTATION_SUMMARY.md) | **🆕 Resumen ejecutivo + plan 3 sprints** | PMs, Developers |
+| [FK_TRIGGERS_AUDIT_FIX.sql](20-DB/FK_TRIGGERS_AUDIT_FIX.sql) | **🆕 SQL: 18 FKs + 5 triggers + 4 tablas** | DBAs, Developers |
+
+**📊 Hallazgos clave:**
+- ✅ 30 tablas, 52 SPs, 58 índices (excelentes)
+- ❌ 9 FKs reales vs 27+ necesarias (CRÍTICO)
+- ❌ 0 triggers vs 5+ necesarios (CRÍTICO)
+- ❌ 0 tablas auditoría vs 4 necesarias (CRÍTICO)
+
+### Documentación Anterior
 | Documento | Contenido |
 |-----------|-----------|
 | [AUDIT_ENDPOINTS_SPs.md](20-DB/AUDIT_ENDPOINTS_SPs.md) | Auditoría de endpoints y SPs |
@@ -304,6 +323,9 @@ docs/
 - [PERMISSIONS_MATRIX.md](30-Auth/PERMISSIONS_MATRIX.md)
 
 ### 💾 Base de Datos
+- [DB_AUDIT_ANALYSIS.md](20-DB/DB_AUDIT_ANALYSIS.md) - 🆕 **Auditoría completa de BD**
+- [AUDIT_IMPLEMENTATION_SUMMARY.md](20-DB/AUDIT_IMPLEMENTATION_SUMMARY.md) - 🆕 **Resumen ejecutivo + plan de implementación**
+- [FK_TRIGGERS_AUDIT_FIX.sql](20-DB/FK_TRIGGERS_AUDIT_FIX.sql) - 🆕 **Script SQL de correcciones (18 FKs, 5 triggers, 4 tablas)**
 - [AUDIT_ENDPOINTS_SPs.md](20-DB/AUDIT_ENDPOINTS_SPs.md)
 - [cdk_tkt.sql](20-DB/cdk_tkt.sql)
 

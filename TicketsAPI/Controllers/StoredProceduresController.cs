@@ -7,10 +7,11 @@ namespace TicketsAPI.Controllers
 {
     [ApiController]
     [Route("api/sp")]
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class StoredProceduresController : BaseApiController
     {
         private readonly string _connectionString;
+        private readonly HashSet<string> _allowedProcedures;
 
         public StoredProceduresController(IConfiguration configuration, ILogger<StoredProceduresController> logger) : base(logger)
         {
@@ -19,6 +20,9 @@ namespace TicketsAPI.Controllers
                 ?? configuration.GetConnectionString("DbTkt")
                 ?? configuration.GetValue<string>("ConnectionString")
                 ?? throw new InvalidOperationException("ConnectionString no configurada");
+
+            var allowedList = configuration.GetSection("ApiSettings:AllowedStoredProcedures").Get<string[]>();
+            _allowedProcedures = new HashSet<string>(allowedList ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         }
 
         [HttpGet]
@@ -52,7 +56,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al listar procedimientos almacenados");
-                return Error<object>("Error al listar procedimientos", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al listar procedimientos", statusCode: 500);
             }
         }
 
@@ -89,7 +93,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener detalle de procedimiento");
-                return Error<object>("Error al obtener procedimiento", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al obtener procedimiento", statusCode: 500);
             }
         }
 
@@ -103,6 +107,15 @@ namespace TicketsAPI.Controllers
         {
             try
             {
+                // Validar contra whitelist de SPs permitidos
+                if (!_allowedProcedures.Contains(name))
+                {
+                    _logger.LogWarning("Intento de ejecutar SP no autorizado: {SpName} por usuario {UserId}", name, GetCurrentUserId());
+                    return Error<object>("Procedimiento no permitido", new List<string> { $"'{name}' no está en la lista de procedimientos autorizados" }, 403);
+                }
+
+                _logger.LogInformation("Ejecutando SP autorizado: {SpName} por usuario {UserId}", name, GetCurrentUserId());
+
                 await using var conn = new MySqlConnection(_connectionString);
                 await conn.OpenAsync();
                 await using var cmd = new MySqlCommand(name, conn) { CommandType = CommandType.StoredProcedure };
@@ -141,7 +154,7 @@ namespace TicketsAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al ejecutar procedimiento almacenado {Name}", name);
-                return Error<object>($"Error al ejecutar {name}", new List<string> { ex.Message }, 500);
+                return Error<object>("Error al ejecutar procedimiento", statusCode: 500);
             }
         }
 

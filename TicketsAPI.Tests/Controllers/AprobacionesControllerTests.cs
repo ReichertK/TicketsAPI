@@ -17,6 +17,7 @@ namespace TicketsAPI.Tests.Controllers
         private readonly Mock<IBaseRepository<Aprobacion>> _mockAprobacionRepository;
         private readonly Mock<IBaseRepository<Ticket>> _mockTicketRepository;
         private readonly Mock<INotificacionService> _mockNotificacionService;
+        private readonly Mock<IAuthService> _mockAuthService;
         private readonly Mock<ILogger<AprobacionesController>> _mockLogger;
         private readonly AprobacionesController _controller;
 
@@ -25,12 +26,14 @@ namespace TicketsAPI.Tests.Controllers
             _mockAprobacionRepository = new Mock<IBaseRepository<Aprobacion>>();
             _mockTicketRepository = new Mock<IBaseRepository<Ticket>>();
             _mockNotificacionService = new Mock<INotificacionService>();
+            _mockAuthService = new Mock<IAuthService>();
             _mockLogger = ControllerTestHelper.CreateMockLogger<AprobacionesController>();
             
             _controller = new AprobacionesController(
                 _mockAprobacionRepository.Object,
                 _mockTicketRepository.Object,
                 _mockNotificacionService.Object,
+                _mockAuthService.Object,
                 _mockLogger.Object
             );
         }
@@ -64,6 +67,7 @@ namespace TicketsAPI.Tests.Controllers
 
             _mockAprobacionRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(aprobaciones);
             ControllerTestHelper.SetupAuthenticatedUser(_controller, usuarioId);
+            _mockAuthService.Setup(s => s.ValidarPermisoAsync(usuarioId, "TKT_APPROVE")).ReturnsAsync(true);
 
             // Act
             var result = await _controller.ObtenerAprobacionesPendientes();
@@ -99,6 +103,7 @@ namespace TicketsAPI.Tests.Controllers
             // Arrange
             _mockAprobacionRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Aprobacion>());
             ControllerTestHelper.SetupAuthenticatedUser(_controller, 5);
+            _mockAuthService.Setup(s => s.ValidarPermisoAsync(5, "TKT_APPROVE")).ReturnsAsync(true);
 
             // Act
             var result = await _controller.ObtenerAprobacionesPendientes();
@@ -226,6 +231,7 @@ namespace TicketsAPI.Tests.Controllers
                 .Returns(Task.CompletedTask);
 
             ControllerTestHelper.SetupAuthenticatedUser(_controller, usuarioId);
+            _mockAuthService.Setup(s => s.ValidarPermisoAsync(usuarioId, "TKT_APPROVE")).ReturnsAsync(true);
 
             // Act
             var result = await _controller.ResponderAprobacion(aprobacionId, dto);

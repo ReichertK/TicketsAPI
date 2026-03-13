@@ -200,12 +200,41 @@ Ver [DEPLOY_IIS_GUIDE.md](docs/90-Reports/DEPLOY_IIS_GUIDE.md) para la guía com
 
 ## 🧪 Testing
 
-```bash
-# Tests unitarios del backend
-cd TicketsAPI.Tests
-dotnet test
+### Backend (xUnit + Moq + FluentAssertions)
 
-# Tests de integración
+```bash
+cd TicketsAPI.Tests
+dotnet test --verbosity normal
+```
+
+**Cobertura actual**: 95 tests (92 ✅ | 3 omitidos por diseño)
+
+| Suite | Tests | Capa testeada |
+|-------|------:|---------------|
+| AuthServiceTests | 12 | Login, RefreshToken, Logout, Permisos, BCrypt migration |
+| TicketServiceTests | 11 | CRUD, permisos, máquina de estados, vista-routing |
+| EstadoServiceTests | 8 | Transiciones, políticas, state machine rules |
+| Controller tests | 64 | Endpoints REST, validaciones HTTP, error codes |
+
+### Frontend (Vitest + React Testing Library)
+
+```bash
+cd tickets-frontend
+npm test          # modo watch
+npm run test:run  # ejecución única
+```
+
+**Cobertura actual**: 18 tests (18 ✅)
+
+| Suite | Tests | Capa testeada |
+|-------|------:|---------------|
+| LoginPage smoke | 6 | Render, branding, inputs, toggle password, loading state |
+| TicketsPage smoke | 3 | Render, heading, nuevo ticket button |
+| AuthStore (Zustand) | 9 | login/logout, permisos, roles, localStorage |
+
+### Tests de integración
+
+```bash
 python integration_tests.py
 ```
 

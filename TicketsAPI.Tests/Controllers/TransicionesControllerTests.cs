@@ -18,6 +18,7 @@ namespace TicketsAPI.Tests.Controllers
         private readonly Mock<IBaseRepository<Ticket>> _mockTicketRepository;
         private readonly Mock<INotificacionService> _mockNotificacionService;
         private readonly Mock<ITicketService> _mockTicketService;
+        private readonly Mock<IEstadoService> _mockEstadoService;
         private readonly Mock<ILogger<TransicionesController>> _mockLogger;
         private readonly TransicionesController _controller;
 
@@ -27,6 +28,7 @@ namespace TicketsAPI.Tests.Controllers
             _mockTicketRepository = new Mock<IBaseRepository<Ticket>>();
             _mockNotificacionService = new Mock<INotificacionService>();
             _mockTicketService = new Mock<ITicketService>();
+            _mockEstadoService = new Mock<IEstadoService>();
             _mockLogger = ControllerTestHelper.CreateMockLogger<TransicionesController>();
             
             _controller = new TransicionesController(
@@ -34,6 +36,7 @@ namespace TicketsAPI.Tests.Controllers
                 _mockTicketRepository.Object,
                 _mockNotificacionService.Object,
                 _mockTicketService.Object,
+                _mockEstadoService.Object,
                 _mockLogger.Object
             );
         }
@@ -139,6 +142,7 @@ namespace TicketsAPI.Tests.Controllers
                 .Returns(Task.CompletedTask);
 
             ControllerTestHelper.SetupAuthenticatedUser(_controller, usuarioId);
+            _mockEstadoService.Setup(s => s.ValidarTransicionAsync(2, 3, It.IsAny<int>())).ReturnsAsync(true);
 
             // Act
             var result = await _controller.RealizarTransicion(ticketId, dto);

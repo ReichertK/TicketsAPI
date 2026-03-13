@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TicketsAPI.Controllers;
@@ -26,11 +27,17 @@ namespace TicketsAPI.Tests.Controllers
             _mockTicketRepository = new Mock<IBaseRepository<Ticket>>();
             _mockNotificacionService = new Mock<INotificacionService>();
             _mockLogger = ControllerTestHelper.CreateMockLogger<ComentariosController>();
-            
+
+            var mockConfigSection = new Mock<IConfigurationSection>();
+            mockConfigSection.Setup(s => s[It.IsAny<string>()]).Returns("Server=fake;");
+            var mockConfig = new Mock<IConfiguration>();
+            mockConfig.Setup(c => c.GetSection("ConnectionStrings")).Returns(mockConfigSection.Object);
+
             _controller = new ComentariosController(
                 _mockComentarioRepository.Object,
                 _mockTicketRepository.Object,
                 _mockNotificacionService.Object,
+                mockConfig.Object,
                 _mockLogger.Object
             );
         }
@@ -66,7 +73,7 @@ namespace TicketsAPI.Tests.Controllers
             };
 
             _mockTicketRepository.Setup(r => r.GetByIdAsync(ticketId)).ReturnsAsync(ticket);
-            _mockComentarioRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(comentarios);
+            _mockComentarioRepository.Setup(r => r.GetByTicketAsync(ticketId)).ReturnsAsync(comentarios);
             
             ControllerTestHelper.SetupAuthenticatedUser(_controller, 5);
 

@@ -26,7 +26,7 @@ namespace TicketsAPI.Services.Implementations
         /// Verifica si el usuario está bloqueado por intentos fallidos.
         /// Si el bloqueo ha expirado, lo limpia automáticamente.
         /// </summary>
-        public async Task<(bool Bloqueado, int IntentosRestantes, DateTime? BloqueadoHasta)> VerificarBloqueoAsync(string nombreUsuario)
+        public virtual async Task<(bool Bloqueado, int IntentosRestantes, DateTime? BloqueadoHasta)> VerificarBloqueoAsync(string nombreUsuario)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace TicketsAPI.Services.Implementations
         /// <summary>
         /// Registra un intento fallido de login. Si alcanza el máximo, bloquea la cuenta.
         /// </summary>
-        public async Task RegistrarIntentoFallidoAsync(string nombreUsuario, string ipAddress)
+        public virtual async Task RegistrarIntentoFallidoAsync(string nombreUsuario, string ipAddress)
         {
             try
             {
@@ -128,7 +128,7 @@ namespace TicketsAPI.Services.Implementations
         /// <summary>
         /// Limpia el contador de intentos fallidos después de un login exitoso.
         /// </summary>
-        public async Task LimpiarIntentosAsync(string nombreUsuario)
+        public virtual async Task LimpiarIntentosAsync(string nombreUsuario)
         {
             try
             {

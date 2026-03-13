@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TicketsAPI.Controllers;
@@ -93,8 +94,14 @@ namespace TicketsAPI.Tests.Controllers
 
             public TicketsControllerComprehensiveTests()
             {
+                var mockConfigSection = new Mock<IConfigurationSection>();
+                mockConfigSection.Setup(s => s[It.IsAny<string>()]).Returns("Server=fake;");
+                var mockConfig = new Mock<IConfiguration>();
+                mockConfig.Setup(c => c.GetSection("ConnectionStrings")).Returns(mockConfigSection.Object);
+
                 _controller = new TicketsController(
                     _mockLogger.Object,
+                    mockConfig.Object,
                     _ticketService.Object,
                     _estadoService.Object,
                     _notificacionService.Object,
@@ -132,6 +139,7 @@ namespace TicketsAPI.Tests.Controllers
             {
                 var ticket = new TicketDTO { Id_Tkt = 1, Contenido = "Test" };
                 _ticketService.Setup(s => s.GetByIdAsync(1)).ReturnsAsync(ticket);
+                ControllerTestHelper.SetupAuthenticatedUser(_controller, 1);
 
                 var result = await _controller.GetTicket(1);
 

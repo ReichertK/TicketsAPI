@@ -1,4 +1,4 @@
-namespace TicketsAPI.Config
+﻿namespace TicketsAPI.Config
 {
     /// Constantes de estados del ciclo de vida del ticket.
     /// Centralizan los IDs de estado para evitar magic numbers en servicios y controladores.
@@ -10,26 +10,24 @@ namespace TicketsAPI.Config
         /// Ticket en proceso de resolución (DB: 2 = En Proceso).
         public const int EnProceso = 2;
 
-        /// <summary>Ticket cerrado (DB: 3 = Cerrado)</summary>
+        /// Ticket cerrado (DB: 3 = Cerrado)
         public const int Cerrado = 3;
 
-        /// <summary>Ticket en espera de información (DB: 4 = En Espera)</summary>
+        /// Ticket en espera de información (DB: 4 = En Espera)
         public const int EnEspera = 4;
 
-        /// <summary>Ticket pendiente de aprobación (DB: 5 = Pendiente Aprobación)</summary>
+        /// Ticket pendiente de aprobación (DB: 5 = Pendiente Aprobación)
         public const int PendienteAprobacion = 5;
 
-        /// <summary>Ticket resuelto (DB: 6 = Resuelto)</summary>
+        /// Ticket resuelto (DB: 6 = Resuelto)
         public const int Resuelto = 6;
 
-        /// <summary>Ticket reabierto (DB: 7 = Reabierto)</summary>
+        /// Ticket reabierto (DB: 7 = Reabierto)
         public const int Reabierto = 7;
     }
 
-    /// <summary>
     /// Constantes de roles del sistema.
     /// Centralizan los IDs y nombres de rol para evitar IDs/strings hardcoded.
-    /// </summary>
     public static class UserRoles
     {
         // IDs numéricos (deben coincidir con tabla rol)

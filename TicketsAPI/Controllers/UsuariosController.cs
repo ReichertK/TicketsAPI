@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para gestión de usuarios (CRUD)
-    /// </summary>
     [Authorize]
     public class UsuariosController : BaseApiController
     {
@@ -21,10 +19,8 @@ namespace TicketsAPI.Controllers
             _authService = authService;
         }
 
-        /// <summary>
         /// Lista ligera de usuarios activos para el dropdown de asignación.
         /// Accesible para cualquier usuario con el permiso TKT_ASSIGN.
-        /// </summary>
         [HttpGet("para-asignar")]
         public async Task<IActionResult> GetParaAsignar()
         {
@@ -47,9 +43,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Listar todos los usuarios (Admin+)
-        /// </summary>
         [HttpGet]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> GetAll()
@@ -66,9 +60,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Búsqueda avanzada de usuarios (Admin+)
-        /// </summary>
         [HttpGet("buscar")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Buscar([FromQuery] string? nombre, [FromQuery] string? email, [FromQuery] string? tipo, [FromQuery] int? habilitado)
@@ -85,9 +77,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener usuario por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -115,9 +105,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear nuevo usuario (Admin+)
-        /// </summary>
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Create([FromBody] CreateUpdateUsuarioDTO dto)
@@ -147,9 +135,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar usuario (Admin o propio usuario)
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateUpdateUsuarioDTO dto)
         {
@@ -208,9 +194,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Eliminar usuario (Admin+)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int id)
@@ -245,9 +229,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Cambiar contraseña (propio usuario)
-        /// </summary>
         [HttpPost("{id}/change-password")]
         public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordDTO dto)
         {
@@ -284,9 +266,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener el perfil del usuario autenticado actual
-        /// </summary>
         [HttpGet("me/profile")]
         public async Task<IActionResult> GetCurrentUserProfile()
         {
@@ -307,9 +287,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Restablecer contraseña de un usuario (solo Admin)
-        /// </summary>
         [HttpPost("{id}/reset-password")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordRequest request)

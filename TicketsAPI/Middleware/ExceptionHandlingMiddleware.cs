@@ -1,11 +1,9 @@
-using TicketsAPI.Models.DTOs;
+﻿using TicketsAPI.Models.DTOs;
 using MySqlConnector;
 
 namespace TicketsAPI.Middleware
 {
-    /// <summary>
     /// Middleware para manejo centralizado de excepciones
-    /// </summary>
     public class ExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;

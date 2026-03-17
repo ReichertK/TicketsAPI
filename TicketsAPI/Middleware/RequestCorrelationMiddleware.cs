@@ -1,13 +1,11 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using Serilog.Context;
 
 namespace TicketsAPI.Middleware
 {
-    /// <summary>
     /// Middleware para registrar la correlación de requests
     /// Extrae o genera un X-Request-Id y lo propaga a través de todos los logs
-    /// </summary>
     public class RequestCorrelationMiddleware
     {
         private readonly RequestDelegate _next;
@@ -74,9 +72,7 @@ namespace TicketsAPI.Middleware
             }
         }
 
-        /// <summary>
         /// Extrae el X-Request-Id del header o genera uno nuevo
-        /// </summary>
         private string ExtractCorrelationId(HttpContext context)
         {
             const string headerName = CorrelationIdHeader;
@@ -91,9 +87,7 @@ namespace TicketsAPI.Middleware
         }
     }
 
-    /// <summary>
     /// Extensiones para registrar el middleware
-    /// </summary>
     public static class RequestCorrelationMiddlewareExtensions
     {
         public static IApplicationBuilder UseRequestCorrelation(this IApplicationBuilder builder)

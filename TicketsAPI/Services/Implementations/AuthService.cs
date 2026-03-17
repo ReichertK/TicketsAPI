@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -264,9 +264,7 @@ namespace TicketsAPI.Services.Implementations
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        /// <summary>
         /// Genera un refresh token criptográficamente seguro
-        /// </summary>
         private static string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];
@@ -275,9 +273,7 @@ namespace TicketsAPI.Services.Implementations
             return Convert.ToBase64String(randomNumber);
         }
 
-        /// <summary>
         /// Hashea un token para almacenamiento seguro (nunca guardar tokens en plano)
-        /// </summary>
         private static string HashToken(string token)
         {
             using var sha256 = SHA256.Create();

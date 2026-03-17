@@ -1,14 +1,12 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using TicketsAPI.Config;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Implementación de INotificationProvider usando SignalR.
     /// Mañana se puede reemplazar por WhatsAppNotificationProvider, EmailNotificationProvider, SlackNotificationProvider, etc.
     /// sin cambiar nada en los servicios de negocio.
-    /// </summary>
     public class SignalRNotificationProvider : INotificationProvider
     {
         private readonly IHubContext<TicketHub> _hubContext;

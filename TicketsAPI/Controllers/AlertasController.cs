@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
@@ -7,10 +7,8 @@ using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controller para alertas y menciones (@usuario).
     /// Los usuarios solo pueden ver/gestionar sus propias alertas.
-    /// </summary>
     [Authorize]
     public class AlertasController : BaseApiController
     {
@@ -24,10 +22,8 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
-        /// <summary>
         /// Obtener alertas no leídas del usuario autenticado.
         /// GET /api/v1/Alertas?limite=20
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAlertasNoLeidas([FromQuery] int limite = 20)
         {
@@ -59,10 +55,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Marcar una alerta como leída.
         /// PUT /api/v1/Alertas/{id}/leida
-        /// </summary>
         [HttpPut("{id}/leida")]
         public async Task<IActionResult> MarcarLeida(long id)
         {
@@ -91,10 +85,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Marcar todas las alertas como leídas.
         /// PUT /api/v1/Alertas/marcar-todas
-        /// </summary>
         [HttpPut("marcar-todas")]
         public async Task<IActionResult> MarcarTodasLeidas()
         {

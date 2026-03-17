@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
@@ -24,9 +24,7 @@ namespace TicketsAPI.Controllers
             _cacheService = cacheService;
         }
 
-        /// <summary>
         /// Obtener todos los estados (activos e inactivos)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ObtenerEstados()
         {
@@ -51,9 +49,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener estado por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerEstadoPorId(int id)
         {
@@ -81,9 +77,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar estado (nombre + descripción)
-        /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ActualizarEstado(int id, [FromBody] CreateUpdateEstadoDTO dto)
@@ -114,10 +108,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Toggle habilitado/deshabilitado (soft delete)
         /// Protege estados críticos (Abierto, Cerrado)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ToggleEstado(int id)

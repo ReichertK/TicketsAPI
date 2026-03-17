@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para autenticación y autorización
-    /// </summary>
     public class AuthController : BaseApiController
     {
         private readonly IAuthService _authService;
@@ -17,9 +15,7 @@ namespace TicketsAPI.Controllers
             _authService = authService;
         }
 
-        /// <summary>
         /// Login de usuario
-        /// </summary>
         /// <param name="request">Credenciales del usuario</param>
         /// <returns>Token JWT y datos del usuario</returns>
         [HttpPost("login")]
@@ -42,9 +38,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Renovar token JWT
-        /// </summary>
         /// <param name="request">Token de renovación</param>
         /// <returns>Nuevo token JWT</returns>
         [HttpPost("refresh-token")]
@@ -67,9 +61,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Logout del usuario
-        /// </summary>
         [HttpPost("logout")]
         [Authorize]
         public async Task<IActionResult> Logout()
@@ -87,9 +79,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener el usuario autenticado actual
-        /// </summary>
         [HttpGet("me")]
         [Authorize]
         public IActionResult GetCurrentUser()

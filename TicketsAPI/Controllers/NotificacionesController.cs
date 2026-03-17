@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Repositories.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para notificaciones de lectura (tickets no leídos)
-    /// </summary>
     [Authorize]
     public class NotificacionesController : BaseApiController
     {
@@ -20,10 +18,8 @@ namespace TicketsAPI.Controllers
             _notificacionRepo = notificacionRepo;
         }
 
-        /// <summary>
         /// Obtener resumen de notificaciones no leídas del usuario actual.
         /// Devuelve conteos + últimos 5 tickets no leídos.
-        /// </summary>
         [HttpGet("resumen")]
         public async Task<IActionResult> GetResumen()
         {
@@ -43,9 +39,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Marcar un ticket específico como leído
-        /// </summary>
         [HttpPatch("{idTicket}/leido")]
         public async Task<IActionResult> MarcarLeido(int idTicket)
         {
@@ -65,9 +59,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Marcar todas las notificaciones del usuario como leídas
-        /// </summary>
         [HttpPatch("marcar-todos-leidos")]
         public async Task<IActionResult> MarcarTodosLeidos()
         {

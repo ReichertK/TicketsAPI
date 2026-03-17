@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Services.Interfaces;
@@ -6,10 +6,8 @@ using TicketsAPI.Services.Implementations;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para obtener datos de referencia (Estados, Prioridades, Departamentos, Roles)
     /// Utiliza cache para mejorar performance
-    /// </summary>
     [Authorize]
     public class ReferencesController : BaseApiController
     {
@@ -34,10 +32,8 @@ namespace TicketsAPI.Controllers
             _cacheService = cacheService;
         }
 
-        /// <summary>
         /// Obtener todos los estados activos (cached - 15 min)
         /// Para selectores de tickets — solo estados habilitados
-        /// </summary>
         [AllowAnonymous]
         [HttpGet("estados")]
         [ResponseCache(Duration = 900)] // 15 minutos en el cliente
@@ -56,10 +52,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener todas las prioridades activas (cached - 15 min)
         /// Para selectores de tickets — solo prioridades habilitadas
-        /// </summary>
         [AllowAnonymous]
         [ResponseCache(Duration = 900)] // 15 minutos en el cliente
         [HttpGet("prioridades")]
@@ -78,10 +72,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener todos los departamentos activos (cached - 15 min)
         /// Para selectores de tickets y asignaciones — solo departamentos habilitados
-        /// </summary>
         [AllowAnonymous]
         [HttpGet("departamentos")]
         [ResponseCache(Duration = 900)] // 15 minutos en el cliente
@@ -101,9 +93,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener todos los roles
-        /// </summary>
         [HttpGet("roles")]
         [ResponseCache(Duration = 900)]
         public async Task<IActionResult> GetRoles()

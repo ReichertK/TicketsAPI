@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Dapper;
 using MySqlConnector;
 using TicketsAPI.Repositories.Interfaces;
@@ -498,9 +498,7 @@ namespace TicketsAPI.Repositories.Implementations
             return historial;
         }
 
-        /// <summary>
         /// Búsqueda avanzada con soporte para búsqueda en comentarios y diferentes tipos de matching
-        /// </summary>
         public async Task<PaginatedResponse<TicketDTO>> GetFilteredAdvancedAsync(TicketFiltroDTO filtro)
         {
             using var conn = CreateConnection();
@@ -807,17 +805,13 @@ namespace TicketsAPI.Repositories.Implementations
 
         // ── Vistas de listado (SPs dedicados) ─────────────────────────
 
-        /// <summary>
         /// Mapea el nombre de columna del frontend a la clave que acepta la SP.
         /// Las SPs aceptan: 'fecha', 'estado', 'prioridad', 'departamento'.
-        /// </summary>
         private static readonly HashSet<string> _validSortColumns =
             new(StringComparer.OrdinalIgnoreCase) { "fecha", "estado", "prioridad", "departamento" };
 
-        /// <summary>
         /// Devuelve el valor seguro de p_ordenar_por para enviar a la SP.
         /// Si el frontend envía un valor no válido, usa 'fecha' (default de la SP).
-        /// </summary>
         private static string? SafeSortColumn(string? ordenarPor)
         {
             if (!string.IsNullOrWhiteSpace(ordenarPor) && _validSortColumns.Contains(ordenarPor))
@@ -825,9 +819,7 @@ namespace TicketsAPI.Repositories.Implementations
             return null; // la SP usará su default (fecha)
         }
 
-        /// <summary>
         /// Mapea una fila del resultado de un SP de listado a TicketDTO
-        /// </summary>
         private static TicketDTO MapSpRowToTicketDTO(dynamic row)
         {
             var dto = new TicketDTO

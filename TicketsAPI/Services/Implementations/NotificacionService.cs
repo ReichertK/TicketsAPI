@@ -1,11 +1,9 @@
-using TicketsAPI.Services.Interfaces;
+﻿using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Servicio de notificaciones refactorizado para usar INotificationProvider.
     /// Ya no depende directamente de SignalR — se puede inyectar cualquier proveedor.
-    /// </summary>
     public class NotificacionService : INotificacionService
     {
         private readonly INotificationProvider _provider;

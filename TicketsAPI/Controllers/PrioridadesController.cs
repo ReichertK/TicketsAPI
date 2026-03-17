@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
@@ -24,9 +24,7 @@ namespace TicketsAPI.Controllers
             _cacheService = cacheService;
         }
 
-        /// <summary>
         /// Obtener todas las prioridades (activas e inactivas)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ObtenerPrioridades()
         {
@@ -51,9 +49,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener prioridad por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPrioridadPorId(int id)
         {
@@ -81,9 +77,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar prioridad (nombre + descripción)
-        /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ActualizarPrioridad(int id, [FromBody] CreateUpdatePrioridadDTO dto)
@@ -114,9 +108,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Toggle habilitado/deshabilitado (soft delete)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> TogglePrioridad(int id)

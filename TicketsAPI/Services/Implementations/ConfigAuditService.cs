@@ -1,14 +1,12 @@
-using Dapper;
+﻿using Dapper;
 using MySqlConnector;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Implementación del servicio de auditoría de configuración.
     /// Inserta registros en la tabla audit_config para rastrear cambios
     /// en entidades administrativas (departamentos, motivos, roles, permisos).
-    /// </summary>
     public class ConfigAuditService : IConfigAuditService
     {
         private readonly string _connectionString;

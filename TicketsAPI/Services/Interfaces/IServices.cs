@@ -1,4 +1,4 @@
-using TicketsAPI.Models.DTOs;
+﻿using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Services.Interfaces
 {
@@ -39,9 +39,7 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> UpdateAsync(int id, CreateUpdateUsuarioDTO dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ChangePasswordAsync(int id, string passwordActual, string passwordNueva);
-        /// <summary>
         /// Restablecer contraseña de un usuario (desde panel Admin).
-        /// </summary>
         Task<bool> ResetPasswordAsync(int idUsuarioTarget, int idUsuarioAdmin, string nuevaPassword);
     }
 
@@ -74,13 +72,9 @@ namespace TicketsAPI.Services.Interfaces
         Task TransicionEstadoAsync(int idTicket, int idUsuario, int idEstadoNuevo);
         Task NotificarNuevoComentarioAsync(int idTicket);
         Task NuevoComentarioAsync(int idTicket, int idUsuario, string comentario);
-        /// <summary>
         /// Enviar alerta de mención (@usuario) a un usuario específico vía SignalR.
-        /// </summary>
         Task MencionUsuarioAsync(int idUsuarioDestino, int idTicket, long idComentario, string mensaje);
-        /// <summary>
         /// Notificar a un usuario que le asignaron un ticket vía SignalR.
-        /// </summary>
         Task AsignacionTicketAsync(int idUsuarioDestino, int idTicket, string mensaje);
     }
 
@@ -103,9 +97,7 @@ namespace TicketsAPI.Services.Interfaces
         Task<DepartamentoDTO?> GetByIdAsync(int id);
     }
 
-    /// <summary>
     /// DTO auxiliar para transiciones permitidas
-    /// </summary>
     public class TransicionPermitidaDTO
     {
         public int Id_Estado_Destino { get; set; }

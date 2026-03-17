@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -7,10 +7,8 @@ using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controller para consultar y exportar registros de auditoría (audit_log).
     /// Solo accesible por Administradores.
-    /// </summary>
     [Authorize(Roles = "Administrador")]
     public class AuditLogsController : BaseApiController
     {
@@ -27,10 +25,8 @@ namespace TicketsAPI.Controllers
             _cache = cache;
         }
 
-        /// <summary>
         /// Obtener registros de auditoría con filtros y paginación.
         /// GET /api/v1/AuditLogs?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01&pagina=1&porPagina=50
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] AuditLogFiltroDTO filtro)
         {
@@ -86,10 +82,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener estadísticas resumidas del audit_log (cacheadas 5 min para evitar full-scans).
         /// GET /api/v1/AuditLogs/stats
-        /// </summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
         {
@@ -140,10 +134,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener las tablas y acciones distintas para los filtros del frontend.
         /// GET /api/v1/AuditLogs/filters
-        /// </summary>
         [HttpGet("filters")]
         public async Task<IActionResult> GetFilterOptions()
         {
@@ -173,10 +165,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Generar un ciclo INSERT → UPDATE → DELETE de prueba en audit_log para validar DiffTable.
         /// POST /api/v1/AuditLogs/test-cycle
-        /// </summary>
         [HttpPost("test-cycle")]
         public async Task<IActionResult> GenerateTestCycle()
         {
@@ -235,10 +225,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Exportar registros de auditoría a Excel (.xlsx) con los mismos filtros de la vista.
         /// GET /api/v1/AuditLogs/export?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01
-        /// </summary>
         [HttpGet("export")]
         public async Task<IActionResult> ExportToExcel([FromQuery] AuditLogFiltroDTO filtro)
         {

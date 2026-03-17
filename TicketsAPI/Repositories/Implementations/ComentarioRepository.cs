@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using TicketsAPI.Models.Entities;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Models.DTOs;
@@ -97,10 +97,8 @@ namespace TicketsAPI.Repositories.Implementations
             return result.ToList();
         }
 
-        /// <summary>
         /// Crea un comentario usando sp_tkt_comentar
         /// Usa parámetros de salida en lugar de LAST_INSERT_ID() para mayor seguridad
-        /// </summary>
         public async Task<ComentarioResultDTO> CrearComentarioViaStoredProcedureAsync(int idTkt, int idUsuario, string comentario)
         {
             using var conn = CreateConnection();

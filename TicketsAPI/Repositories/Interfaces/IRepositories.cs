@@ -1,4 +1,4 @@
-using TicketsAPI.Models.DTOs;
+﻿using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Repositories.Interfaces
 {
@@ -24,19 +24,13 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Usuario?> GetByRefreshTokenAsync(string refreshTokenHash);
         Task<bool> ClearRefreshTokenAsync(int idUsuario);
         Task<bool> UpdatePasswordHashAsync(int idUsuario, string newHash);
-        /// <summary>
         /// Obtiene todos los usuarios con Rol y Departamento en una sola consulta JOIN (elimina N+1).
-        /// </summary>
         Task<List<Models.Entities.Usuario>> GetAllWithRelationsAsync();
-        /// <summary>
         /// Toggle soft-delete: si fechaBaja IS NULL → pone CURDATE(); si tiene fecha → la limpia.
         /// Retorna true si se logró la operación.
-        /// </summary>
         Task<bool> ToggleActiveAsync(int idUsuario);
         Task<(int idEmpresa, int idSucursal, int idPerfil)?> GetUsuarioContextoAsync(int idUsuario);
-        /// <summary>
         /// Restablecer contraseña via SP sp_usuario_reset_password (Admin-only, con audit_log).
-        /// </summary>
         Task<bool> ResetPasswordAsync(int idUsuarioTarget, string nuevoPasswordHash, int idUsuarioAdmin);
     }
 
@@ -72,10 +66,8 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Estado?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Estado>> GetAllActiveAsync();
         Task<bool> ExistsAsync(int id);
-        /// <summary>
         /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
         /// Protege estados críticos (Abierto, Cerrado) de ser desactivados.
-        /// </summary>
         Task<bool> ToggleStatusAsync(int id);
     }
 
@@ -84,9 +76,7 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Prioridad?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Prioridad>> GetAllActiveAsync();
         Task<bool> ExistsAsync(int id);
-        /// <summary>
         /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
-        /// </summary>
         Task<bool> ToggleStatusAsync(int id);
     }
 
@@ -95,9 +85,7 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<Models.Entities.Departamento?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Departamento>> GetAllActiveAsync();
         Task<bool> ExistsAsync(int id);
-        /// <summary>
         /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
-        /// </summary>
         Task<bool> ToggleStatusAsync(int id);
     }
 
@@ -146,13 +134,9 @@ namespace TicketsAPI.Repositories.Interfaces
         Task<bool> ExistsAsync(int id);
         Task<Models.Entities.Motivo?> GetByNombreAsync(string nombre);
         Task<List<Models.Entities.Motivo>> GetAllActiveAsync();
-        /// <summary>
         /// Toggle soft-delete: si Habilitado = 1 → desactiva; si 0 → reactiva.
-        /// </summary>
         Task<bool> ToggleStatusAsync(int id);
-        /// <summary>
         /// Obtener motivos activos filtrados por departamento (para selector dinámico en frontend).
-        /// </summary>
         Task<List<Models.Entities.Motivo>> GetByDepartamentoAsync(int idDepartamento);
     }
 

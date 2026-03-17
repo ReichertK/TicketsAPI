@@ -1,11 +1,9 @@
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace TicketsAPI.Config
 {
-    /// <summary>
     /// Filter para agregar descripciones a los tags de Swagger
-    /// </summary>
     public class SwaggerTagDescriptionsDocumentFilter : IDocumentFilter
     {
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)

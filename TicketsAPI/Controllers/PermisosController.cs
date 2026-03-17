@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Repositories.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para gestión del catálogo de permisos RBAC
-    /// </summary>
     [Authorize(Roles = "Administrador")]
     public class PermisosController : BaseApiController
     {
@@ -20,9 +18,7 @@ namespace TicketsAPI.Controllers
             _permisoRepo = permisoRepo;
         }
 
-        /// <summary>
         /// Listar todos los permisos del catálogo
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -38,9 +34,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear un nuevo permiso
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUpdatePermisoDTO dto)
         {
@@ -59,9 +53,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar un permiso existente
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateUpdatePermisoDTO dto)
         {

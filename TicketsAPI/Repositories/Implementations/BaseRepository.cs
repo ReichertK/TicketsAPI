@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using MySqlConnector;
 using Microsoft.Extensions.Logging;
 
@@ -8,14 +8,12 @@ namespace TicketsAPI.Repositories.Implementations
     {
         protected readonly string _connectionString;
 
-        /// <summary>
         /// Códigos de error MySQL 5.5 que son transitorios y se pueden reintentar:
         /// 1205 = Lock Wait Timeout
         /// 1213 = Deadlock
         /// 1040 = Too many connections
         /// 2006 = MySQL server has gone away
         /// 2013 = Lost connection during query
-        /// </summary>
         private static readonly HashSet<int> TransientMySqlErrors = new() { 1205, 1213, 1040, 2006, 2013 };
         private const int MaxRetries = 3;
         private const int BaseDelayMs = 200; // 200ms, 400ms, 800ms (exponential)
@@ -30,11 +28,9 @@ namespace TicketsAPI.Repositories.Implementations
             return new MySqlConnection(_connectionString);
         }
 
-        /// <summary>
         /// Ejecuta una operación de base de datos con reintentos automáticos
         /// ante errores transitorios de MySQL 5.5 (deadlock, lock timeout, conexión perdida).
         /// Usa exponential backoff: 200ms → 400ms → 800ms.
-        /// </summary>
         protected async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> operation, string? operationName = null)
         {
             for (int attempt = 1; attempt <= MaxRetries; attempt++)
@@ -58,9 +54,7 @@ namespace TicketsAPI.Repositories.Implementations
             return await operation();
         }
 
-        /// <summary>
         /// Sobrecarga para operaciones sin retorno (void).
-        /// </summary>
         protected async Task ExecuteWithRetryAsync(Func<Task> operation, string? operationName = null)
         {
             await ExecuteWithRetryAsync(async () =>

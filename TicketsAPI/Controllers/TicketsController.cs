@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
@@ -11,9 +11,7 @@ using TicketsAPI.Config;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para gestión de tickets
-    /// </summary>
     [Authorize]
     public class TicketsController : BaseApiController
     {
@@ -49,9 +47,7 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
-        /// <summary>
         /// Obtener todos los tickets filtrados
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetTickets([FromQuery] TicketFiltroDTO filtro)
         {
@@ -74,9 +70,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Búsqueda avanzada de tickets con soporte para búsqueda en comentarios
-        /// </summary>
         /// <param name="filtro">Filtros de búsqueda avanzada</param>
         /// <returns>Lista paginada de tickets</returns>
         /// <remarks>
@@ -113,9 +107,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener un ticket por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicket(int id)
         {
@@ -142,9 +134,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear un nuevo ticket
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateUpdateTicketDTO dto)
         {
@@ -178,9 +168,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar un ticket
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTicket(int id, [FromBody] CreateUpdateTicketDTO dto)
         {
@@ -222,9 +210,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Eliminar un ticket (Admin)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteTicket(int id)
@@ -244,9 +230,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Transicionar el estado de un ticket
-        /// </summary>
         [HttpPatch("{id}/cambiar-estado")]
         public async Task<IActionResult> ChangeTicketStatus(int id, [FromBody] TransicionEstadoDTO dto)
         {
@@ -306,12 +290,10 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Asignar un ticket a un usuario.
         /// Auto-asignación: PATCH /tickets/{id}/asignar (body vacío o {Id_Usuario_Asignado: self})
         /// Asignación a tercero: PATCH /tickets/{id}/asignar (body con Id_Usuario_Asignado y Comentario opcional)
         /// Reasignación (Admin): requiere Comentario obligatorio (validado por SP).
-        /// </summary>
         [HttpPatch("{id}/asignar")]
         public async Task<IActionResult> AssignTicket(int id, [FromBody] AsignarTicketDTO? dto)
         {
@@ -380,9 +362,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Cerrar un ticket
-        /// </summary>
         [HttpPatch("{id}/cerrar")]
         public async Task<IActionResult> CloseTicket(int id)
         {
@@ -410,12 +390,10 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener transiciones de estado permitidas para el ticket actual.
         /// Incluye metadata de permisos (requiere_propietario, permiso_requerido, requiere_aprobacion).
         /// Si el usuario es admin, devuelve todas las transiciones.
         /// Si requiere_propietario=true, solo se incluye si el usuario es el asignado.
-        /// </summary>
         [HttpGet("{id}/transiciones-permitidas")]
         public async Task<IActionResult> GetPermittedTransitions(int id)
         {
@@ -453,9 +431,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener historial completo de un ticket (transiciones + comentarios)
-        /// </summary>
         [HttpGet("{id}/historial")]
         public async Task<IActionResult> GetHistorial(int id)
         {
@@ -477,10 +453,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener historial de transiciones paginado de un ticket.
         /// GET /api/v1/Tickets/{id}/Historial-Transiciones?pagina=1&amp;porPagina=10
-        /// </summary>
         [HttpGet("{id}/Historial-Transiciones")]
         public async Task<IActionResult> GetHistorialTransiciones(int id, [FromQuery] int pagina = 1, [FromQuery] int porPagina = 10)
         {
@@ -551,9 +525,7 @@ namespace TicketsAPI.Controllers
 
         // Suscripciones
 
-        /// <summary>
         /// Suscribirse a un ticket (seguir)
-        /// </summary>
         [HttpPost("{id}/suscribir")]
         public async Task<IActionResult> Suscribir(int id)
         {
@@ -577,9 +549,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Desuscribirse de un ticket (dejar de seguir)
-        /// </summary>
         [HttpDelete("{id}/suscribir")]
         public async Task<IActionResult> Desuscribir(int id)
         {
@@ -603,9 +573,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener suscriptores de un ticket + si el usuario actual está suscrito
-        /// </summary>
         [HttpGet("{id}/suscriptores")]
         public async Task<IActionResult> GetSuscriptores(int id)
         {
@@ -628,9 +596,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Exportar tickets a CSV
-        /// </summary>
         [HttpGet("exportar-csv")]
         public async Task<IActionResult> ExportCsv([FromQuery] TicketFiltroDTO filtro)
         {
@@ -668,11 +634,9 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener estadísticas rápidas de tickets para el mini-dashboard.
         /// GET /api/v1/Tickets/stats?idEstado=1&idPrioridad=2&idDepartamento=3&busqueda=test
         /// RBAC: filtrado automático por rol del usuario.
-        /// </summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetTicketStats(
             [FromQuery] int? idEstado = null,

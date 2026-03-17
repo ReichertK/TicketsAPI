@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using Dapper;
@@ -40,9 +40,7 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
-        /// <summary>
         /// Obtener comentarios de un ticket
-        /// </summary>
         [HttpGet("Tickets/{ticketId}/Comments")]
         public async Task<IActionResult> GetComentariosPorTicket(int ticketId)
         {
@@ -73,9 +71,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear nuevo comentario en un ticket
-        /// </summary>
         [HttpPost("Tickets/{ticketId}/Comments")]
         public async Task<IActionResult> CrearComentario(int ticketId, [FromBody] CreateUpdateComentarioDTO dto)
         {
@@ -150,9 +146,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener comentario por ID
-        /// </summary>
         [HttpGet("Comments/{id}")]
         public async Task<IActionResult> GetComentarioPorId(int id)
         {
@@ -181,9 +175,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar comentario
-        /// </summary>
         [HttpPut("Comments/{id}")]
         [HttpPut("Tickets/{ticketId}/Comments/{id}")]
         public async Task<IActionResult> ActualizarComentario(int id, [FromBody] CreateUpdateComentarioDTO dto, int? ticketId = null)
@@ -215,9 +207,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Eliminar comentario
-        /// </summary>
         [HttpDelete("Comments/{id}")]
         public async Task<IActionResult> EliminarComentario(int id)
         {
@@ -241,10 +231,8 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Busca @menciones en el texto del comentario, resuelve los nombres a idUsuario,
         /// persiste la alerta en notificacion_alerta (vía SP) y envía SignalR al destino.
-        /// </summary>
         private async Task ProcesarMencionesAsync(string contenido, int idTicket, long idComentario, int idUsuarioAutor)
         {
             if (string.IsNullOrWhiteSpace(contenido)) return;

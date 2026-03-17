@@ -1,13 +1,11 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Servicio para exportación de datos a diferentes formatos
-    /// </summary>
     public class ExportService : IExportService
     {
         private readonly ILogger<ExportService> _logger;
@@ -17,9 +15,7 @@ namespace TicketsAPI.Services.Implementations
             _logger = logger;
         }
 
-        /// <summary>
         /// Exportar tickets a CSV
-        /// </summary>
         public async Task<string> ExportTicketsToCsvAsync(List<TicketDTO> tickets)
         {
             await Task.CompletedTask; // Método sincrónico, pero mantenemos firma async
@@ -48,9 +44,7 @@ namespace TicketsAPI.Services.Implementations
             return csv.ToString();
         }
 
-        /// <summary>
         /// Exportar cualquier tipo de datos a CSV (genérico)
-        /// </summary>
         public async Task<string> ExportToCsvAsync<T>(List<T> datos, string nombreArchivo) where T : class
         {
             await Task.CompletedTask;
@@ -76,9 +70,7 @@ namespace TicketsAPI.Services.Implementations
             return csv.ToString();
         }
 
-        /// <summary>
         /// Escapar valores CSV (manejo de comas, comillas, saltos de línea)
-        /// </summary>
         private static string EscapeCsvValue(string value)
         {
             if (string.IsNullOrEmpty(value))

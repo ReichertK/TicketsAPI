@@ -1,13 +1,11 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Servicio unificado de contraseñas con soporte para legado (MD5/SHA256/Plaintext)
     /// y migración progresiva a BCrypt.
-    /// </summary>
     public class PasswordService : IPasswordService
     {
         private const int BcryptWorkFactor = 11;
@@ -85,17 +83,13 @@ namespace TicketsAPI.Services.Implementations
 
         #region Helpers de legado
 
-        /// <summary>
         /// Detecta si el hash parece ser MD5 (32 caracteres hexadecimales)
-        /// </summary>
         private static bool IsMd5Hash(string hash)
         {
             return hash.Length == 32 && hash.All(c => "0123456789abcdefABCDEF".Contains(c));
         }
 
-        /// <summary>
         /// Detecta si el hash parece ser SHA256 en Base64 (~44 caracteres, termina en =)
-        /// </summary>
         private static bool IsSha256Base64(string hash)
         {
             if (hash.Length < 40 || hash.Length > 48)

@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para reportes y analytics
-    /// </summary>
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
@@ -22,9 +20,7 @@ namespace TicketsAPI.Controllers
             _reporteService = reporteService;
         }
 
-        /// <summary>
         /// Obtener métricas del dashboard
-        /// </summary>
         /// <param name="idDepartamento">Filtrar por departamento (opcional)</param>
         /// <returns>Dashboard con métricas generales</returns>
         [HttpGet("Dashboard")]
@@ -46,9 +42,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener reporte de tickets agrupados por estado
-        /// </summary>
         /// <param name="filtro">Filtros del reporte</param>
         /// <returns>Lista de tickets agrupados por estado con porcentajes</returns>
         [HttpGet("PorEstado")]
@@ -69,9 +63,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener reporte de tickets agrupados por prioridad
-        /// </summary>
         /// <param name="filtro">Filtros del reporte</param>
         /// <returns>Lista de tickets agrupados por prioridad con porcentajes</returns>
         [HttpGet("PorPrioridad")]
@@ -92,9 +84,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener reporte de tickets agrupados por departamento
-        /// </summary>
         /// <param name="filtro">Filtros del reporte</param>
         /// <returns>Lista de tickets agrupados por departamento con porcentajes</returns>
         [HttpGet("PorDepartamento")]
@@ -115,9 +105,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener tendencias de tickets por periodo (día, semana o mes)
-        /// </summary>
         /// <param name="filtro">Filtros del reporte con agrupación por periodo</param>
         /// <returns>Lista de tendencias por periodo</returns>
         [HttpGet("Tendencias")]

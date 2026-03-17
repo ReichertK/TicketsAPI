@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
@@ -29,9 +29,7 @@ namespace TicketsAPI.Controllers
             _auditService = auditService;
         }
 
-        /// <summary>
         /// Obtener todos los motivos (activos e inactivos)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ObtenerMotivos()
         {
@@ -56,9 +54,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener motivo por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerMotivoPorId(int id)
         {
@@ -86,9 +82,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear nuevo motivo
-        /// </summary>
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> CrearMotivo([FromBody] CreateUpdateMotivoDTO dto)
@@ -125,9 +119,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar motivo
-        /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ActualizarMotivo(int id, [FromBody] CreateUpdateMotivoDTO dto)
@@ -165,9 +157,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Toggle habilitado/deshabilitado (soft delete)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ToggleMotivo(int id)
@@ -199,9 +189,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener motivos activos filtrados por departamento
-        /// </summary>
         [HttpGet("por-departamento/{idDepartamento}")]
         public async Task<IActionResult> ObtenerMotivosPorDepartamento(int idDepartamento)
         {

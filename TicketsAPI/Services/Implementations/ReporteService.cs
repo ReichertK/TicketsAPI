@@ -1,13 +1,11 @@
-using TicketsAPI.Models.DTOs;
+﻿using TicketsAPI.Models.DTOs;
 using TicketsAPI.Models.Entities;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Servicio para generación de reportes y analytics
-    /// </summary>
     public class ReporteService : IReporteService
     {
         private readonly ITicketRepository _ticketRepository;

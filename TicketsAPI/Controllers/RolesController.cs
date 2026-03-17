@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using TicketsAPI.Models.DTOs;
@@ -7,9 +7,7 @@ using TicketsAPI.Services.Interfaces;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador para gestión de roles RBAC
-    /// </summary>
     [Authorize(Roles = "Administrador")]
     public class RolesController : BaseApiController
     {
@@ -28,9 +26,7 @@ namespace TicketsAPI.Controllers
             _auditService = auditService;
         }
 
-        /// <summary>
         /// Listar todos los roles con su cantidad de permisos
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -46,9 +42,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear un nuevo rol
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUpdateRolDTO dto)
         {
@@ -73,9 +67,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar un rol existente
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateUpdateRolDTO dto)
         {
@@ -100,9 +92,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Eliminar un rol (protege Administrador y roles con usuarios)
-        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -128,9 +118,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener permisos asignados a un rol
-        /// </summary>
         [HttpGet("{id}/permisos")]
         public async Task<IActionResult> GetPermisos(int id)
         {
@@ -152,9 +140,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Asignar lista de permisos a un rol (sync completo: borra y reinserta)
-        /// </summary>
         [HttpPost("{id}/permisos")]
         public async Task<IActionResult> AsignarPermisos(int id, [FromBody] AsignarPermisosRolDTO dto)
         {
@@ -183,9 +169,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Asignar un rol a un usuario
-        /// </summary>
         [HttpPost("asignar-usuario/{idUsuario}")]
         public async Task<IActionResult> AsignarRolAUsuario(int idUsuario, [FromBody] AsignarRolUsuarioDTO dto)
         {

@@ -1,12 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models.DTOs;
 using System.Security.Claims;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controlador base para todos los controladores API
-    /// </summary>
     [ApiController]
     [Route("api/v1/[controller]")]
     [Produces("application/json")]
@@ -19,9 +17,7 @@ namespace TicketsAPI.Controllers
             _logger = logger;
         }
 
-        /// <summary>
         /// Obtiene el ID del usuario autenticado
-        /// </summary>
         protected int GetCurrentUserId()
         {
             // Prefer standard NameIdentifier (mapped from 'sub' by JWT handler) and fallback to raw 'sub'
@@ -29,17 +25,13 @@ namespace TicketsAPI.Controllers
             return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
 
-        /// <summary>
         /// Obtiene el rol del usuario autenticado
-        /// </summary>
         protected string? GetCurrentUserRole()
         {
             return User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
         }
 
-        /// <summary>
         /// Crear respuesta exitosa
-        /// </summary>
         protected IActionResult Success<T>(T data, string mensaje = "Operación exitosa", int? statusCode = null)
         {
             var response = new ApiResponse<T>
@@ -52,9 +44,7 @@ namespace TicketsAPI.Controllers
             return StatusCode(statusCode ?? 200, response);
         }
 
-        /// <summary>
         /// Crear respuesta de error
-        /// </summary>
         protected IActionResult Error<T>(string mensaje, List<string>? errores = null, int statusCode = 400)
         {
             var response = new ApiResponse<T>

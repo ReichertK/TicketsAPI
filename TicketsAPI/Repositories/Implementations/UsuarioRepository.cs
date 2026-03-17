@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Models.Entities;
 
@@ -240,11 +240,9 @@ namespace TicketsAPI.Repositories.Implementations
             return rows > 0;
         }
 
-        /// <summary>
         /// D2: Trae todos los usuarios con Rol y Departamento en 1 sola consulta JOIN.
         /// Elimina el problema N+1 de GetAllAsync + foreach GetByIdAsync(rol) + GetByIdAsync(depto).
         /// Sintaxis compatible con MySQL 5.5 (sin CTEs ni funciones de ventana).
-        /// </summary>
         public async Task<List<Usuario>> GetAllWithRelationsAsync()
         {
             using var conn = CreateConnection();
@@ -281,10 +279,8 @@ namespace TicketsAPI.Repositories.Implementations
             return usuarios.ToList();
         }
 
-        /// <summary>
         /// Toggle soft-delete: si fechaBaja IS NULL → CURDATE(); si ya tiene fecha → NULL.
         /// Compatible con MySQL 5.5.
-        /// </summary>
         public async Task<bool> ToggleActiveAsync(int idUsuario)
         {
             using var conn = CreateConnection();

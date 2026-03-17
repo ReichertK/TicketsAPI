@@ -1,14 +1,12 @@
-using Dapper;
+﻿using Dapper;
 using MySqlConnector;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace TicketsAPI.Middleware
 {
-    /// <summary>
     /// Middleware que valida en cada request autenticado que el usuario
     /// siga activo (fechaBaja IS NULL). Si fue desactivado, devuelve 401.
     /// Usa cache in-memory de 30 s para minimizar el impacto en BD.
-    /// </summary>
     public class UserActiveValidationMiddleware
     {
         private readonly RequestDelegate _next;
@@ -68,9 +66,7 @@ namespace TicketsAPI.Middleware
         }
     }
 
-    /// <summary>
     /// Extension method para registrar el middleware de validación de usuario activo
-    /// </summary>
     public static class UserActiveValidationMiddlewareExtensions
     {
         public static IApplicationBuilder UseUserActiveValidation(this IApplicationBuilder builder)

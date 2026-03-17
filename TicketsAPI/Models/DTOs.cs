@@ -4,9 +4,7 @@ using System.Text.Json.Serialization;
 namespace TicketsAPI.Models.DTOs
 {
     // AUTH DTOs
-    /// <summary>
     /// DTO para login
-    /// </summary>
     public class LoginRequest
     {
         [Required(ErrorMessage = "El usuario es requerido")]
@@ -16,9 +14,7 @@ namespace TicketsAPI.Models.DTOs
         public string Contraseña { get; set; } = string.Empty;
     }
 
-    /// <summary>
     /// DTO para restablecer contraseña (admin)
-    /// </summary>
     public class ResetPasswordRequest
     {
         [Required(ErrorMessage = "La nueva contraseña es requerida")]
@@ -26,9 +22,7 @@ namespace TicketsAPI.Models.DTOs
         public string NuevaPassword { get; set; } = string.Empty;
     }
 
-    /// <summary>
     /// DTO para respuesta de login
-    /// </summary>
     public class LoginResponse
     {
         public int Id_Usuario { get; set; }
@@ -40,9 +34,7 @@ namespace TicketsAPI.Models.DTOs
         public List<string> Permisos { get; set; } = new();
     }
 
-    /// <summary>
     /// DTO para renovar token
-    /// </summary>
     public class RefreshTokenRequest
     {
         [Required]
@@ -50,9 +42,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // USER DTOs
-    /// <summary>
     /// DTO para usuario
-    /// </summary>
     public class UsuarioDTO
     {
         public int Id_Usuario { get; set; }
@@ -68,9 +58,7 @@ namespace TicketsAPI.Models.DTOs
         public DepartamentoDTO? Departamento { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear/actualizar usuario
-    /// </summary>
     public class CreateUpdateUsuarioDTO
     {
         [Required(ErrorMessage = "El nombre es requerido")]
@@ -95,9 +83,7 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Departamento { get; set; }
     }
 
-    /// <summary>
     /// DTO para cambiar contraseña
-    /// </summary>
     public class ChangePasswordDTO
     {
         [Required(ErrorMessage = "La contraseña actual es requerida")]
@@ -109,9 +95,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // ROLE & PERMISSION DTOs
-    /// <summary>
     /// DTO para rol
-    /// </summary>
     public class RolDTO
     {
         public int Id_Rol { get; set; }
@@ -121,9 +105,7 @@ namespace TicketsAPI.Models.DTOs
         public List<PermisoDTO>? Permisos { get; set; }
     }
 
-    /// <summary>
     /// DTO para permiso
-    /// </summary>
     public class PermisoDTO
     {
         public int Id_Permiso { get; set; }
@@ -133,9 +115,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // DEPARTMENT DTOs
-    /// <summary>
     /// DTO para departamento
-    /// </summary>
     public class DepartamentoDTO
     {
         public int Id_Departamento { get; set; }
@@ -145,9 +125,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // TICKET DTOs
-    /// <summary>
     /// DTO para crear/actualizar ticket
-    /// </summary>
     public class CreateUpdateTicketDTO
     {
         [Required(ErrorMessage = "El contenido es requerido")]
@@ -164,9 +142,7 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Motivo { get; set; }
     }
 
-    /// <summary>
     /// DTO para ticket (respuesta)
-    /// </summary>
     public class TicketDTO
     {
         public long Id_Tkt { get; set; }
@@ -195,9 +171,7 @@ namespace TicketsAPI.Models.DTOs
         public List<HistorialTicketDTO>? Historial { get; set; }
     }
 
-    /// <summary>
     /// DTO para transición de estado
-    /// </summary>
     public class TransicionEstadoDTO
     {
         public int Id_Estado_Nuevo { get; set; }
@@ -211,9 +185,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // STATUS & PRIORITY DTOs
-    /// <summary>
     /// DTO para estado
-    /// </summary>
     public class EstadoDTO
     {
         public int Id_Estado { get; set; }
@@ -223,9 +195,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Activo { get; set; }
     }
 
-    /// <summary>
     /// DTO para prioridad
-    /// </summary>
     public class PrioridadDTO
     {
         public int Id_Prioridad { get; set; }
@@ -236,9 +206,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // COMMENT & HISTORY DTOs
-    /// <summary>
     /// DTO para comentario
-    /// </summary>
     public class ComentarioDTO
     {
         public int Id_Comentario { get; set; }
@@ -251,9 +219,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Privado { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear/actualizar comentario
-    /// </summary>
     public class CreateUpdateComentarioDTO
     {
         [Required(ErrorMessage = "El contenido es requerido")]
@@ -263,9 +229,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Privado { get; set; } = false;
     }
 
-    /// <summary>
     /// DTO para historial de ticket
-    /// </summary>
     public class HistorialTicketDTO
     {
         public int Id_Historial { get; set; }
@@ -280,9 +244,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // PAGINATION & RESPONSE DTOs
-    /// <summary>
     /// DTO para filtros de búsqueda
-    /// </summary>
     public class TicketFiltroDTO
     {
         public int? Id_Estado { get; set; }
@@ -310,51 +272,37 @@ namespace TicketsAPI.Models.DTOs
         public int Pagina { get; set; } = 1;
         public int TamañoPagina { get; set; } = 20;
 
-        /// <summary>
         /// Tipo de vista: "mis-tickets", "cola", "todos".
         /// Se pasa como query param. El servicio selecciona el SP correcto.
-        /// </summary>
         public string? Vista { get; set; }
 
-        /// <summary>
         /// Filtro "sin asignar" para la cola de trabajo (legacy, ahora se usa Vista=cola).
-        /// </summary>
         public bool? SinAsignar { get; set; }
 
-        /// <summary>
         /// ID del usuario que visualiza. Cuando está seteado, el filtro se comporta como:
         /// (creador = VistaUsuarioId) OR (asignado = VistaUsuarioId)
         /// Si además VistaUsuarioDepartamentoId está seteado, agrega: OR (departamento = VistaUsuarioDepartamentoId)
         /// Se setea automáticamente en TicketService según permisos del usuario.
-        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
         public int? VistaUsuarioId { get; set; }
 
-        /// <summary>
         /// Departamento del usuario que visualiza. Cuando está seteado junto con VistaUsuarioId,
         /// permite ver tickets del mismo departamento (para usuarios con VER_SOLO_DEPARTAMENTO o TKT_LIST_ALL).
-        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
         public int? VistaUsuarioDepartamentoId { get; set; }
     }
 
-    /// <summary>
     /// DTO para asignación de ticket
-    /// </summary>
     public class AsignarTicketDTO
     {
         [Required(ErrorMessage = "El ID de usuario es requerido")]
         public int Id_Usuario_Asignado { get; set; }
 
-        /// <summary>
         /// Comentario obligatorio al reasignar (cuando el ticket ya tenía dueño)
-        /// </summary>
         public string? Comentario { get; set; }
     }
 
-    /// <summary>
     /// DTO para respuesta paginada
-    /// </summary>
     public class PaginatedResponse<T>
     {
         public List<T> Datos { get; set; } = new();
@@ -366,9 +314,7 @@ namespace TicketsAPI.Models.DTOs
         public bool TienePaginaSiguiente { get; set; }
     }
 
-    /// <summary>
     /// DTO para respuesta de API
-    /// </summary>
     public class ApiResponse<T>
     {
         public bool Exitoso { get; set; }
@@ -377,9 +323,7 @@ namespace TicketsAPI.Models.DTOs
         public List<string> Errores { get; set; } = new();
     }
 
-    /// <summary>
     /// DTO para estadísticas del dashboard
-    /// </summary>
     public class DashboardDTO
     {
         public int TicketsTotal { get; set; }
@@ -395,9 +339,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // MOTIVO DTOs
-    /// <summary>
     /// DTO para motivo de ticket
-    /// </summary>
     public class MotivoDTO
     {
         public int Id_Motivo { get; set; }
@@ -407,9 +349,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Activo { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear/actualizar motivo
-    /// </summary>
     public class CreateUpdateMotivoDTO
     {
         public string Nombre { get; set; } = string.Empty;
@@ -419,9 +359,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // ESTADO / PRIORIDAD ADMIN DTOs
-    /// <summary>
     /// DTO para crear/actualizar estado
-    /// </summary>
     public class CreateUpdateEstadoDTO
     {
         [Required(ErrorMessage = "El nombre es requerido")]
@@ -429,9 +367,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Descripcion { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear/actualizar prioridad
-    /// </summary>
     public class CreateUpdatePrioridadDTO
     {
         [Required(ErrorMessage = "El nombre es requerido")]
@@ -440,9 +376,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // GRUPO DTOs
-    /// <summary>
     /// DTO para grupo
-    /// </summary>
     public class GrupoDTO
     {
         public int Id_Grupo { get; set; }
@@ -450,9 +384,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // APROBACION DTOs
-    /// <summary>
     /// DTO para solicitud de aprobación
-    /// </summary>
     public class AprobacionDTO
     {
         public int Id_Aprobacion { get; set; }
@@ -464,18 +396,14 @@ namespace TicketsAPI.Models.DTOs
         public DateTime? Fecha_Respuesta { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear aprobación
-    /// </summary>
     public class CreateAprobacionDTO
     {
         [Required]
         public int Id_Usuario_Aprobador { get; set; }
     }
 
-    /// <summary>
     /// DTO para responder aprobación
-    /// </summary>
     public class ResponderAprobacionDTO
     {
         [Required]
@@ -484,9 +412,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // TRANSICION DTOs
-    /// <summary>
     /// DTO para transición de estado
-    /// </summary>
     public class TransicionDTO
     {
         public int Id_Transicion { get; set; }
@@ -498,9 +424,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime Fecha { get; set; }
     }
 
-    /// <summary>
     /// DTO para crear/actualizar departamento
-    /// </summary>
     public class CreateUpdateDepartamentoDTO
     {
         [Required]
@@ -509,9 +433,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // TRANSICION RESULT DTO
-    /// <summary>
     /// Resultado de la transición de estado de un ticket (salida de sp_tkt_transicionar)
-    /// </summary>
     public class TransicionResultDTO
     {
         public int Success { get; set; }  // 1 = éxito, 0 = error
@@ -521,9 +443,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // COMENTARIO RESULT DTO
-    /// <summary>
     /// Resultado de la creación de comentario (salida de sp_tkt_comentar)
-    /// </summary>
     public class ComentarioResultDTO
     {
         public int Success { get; set; }  // 1 = éxito, 0 = error
@@ -532,9 +452,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // REPORTES DTOs
-    /// <summary>
     /// DTO para reporte agrupado por estado
-    /// </summary>
     public class ReporteEstadoDTO
     {
         public string NombreEstado { get; set; } = string.Empty;
@@ -543,9 +461,7 @@ namespace TicketsAPI.Models.DTOs
         public string Color { get; set; } = string.Empty;
     }
 
-    /// <summary>
     /// DTO para reporte agrupado por prioridad
-    /// </summary>
     public class ReportePrioridadDTO
     {
         public string NombrePrioridad { get; set; } = string.Empty;
@@ -554,9 +470,7 @@ namespace TicketsAPI.Models.DTOs
         public string Color { get; set; } = string.Empty;
     }
 
-    /// <summary>
     /// DTO para reporte agrupado por departamento
-    /// </summary>
     public class ReporteDepartamentoDTO
     {
         public string NombreDepartamento { get; set; } = string.Empty;
@@ -566,9 +480,7 @@ namespace TicketsAPI.Models.DTOs
         public int TicketsCerrados { get; set; }
     }
 
-    /// <summary>
     /// DTO para reporte de tendencias por periodo
-    /// </summary>
     public class TendenciaDTO
     {
         public string Periodo { get; set; } = string.Empty; // "2024-01-27", "Semana 4", "Enero 2024"
@@ -578,9 +490,7 @@ namespace TicketsAPI.Models.DTOs
         public double TiempoPromedioResolucionHoras { get; set; }
     }
 
-    /// <summary>
     /// DTO para filtros de reportes
-    /// </summary>
     public class FiltroReporteDTO
     {
         public DateTime? FechaDesde { get; set; }
@@ -592,9 +502,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // SUSCRIPCION DTOs
-    /// <summary>
     /// Resultado de sp_tkt_gestionar_suscripcion
-    /// </summary>
     public class SuscripcionResultDTO
     {
         public int Success { get; set; }
@@ -602,9 +510,7 @@ namespace TicketsAPI.Models.DTOs
         public int Total { get; set; }
     }
 
-    /// <summary>
     /// DTO para un suscriptor de ticket
-    /// </summary>
     public class SuscriptorDTO
     {
         public int Id_Usuario { get; set; }
@@ -614,9 +520,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // NOTIFICACION LECTURA DTOs
-    /// <summary>
     /// Resumen de notificaciones no leídas
-    /// </summary>
     public class NotificacionResumenDTO
     {
         public int TotalNoLeidos { get; set; }
@@ -624,9 +528,7 @@ namespace TicketsAPI.Models.DTOs
         public List<NotificacionTicketDTO> UltimosNoLeidos { get; set; } = new();
     }
 
-    /// <summary>
     /// Ticket no leído en dropdown de notificaciones
-    /// </summary>
     public class NotificacionTicketDTO
     {
         public long Id_Ticket { get; set; }
@@ -683,9 +585,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // AUDIT LOG DTOs
-    /// <summary>
     /// DTO para registros de auditoría (audit_log)
-    /// </summary>
     public class AuditLogDTO
     {
         public long IdAuditoria { get; set; }
@@ -701,9 +601,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Descripcion { get; set; }
     }
 
-    /// <summary>
     /// Filtros para consultar audit_log
-    /// </summary>
     public class AuditLogFiltroDTO
     {
         public string? Tabla { get; set; }
@@ -716,9 +614,7 @@ namespace TicketsAPI.Models.DTOs
         public int PorPagina { get; set; } = 50;
     }
 
-    /// <summary>
     /// Resumen de estadísticas del audit_log
-    /// </summary>
     public class AuditLogStatsDTO
     {
         public long TotalEstimado { get; set; }
@@ -728,9 +624,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime? UltimaFecha { get; set; }
     }
 
-    /// <summary>
     /// DTO para historial de transiciones de un ticket (datos enriquecidos).
-    /// </summary>
     public class TransicionHistorialDTO
     {
         public long IdTransicion { get; set; }
@@ -749,9 +643,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // GLOBAL SEARCH DTOs
-    /// <summary>
     /// Resultado individual de la búsqueda global
-    /// </summary>
     public class GlobalSearchItemDTO
     {
         public string Categoria { get; set; } = string.Empty;
@@ -760,9 +652,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Extra { get; set; }
     }
 
-    /// <summary>
     /// Resultado agrupado de la búsqueda global
-    /// </summary>
     public class GlobalSearchResultDTO
     {
         public List<GlobalSearchItemDTO> Tickets { get; set; } = new();
@@ -771,9 +661,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // TICKET STATS DTOs
-    /// <summary>
     /// Estadísticas rápidas de tickets para el mini-dashboard
-    /// </summary>
     public class TicketStatsDTO
     {
         public int Abiertos { get; set; }
@@ -783,9 +671,7 @@ namespace TicketsAPI.Models.DTOs
     }
 
     // ALERTAS / MENCIONES DTOs
-    /// <summary>
     /// Alerta de mención (@usuario)
-    /// </summary>
     public class AlertaDTO
     {
         public long IdAlerta { get; set; }
@@ -797,9 +683,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime Fecha { get; set; }
     }
 
-    /// <summary>
     /// DTO para respuesta de exportación
-    /// </summary>
     public class ExportResultDTO
     {
         public string FileName { get; set; } = string.Empty;

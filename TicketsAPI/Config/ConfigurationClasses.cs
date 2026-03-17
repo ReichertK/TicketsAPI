@@ -1,12 +1,10 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySqlConnector;
 using Dapper;
 
 namespace TicketsAPI.Config
 {
-    /// <summary>
     /// Health check para la base de datos
-    /// </summary>
     public class DatabaseHealthCheck : IHealthCheck
     {
         private readonly string? _connectionString;
@@ -39,10 +37,8 @@ namespace TicketsAPI.Config
         }
     }
 
-    /// <summary>
     /// Health check que ejecuta una consulta liviana al dashboard para calentar
     /// el buffer pool de InnoDB, el connection pool de .NET y el JIT del endpoint.
-    /// </summary>
     public class DashboardWarmupHealthCheck : IHealthCheck
     {
         private readonly string? _connectionString;
@@ -80,9 +76,7 @@ namespace TicketsAPI.Config
         }
     }
 
-    /// <summary>
     /// Configuración JWT
-    /// </summary>
     public class JwtSettings
     {
         public string SecretKey { get; set; } = string.Empty;
@@ -92,9 +86,7 @@ namespace TicketsAPI.Config
         public int RefreshTokenExpirationDays { get; set; }
     }
 
-    /// <summary>
     /// Configuración CORS
-    /// </summary>
     public class CorsSettings
     {
         public string[] AllowedOrigins { get; set; } = Array.Empty<string>();
@@ -102,9 +94,7 @@ namespace TicketsAPI.Config
         public string[] AllowedHeaders { get; set; } = Array.Empty<string>();
     }
 
-    /// <summary>
     /// Configuración de API
-    /// </summary>
     public class ApiSettings
     {
         public int PageSize { get; set; } = 20;

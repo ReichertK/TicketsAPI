@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using MySqlConnector;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Models.Entities;
@@ -63,9 +63,7 @@ namespace TicketsAPI.Repositories.Implementations
             return parameters.Get<int>("p_id");
         }
 
-        /// <summary>
         /// Soft-delete: toggle Habilitado via SP (protege Abierto/Cerrado).
-        /// </summary>
         public async Task<bool> DeleteAsync(int id)
         {
             return await ToggleStatusAsync(id);
@@ -123,10 +121,8 @@ namespace TicketsAPI.Repositories.Implementations
             return count > 0;
         }
 
-        /// <summary>
         /// Toggle soft-delete via SP sp_toggle_estado.
         /// Protege estados Abierto y Cerrado de ser desactivados.
-        /// </summary>
         public async Task<bool> ToggleStatusAsync(int id)
         {
             using var conn = CreateConnection();

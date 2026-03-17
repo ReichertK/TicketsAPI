@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using TicketsAPI.Repositories.Interfaces;
 using TicketsAPI.Models.Entities;
 
@@ -8,10 +8,8 @@ namespace TicketsAPI.Repositories.Implementations
     {
         public PoliticaTransicionRepository(string connectionString) : base(connectionString) { }
 
-        /// <summary>
         /// DEPRECATED: No usar. Tabla PoliticasTransicion no existe en BD.
         /// Usar métodos GetTransicionAsync y GetPosiblesTransicionesAsync que mapean a tkt_transicion_regla
-        /// </summary>
         public async Task<int> CreateAsync(PoliticaTransicion entity)
         {
             using var conn = CreateConnection();

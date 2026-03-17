@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -7,14 +7,10 @@ using TicketsAPI.Controllers;
 
 namespace TicketsAPI.Tests.Helpers
 {
-    /// <summary>
     /// Helper class para crear contextos de usuario autenticado en tests
-    /// </summary>
     public static class ControllerTestHelper
     {
-        /// <summary>
         /// Configura un controller con usuario autenticado
-        /// </summary>
         public static void SetupAuthenticatedUser(
             ControllerBase controller, 
             int userId, 
@@ -44,9 +40,7 @@ namespace TicketsAPI.Tests.Helpers
             };
         }
 
-        /// <summary>
         /// Configura un controller sin usuario autenticado
-        /// </summary>
         public static void SetupUnauthenticatedUser(ControllerBase controller)
         {
             controller.ControllerContext = new ControllerContext
@@ -58,17 +52,13 @@ namespace TicketsAPI.Tests.Helpers
             };
         }
 
-        /// <summary>
         /// Crea un mock de ILogger genérico
-        /// </summary>
         public static Mock<ILogger<T>> CreateMockLogger<T>()
         {
             return new Mock<ILogger<T>>();
         }
 
-        /// <summary>
         /// Verifica que se haya llamado al logger con error
-        /// </summary>
         public static void VerifyLogError<T>(Mock<ILogger<T>> mockLogger)
         {
             mockLogger.Verify(
@@ -81,9 +71,7 @@ namespace TicketsAPI.Tests.Helpers
                 Times.AtLeastOnce);
         }
 
-        /// <summary>
         /// Verifica que se haya llamado al logger con warning
-        /// </summary>
         public static void VerifyLogWarning<T>(Mock<ILogger<T>> mockLogger)
         {
             mockLogger.Verify(

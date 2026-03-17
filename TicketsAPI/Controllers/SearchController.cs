@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
@@ -7,10 +7,8 @@ using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Controllers
 {
-    /// <summary>
     /// Controller para búsqueda global (Command Palette / Ctrl+K).
     /// Utiliza sp_global_search con RBAC integrado.
-    /// </summary>
     [Authorize]
     public class SearchController : BaseApiController
     {
@@ -24,11 +22,9 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
-        /// <summary>
         /// Búsqueda global: tickets, usuarios, departamentos.
         /// GET /api/v1/Search?q=termino&limite=10
         /// RBAC: usuarios comunes solo ven tickets de su departamento y activos.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GlobalSearch([FromQuery] string q, [FromQuery] int limite = 10)
         {

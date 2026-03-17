@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
@@ -31,9 +31,7 @@ namespace TicketsAPI.Controllers
             _authService = authService;
         }
 
-        /// <summary>
         /// Obtener aprobaciones pendientes para el usuario actual
-        /// </summary>
         [HttpGet("Approvals/Pending")]
         public async Task<IActionResult> ObtenerAprobacionesPendientes()
         {
@@ -74,9 +72,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Solicitar aprobación para un ticket
-        /// </summary>
         [HttpPost("Tickets/{ticketId}/Approvals")]
         public async Task<IActionResult> SolicitarAprobacion(int ticketId, [FromBody] CreateAprobacionDTO dto)
         {
@@ -116,9 +112,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener aprobación por ID
-        /// </summary>
         [HttpGet("Approvals/{id}")]
         public async Task<IActionResult> ObtenerAprobacionPorId(int id)
         {
@@ -148,9 +142,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Responder solicitud de aprobación (aprobar o rechazar)
-        /// </summary>
         [HttpPut("Approvals/{id}/Respond")]
         public async Task<IActionResult> ResponderAprobacion(int id, [FromBody] ResponderAprobacionDTO dto)
         {
@@ -187,9 +179,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener historial de aprobaciones de un ticket
-        /// </summary>
         [HttpGet("Tickets/{ticketId}/Approvals")]
         public async Task<IActionResult> ObtenerAprobacionesPorTicket(int ticketId)
         {

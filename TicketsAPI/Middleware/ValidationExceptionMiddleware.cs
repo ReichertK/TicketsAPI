@@ -1,13 +1,11 @@
-using FluentValidation;
+﻿using FluentValidation;
 using System.Text.Json;
 using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Middleware
 {
-    /// <summary>
     /// Middleware para manejar excepciones de validación de FluentValidation
     /// Convierte ValidationExceptions en respuestas JSON consistentes
-    /// </summary>
     public class ValidationExceptionMiddleware
     {
         private readonly RequestDelegate _next;
@@ -50,9 +48,7 @@ namespace TicketsAPI.Middleware
         }
     }
 
-    /// <summary>
     /// Extensiones para registrar el middleware
-    /// </summary>
     public static class ValidationExceptionMiddlewareExtensions
     {
         public static IApplicationBuilder UseValidationExceptionHandler(this IApplicationBuilder builder)

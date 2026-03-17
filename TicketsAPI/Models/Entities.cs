@@ -1,8 +1,6 @@
-namespace TicketsAPI.Models.Entities
+﻿namespace TicketsAPI.Models.Entities
 {
-    /// <summary>
     /// Entidad de Usuario con información de autenticación y perfil
-    /// </summary>
     public class Usuario
     {
         public int Id_Usuario { get; set; }
@@ -24,9 +22,7 @@ namespace TicketsAPI.Models.Entities
         public virtual Departamento? Departamento { get; set; }
     }
 
-    /// <summary>
     /// Entidad de Rol con permisos granulares (RBAC)
-    /// </summary>
     public class Rol
     {
         public int Id_Rol { get; set; }
@@ -40,9 +36,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<Usuario>? Usuarios { get; set; }
     }
 
-    /// <summary>
     /// Entidad de Permiso para control granular
-    /// </summary>
     public class Permiso
     {
         public int Id_Permiso { get; set; }
@@ -55,9 +49,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<RolPermiso>? RolPermisos { get; set; }
     }
 
-    /// <summary>
     /// Tabla de unión: Rol-Permiso
-    /// </summary>
     public class RolPermiso
     {
         public int Id_RolPermiso { get; set; }
@@ -70,9 +62,7 @@ namespace TicketsAPI.Models.Entities
         public virtual Permiso? Permiso { get; set; }
     }
 
-    /// <summary>
     /// Entidad de Departamento
-    /// </summary>
     public class Departamento
     {
         public int Id_Departamento { get; set; }
@@ -85,9 +75,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<Ticket>? Tickets { get; set; }
     }
 
-    /// <summary>
     /// Estados del ciclo de vida del ticket
-    /// </summary>
     public class Estado
     {
         public int Id_Estado { get; set; }
@@ -101,9 +89,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<Ticket>? Tickets { get; set; }
     }
 
-    /// <summary>
     /// Prioridades de los tickets
-    /// </summary>
     public class Prioridad
     {
         public int Id_Prioridad { get; set; }
@@ -117,9 +103,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<Ticket>? Tickets { get; set; }
     }
 
-    /// <summary>
     /// Entidad principal de Ticket
-    /// </summary>
     public class Ticket
     {
         public long Id_Tkt { get; set; }
@@ -150,9 +134,7 @@ namespace TicketsAPI.Models.Entities
         public virtual ICollection<Comentario>? Comentarios { get; set; }
     }
 
-    /// <summary>
     /// Historial de cambios y auditoría de ticket
-    /// </summary>
     public class HistorialTicket
     {
         public int Id_Historial { get; set; }
@@ -171,9 +153,7 @@ namespace TicketsAPI.Models.Entities
         public virtual Usuario? Usuario { get; set; }
     }
 
-    /// <summary>
     /// Comentarios en tickets
-    /// </summary>
     public class Comentario
     {
         public int Id_Comentario { get; set; }
@@ -189,9 +169,7 @@ namespace TicketsAPI.Models.Entities
         public virtual Usuario? Usuario { get; set; }
     }
 
-    /// <summary>
     /// Políticas de transición de estado (Máquina de estados)
-    /// </summary>
     public class PoliticaTransicion
     {
         public int Id_Politica { get; set; }
@@ -211,9 +189,7 @@ namespace TicketsAPI.Models.Entities
         public virtual Rol? Rol { get; set; }
     }
 
-    /// <summary>
     /// Motivos/Categorías para los tickets
-    /// </summary>
     public class Motivo
     {
         public int Id_Motivo { get; set; }
@@ -223,9 +199,7 @@ namespace TicketsAPI.Models.Entities
         public bool Activo { get; set; } = true;
     }
 
-    /// <summary>
     /// Aprobaciones de tickets
-    /// </summary>
     public class Aprobacion
     {
         public int Id_Aprobacion { get; set; }
@@ -238,9 +212,7 @@ namespace TicketsAPI.Models.Entities
         public string? Comentario_Respuesta { get; set; }
     }
 
-    /// <summary>
     /// Transiciones de estado de tickets
-    /// </summary>
     public class Transicion
     {
         public int Id_Transicion { get; set; }
@@ -252,9 +224,7 @@ namespace TicketsAPI.Models.Entities
         public DateTime Fecha { get; set; }
     }
 
-    /// <summary>
     /// Grupos de usuarios
-    /// </summary>
     public class Grupo
     {
         public int Id_Grupo { get; set; }

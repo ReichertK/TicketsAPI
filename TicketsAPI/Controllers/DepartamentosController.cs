@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
@@ -29,9 +29,7 @@ namespace TicketsAPI.Controllers
             _auditService = auditService;
         }
 
-        /// <summary>
         /// Obtener todos los departamentos (activos e inactivos)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ObtenerDepartamentos()
         {
@@ -55,9 +53,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener departamento por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerDepartamentoPorId(int id)
         {
@@ -84,9 +80,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear nuevo departamento
-        /// </summary>
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> CrearDepartamento([FromBody] CreateUpdateDepartamentoDTO dto)
@@ -123,9 +117,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar departamento
-        /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ActualizarDepartamento(int id, [FromBody] CreateUpdateDepartamentoDTO dto)
@@ -170,9 +162,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Toggle habilitado/deshabilitado (soft delete)
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> ToggleDepartamento(int id)

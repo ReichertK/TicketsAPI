@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using TicketsAPI.Models.Entities;
 using TicketsAPI.Repositories.Interfaces;
 
@@ -77,9 +77,7 @@ namespace TicketsAPI.Repositories.Implementations
             return newId;
         }
 
-        /// <summary>
         /// Soft-delete: toggle Habilitado.
-        /// </summary>
         public async Task<bool> DeleteAsync(int id)
         {
             return await ToggleStatusAsync(id);
@@ -148,9 +146,7 @@ namespace TicketsAPI.Repositories.Implementations
             return count > 0;
         }
 
-        /// <summary>
         /// Toggle soft-delete: si Habilitado = 1 → pone 0 + fecha; si 0 → pone 1 + limpia fecha.
-        /// </summary>
         public async Task<bool> ToggleStatusAsync(int id)
         {
             using var conn = CreateConnection();

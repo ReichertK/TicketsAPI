@@ -1,10 +1,8 @@
-namespace TicketsAPI.Exceptions
+﻿namespace TicketsAPI.Exceptions
 {
-    /// <summary>
     /// Excepción personalizada para errores de autorización (permisos insuficientes).
     /// Se usa para indicar que el usuario autenticado no tiene permisos para realizar la acción.
     /// Debe resultar en HTTP 403 Forbidden.
-    /// </summary>
     public class UnauthorizedException : Exception
     {
         public UnauthorizedException(string message) : base(message)

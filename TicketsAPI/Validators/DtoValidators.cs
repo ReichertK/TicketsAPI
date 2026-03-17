@@ -1,11 +1,9 @@
-using FluentValidation;
+﻿using FluentValidation;
 using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Validators
 {
-    /// <summary>
     /// Validador para LoginRequest
-    /// </summary>
     public class LoginRequestValidator : AbstractValidator<LoginRequest>
     {
         public LoginRequestValidator()
@@ -20,9 +18,7 @@ namespace TicketsAPI.Validators
         }
     }
 
-    /// <summary>
     /// Validador para RefreshTokenRequest
-    /// </summary>
     public class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenRequest>
     {
         public RefreshTokenRequestValidator()
@@ -33,9 +29,7 @@ namespace TicketsAPI.Validators
         }
     }
 
-    /// <summary>
     /// Validador para CreateUpdateUsuarioDTO
-    /// </summary>
     public class CreateUpdateUsuarioDTOValidator : AbstractValidator<CreateUpdateUsuarioDTO>
     {
         public CreateUpdateUsuarioDTOValidator()
@@ -72,9 +66,7 @@ namespace TicketsAPI.Validators
         }
     }
 
-    /// <summary>
     /// Validador para ChangePasswordDTO
-    /// </summary>
     public class ChangePasswordDTOValidator : AbstractValidator<ChangePasswordDTO>
     {
         public ChangePasswordDTOValidator()
@@ -90,9 +82,7 @@ namespace TicketsAPI.Validators
         }
     }
 
-    /// <summary>
     /// Validador para CreateUpdateTicketDTO
-    /// </summary>
     public class CreateUpdateTicketDTOValidator : AbstractValidator<CreateUpdateTicketDTO>
     {
         public CreateUpdateTicketDTOValidator()
@@ -117,9 +107,7 @@ namespace TicketsAPI.Validators
                 .When(x => x.Id_Motivo.HasValue);
         }
 
-        /// <summary>
         /// Devuelve true si el texto NO contiene patrones de SQL injection.
-        /// </summary>
         private static bool IsSafeFromSqlInjection(string content)
         {
             if (string.IsNullOrEmpty(content))
@@ -132,9 +120,7 @@ namespace TicketsAPI.Validators
         }
     }
 
-    /// <summary>
     /// Validador para TicketFiltroDTO
-    /// </summary>
     public class TicketFiltroDTOValidator : AbstractValidator<TicketFiltroDTO>
     {
         public TicketFiltroDTOValidator()
@@ -161,9 +147,7 @@ namespace TicketsAPI.Validators
                 .When(x => x.Fecha_Desde.HasValue && x.Fecha_Hasta.HasValue);
         }
 
-        /// <summary>
         /// Devuelve true si el texto NO contiene patrones de SQL injection.
-        /// </summary>
         private static bool IsSafeFromSqlInjection(string? text)
         {
             if (string.IsNullOrEmpty(text))

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketsAPI.Models;
 using TicketsAPI.Models.DTOs;
@@ -21,9 +21,7 @@ namespace TicketsAPI.Controllers
             _grupoRepository = grupoRepository;
         }
 
-        /// <summary>
         /// Obtener todos los grupos activos
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ObtenerGrupos()
         {
@@ -45,9 +43,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener grupo por ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerGrupoPorId(int id)
         {
@@ -72,9 +68,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Crear nuevo grupo
-        /// </summary>
         [HttpPost]
         [Authorize]  // Solo requiere autenticación, validación manual de rol dentro
         public async Task<IActionResult> CrearGrupo([FromBody] GrupoDTO dto)
@@ -107,9 +101,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Actualizar grupo
-        /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,Administrador")]
         public async Task<IActionResult> ActualizarGrupo(int id, [FromBody] GrupoDTO dto)
@@ -135,9 +127,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Eliminar grupo
-        /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin,Administrador")]
         public async Task<IActionResult> EliminarGrupo(int id)

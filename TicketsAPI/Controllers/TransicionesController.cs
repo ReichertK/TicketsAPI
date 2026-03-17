@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Dapper;
 using MySqlConnector;
@@ -36,9 +36,7 @@ namespace TicketsAPI.Controllers
             _estadoService = estadoService;
         }
 
-        /// <summary>
         /// Obtener historial de transiciones de un ticket
-        /// </summary>
         [HttpGet("Tickets/{ticketId}/Transitions")]
         public async Task<IActionResult> ObtenerTransicionesPorTicket(int ticketId)
         {
@@ -74,9 +72,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Realizar transición de estado en un ticket
-        /// </summary>
         [HttpPost("Tickets/{ticketId}/Transition")]
         public async Task<IActionResult> RealizarTransicion(int ticketId, [FromBody] TransicionEstadoDTO dto)
         {
@@ -145,9 +141,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener transición por ID
-        /// </summary>
         [HttpGet("Transitions/{id}")]
         public async Task<IActionResult> ObtenerTransicionPorId(int id)
         {
@@ -177,9 +171,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// <summary>
         /// Obtener historial de transiciones de un usuario
-        /// </summary>
         [HttpGet("Users/{userId}/Transitions")]
         public async Task<IActionResult> ObtenerTransicionesPorUsuario(int userId)
         {

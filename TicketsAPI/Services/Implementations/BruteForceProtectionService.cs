@@ -1,12 +1,10 @@
-using Dapper;
+﻿using Dapper;
 using MySqlConnector;
 
 namespace TicketsAPI.Services.Implementations
 {
-    /// <summary>
     /// Servicio de protección contra fuerza bruta.
     /// Registra intentos fallidos, bloquea cuentas tras N fallos y desbloquea automáticamente.
-    /// </summary>
     public class BruteForceProtectionService
     {
         private readonly string _connectionString;
@@ -21,10 +19,8 @@ namespace TicketsAPI.Services.Implementations
             _logger = logger;
         }
 
-        /// <summary>
         /// Verifica si el usuario está bloqueado por intentos fallidos.
         /// Si el bloqueo ha expirado, lo limpia automáticamente.
-        /// </summary>
         public virtual async Task<(bool Bloqueado, int IntentosRestantes, DateTime? BloqueadoHasta)> VerificarBloqueoAsync(string nombreUsuario)
         {
             try
@@ -68,9 +64,7 @@ namespace TicketsAPI.Services.Implementations
             }
         }
 
-        /// <summary>
         /// Registra un intento fallido de login. Si alcanza el máximo, bloquea la cuenta.
-        /// </summary>
         public virtual async Task RegistrarIntentoFallidoAsync(string nombreUsuario, string ipAddress)
         {
             try
@@ -124,9 +118,7 @@ namespace TicketsAPI.Services.Implementations
             }
         }
 
-        /// <summary>
         /// Limpia el contador de intentos fallidos después de un login exitoso.
-        /// </summary>
         public virtual async Task LimpiarIntentosAsync(string nombreUsuario)
         {
             try

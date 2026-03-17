@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,9 +12,7 @@ using TicketsAPI.Tests.Helpers;
 
 namespace TicketsAPI.Tests.Controllers
 {
-    /// <summary>
     /// Pruebas exhaustivas para todos los endpoints principales
-    /// </summary>
     public class AllEndpointsTests
     {
         // Auth

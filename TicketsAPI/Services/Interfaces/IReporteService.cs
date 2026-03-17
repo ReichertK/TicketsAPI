@@ -2,9 +2,6 @@ using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Services.Interfaces
 {
-    /// <summary>
-    /// Interfaz para servicio de reportes y analytics
-    /// </summary>
     public interface IReporteService
     {
         /// <summary>

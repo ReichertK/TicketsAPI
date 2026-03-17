@@ -187,7 +187,6 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario)
         {
-            // F2: Delegamos exclusivamente al SP que valida permisos, registra historial y notifica
             var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
                 idTkt: id,
                 estadoTo: dto.Id_Estado_Nuevo,

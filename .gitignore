@@ -86,6 +86,7 @@ PublishProfiles/
 *.tmp
 *.temp
 *.bak
+tsc_output.txt
 
 # Contenedores
 .docker/

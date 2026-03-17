@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+﻿import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { usePermission } from '../../hooks/usePermission';
 import {
@@ -89,7 +89,7 @@ export default function Layout() {
     navigate('/login');
   };
 
-  // ── Menú RBAC ──────────────────────────────────────────────────
+  // Menú RBAC
   const admin = isAdmin();
   const canListAll = usePermission('TKT_LIST_ALL');
   const canAccessConfig = usePermission('TKT_RBAC_ADMIN');
@@ -125,7 +125,7 @@ export default function Layout() {
     return location.pathname.startsWith(href);
   }
 
-  // ── Sidebar nav items (full / collapsed) ───────────────────────
+  // Sidebar nav items (full / collapsed)
   function renderNavItems(mode: 'full' | 'collapsed', onItemClick?: () => void) {
     return navigation.map((item) => {
       const active = isActive(item.href);
@@ -168,7 +168,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Overlay + Drawer móvil ──────────────────────────────── */}
+      {/* Overlay + Drawer móvil */}
       {drawerOpen && (
         <div
           className="fixed inset-0 z-40 lg:hidden bg-black/50 backdrop-blur-sm"
@@ -216,7 +216,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* ── Sidebar desktop (collapsible) ───────────────────────── */}
+      {/* Sidebar desktop (collapsible) */}
       <aside
         className={`hidden lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:flex-col bg-slate-900 transition-all duration-300 ease-in-out ${collapsed ? 'lg:w-[68px]' : 'lg:w-64'}`}
       >
@@ -284,7 +284,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* ── Main content ────────────────────────────────────────── */}
+      {/* Main content */}
       <div
         className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'lg:pl-[68px]' : 'lg:pl-64'}`}
       >

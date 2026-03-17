@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
@@ -28,8 +28,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-// ── Modal de usuario ─────────────────────────────────────────────
-
+// Modal de usuario
 interface UserModalProps {
   open: boolean;
   usuario: UsuarioDTO | null;
@@ -254,8 +253,7 @@ function UserModal({ open, usuario, onClose }: UserModalProps) {
   );
 }
 
-// ── Página principal ─────────────────────────────────────────────
-
+// Página principal
 export default function UsuariosPage() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);

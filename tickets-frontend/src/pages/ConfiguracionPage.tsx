@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
@@ -41,8 +41,7 @@ const TABS: { id: TabId; label: string; icon: typeof Settings }[] = [
   { id: 'seguridad', label: 'Seguridad', icon: ShieldAlert },
 ];
 
-// ── Toggle Switch reutilizable ───────────────────────────────────
-
+// Toggle Switch reutilizable
 function ToggleSwitch({ activo, onClick, title }: { activo: boolean; onClick: () => void; title?: string }) {
   return (
     <button
@@ -57,8 +56,7 @@ function ToggleSwitch({ activo, onClick, title }: { activo: boolean; onClick: ()
   );
 }
 
-// ── Modal genérico de edición ────────────────────────────────────
-
+// Modal genérico de edición
 interface EditModalProps {
   open: boolean;
   title: string;
@@ -113,8 +111,7 @@ function EditModal({ open, title, fields, onChange, onSubmit, onClose, isPending
   );
 }
 
-// ── Tab: Departamentos ───────────────────────────────────────────
-
+// Tab: Departamentos
 function DepartamentosTab() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -234,8 +231,7 @@ function DepartamentosTab() {
   );
 }
 
-// ── Tab: Estados ─────────────────────────────────────────────────
-
+// Tab: Estados
 function EstadosTab() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -366,8 +362,7 @@ function EstadosTab() {
   );
 }
 
-// ── Tab: Prioridades ─────────────────────────────────────────────
-
+// Tab: Prioridades
 function PrioridadesTab() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -485,8 +480,7 @@ function PrioridadesTab() {
   );
 }
 
-// ── Tab: Motivos ─────────────────────────────────────────────────
-
+// Tab: Motivos
 function MotivosTab() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -611,8 +605,7 @@ function MotivosTab() {
   );
 }
 
-// ── Página principal ─────────────────────────────────────────────
-
+// Página principal
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabId>('departamentos');
 

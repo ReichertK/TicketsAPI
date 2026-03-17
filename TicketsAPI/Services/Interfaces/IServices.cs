@@ -2,9 +2,6 @@ using TicketsAPI.Models.DTOs;
 
 namespace TicketsAPI.Services.Interfaces
 {
-    /// <summary>
-    /// Interfaz para servicio de autenticación
-    /// </summary>
     public interface IAuthService
     {
         Task<LoginResponse?> LoginAsync(LoginRequest request);
@@ -13,9 +10,6 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> ValidarPermisoAsync(int idUsuario, string codigoPermiso);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de tickets
-    /// </summary>
     public interface ITicketService
     {
         Task<TicketDTO?> GetByIdAsync(int id);
@@ -27,9 +21,6 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> CloseAsync(int id, int idUsuario, string? comentario = null);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de máquina de estados
-    /// </summary>
     public interface IEstadoService
     {
         Task<List<EstadoDTO>> GetAllAsync();
@@ -38,9 +29,6 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> ValidarTransicionAsync(int idEstadoOrigen, int idEstadoDestino, int idRol);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de usuarios
-    /// </summary>
     public interface IUsuarioService
     {
         Task<UsuarioDTO?> GetByIdAsync(int id);
@@ -57,9 +45,6 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> ResetPasswordAsync(int idUsuarioTarget, int idUsuarioAdmin, string nuevaPassword);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de comentarios
-    /// </summary>
     public interface IComentarioService
     {
         Task<ComentarioDTO?> GetByIdAsync(int id);
@@ -69,9 +54,6 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> DeleteAsync(int id, int idUsuario);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de auditoría
-    /// </summary>
     public interface IAuditoriaService
     {
         Task<List<HistorialTicketDTO>> GetHistorialTicketAsync(int idTicket);
@@ -80,9 +62,6 @@ namespace TicketsAPI.Services.Interfaces
         Task RegistrarAccesoAsync(int idUsuario, string accion, string? detalles = null);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de notificaciones (SignalR)
-    /// </summary>
     public interface INotificacionService
     {
         Task NotificarNuevoTicketAsync(int idTicket);
@@ -105,9 +84,6 @@ namespace TicketsAPI.Services.Interfaces
         Task AsignacionTicketAsync(int idUsuarioDestino, int idTicket, string mensaje);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de permisos
-    /// </summary>
     public interface IPermisoService
     {
         Task<List<PermisoDTO>> GetByRolAsync(int idRol);
@@ -115,18 +91,12 @@ namespace TicketsAPI.Services.Interfaces
         Task<bool> TienePermisoAsync(int idUsuario, string codigoPermiso);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de prioridades
-    /// </summary>
     public interface IPrioridadService
     {
         Task<List<PrioridadDTO>> GetAllAsync();
         Task<PrioridadDTO?> GetByIdAsync(int id);
     }
 
-    /// <summary>
-    /// Interfaz para servicio de departamentos
-    /// </summary>
     public interface IDepartamentoService
     {
         Task<List<DepartamentoDTO>> GetAllAsync();

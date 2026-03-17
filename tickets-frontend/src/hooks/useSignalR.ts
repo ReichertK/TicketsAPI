@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+﻿import { useEffect, useRef, useCallback } from 'react';
 import {
   HubConnectionBuilder,
   HubConnection,
@@ -77,7 +77,7 @@ function createEventDeduper(windowMs = 1500) {
  * de `token`, evitando reconexiones innecesarias y handlers duplicados.
  */
 
-// ── Module-level singleton to survive StrictMode double-mount ────
+// Module-level singleton to survive StrictMode double-mount
 let _sharedConnection: HubConnection | null = null;
 let _sharedConnecting = false;
 
@@ -127,8 +127,7 @@ export function useSignalR() {
     connection.serverTimeoutInMilliseconds = 120_000; // 2 min
     connection.keepAliveIntervalInMilliseconds = 15_000;
 
-    // ── Handlers de eventos (usan refs para valores actuales) ────
-
+    // Handlers de eventos (usan refs para valores actuales)
     /** Invalidar todas las listas de tickets (mis-tickets, todos, cola) */
     const invalidateTicketLists = () => {
       queryClientRef.current.invalidateQueries({ queryKey: ['mis-tickets'] });
@@ -229,8 +228,7 @@ export function useSignalR() {
       }
     );
 
-    // ── Menciones (@usuario) ─────────────────────────────────────
-
+    // Menciones (@usuario)
     connection.on('MencionUsuario', (payload: { idTicket: number; idComentario: number; mensaje: string }) => {
       if (isDup(`MencionUsuario-${payload.idTicket}-${payload.idComentario}`)) return;
 
@@ -245,8 +243,7 @@ export function useSignalR() {
       });
     });
 
-    // ── Asignación de ticket (@usuario) ──────────────────────────
-
+    // Asignación de ticket (@usuario)
     connection.on('TicketAssigned', (payload: { idTicket: number; mensaje: string }) => {
       if (isDup(`TicketAssigned-${payload.idTicket}`)) return;
 
@@ -263,8 +260,7 @@ export function useSignalR() {
       });
     });
 
-    // ── Reconexión ───────────────────────────────────────────────
-
+    // Reconexión
     connection.onreconnecting(() => {
       sileo.warning({
         title: 'Reconectando…',
@@ -291,22 +287,19 @@ export function useSignalR() {
       _sharedConnecting = false;
     });
 
-    // ── Iniciar conexión ─────────────────────────────────────────
-
+    // Iniciar conexión
     try {
       await connection.start();
       connectionRef.current = connection;
       connectingRef.current = false;
       _sharedConnection = connection;
       _sharedConnecting = false;
-      console.log('[SignalR] Conectado a TicketHub');
 
       // Suscribirse al grupo personal para recibir @menciones dirigidas
       try {
         await connection.invoke('SubscribeToUser');
-        console.log('[SignalR] Suscrito a grupo personal de usuario');
       } catch (subErr) {
-        console.warn('[SignalR] No se pudo suscribir a grupo personal:', subErr);
+        console.warn('[SignalR] Error suscripción grupo personal:', subErr);
       }
     } catch (err) {
       connectingRef.current = false;

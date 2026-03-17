@@ -1,4 +1,4 @@
-export interface LoginRequest {
+﻿export interface LoginRequest {
   usuario: string;
   contraseña: string;
 }
@@ -139,8 +139,7 @@ export interface PaginatedResponse<T> {
   tienePaginaSiguiente: boolean;
 }
 
-// ── DTOs de creación/actualización ───────────────────────────────
-
+// DTOs de creación/actualización
 export interface CreateUpdateUsuarioDTO {
   nombre: string;
   apellido: string;
@@ -156,8 +155,7 @@ export interface CreateUpdateDepartamentoDTO {
   descripcion?: string;
 }
 
-// ── Motivos ──────────────────────────────────────────────────────
-
+// Motivos
 export interface MotivoDTO {
   id_Motivo: number;
   nombre: string;
@@ -172,8 +170,7 @@ export interface CreateUpdateMotivoDTO {
   categoria?: string;
 }
 
-// ── Estados / Prioridades Admin ─────────────────────────────────
-
+// Estados / Prioridades Admin
 export interface CreateUpdateEstadoDTO {
   nombre: string;
   descripcion?: string;
@@ -184,8 +181,7 @@ export interface CreateUpdatePrioridadDTO {
   descripcion?: string;
 }
 
-// ── Transiciones de Estado ───────────────────────────────────────
-
+// Transiciones de Estado
 export interface TransicionPermitidaDTO {
   id_Estado_Destino: number;
   nombre_Estado: string;
@@ -195,8 +191,7 @@ export interface TransicionPermitidaDTO {
   requiere_Aprobacion: boolean;
 }
 
-// ── Suscripciones ────────────────────────────────────────────────
-
+// Suscripciones
 export interface SuscriptorDTO {
   id_Usuario: number;
   nombre: string;
@@ -210,8 +205,7 @@ export interface SuscripcionInfoDTO {
   total: number;
 }
 
-// ── Notificaciones ───────────────────────────────────────────────
-
+// Notificaciones
 export interface NotificacionResumenDTO {
   totalNoLeidos: number;
   pendientesAsignados: number;
@@ -228,8 +222,7 @@ export interface NotificacionTicketDTO {
   es_Asignado_A_Mi: boolean;
 }
 
-// ── RBAC: Roles y Permisos ───────────────────────────────────────
-
+// RBAC: Roles y Permisos
 export interface RolListDTO {
   idRol: number;
   nombre: string;
@@ -244,7 +237,7 @@ export interface PermisoListDTO {
 
 
 
-// ==================== AUDIT LOG DTOs ====================
+// AUDIT LOG DTOs
 export interface AuditLogDTO {
   idAuditoria: number;
   tabla: string;
@@ -283,8 +276,7 @@ export interface AuditLogFiltersOptions {
   acciones: string[];
 }
 
-// ── Historial de Transiciones (enriquecido) ─────────────────────
-
+// Historial de Transiciones (enriquecido)
 export interface TransicionHistorialDTO {
   idTransicion: number;
   idTkt: number;
@@ -301,8 +293,7 @@ export interface TransicionHistorialDTO {
   fecha: string;
 }
 
-// ── Búsqueda Global (Command Palette) ───────────────────────────
-
+// Búsqueda Global (Command Palette)
 export interface GlobalSearchItem {
   categoria: string;
   id: number;
@@ -316,8 +307,7 @@ export interface GlobalSearchResult {
   departamentos: GlobalSearchItem[];
 }
 
-// ── Estadísticas de Tickets (Mini-Dashboard) ────────────────────
-
+// Estadísticas de Tickets (Mini-Dashboard)
 export interface TicketStatsDTO {
   abiertos: number;
   sinAsignar: number;

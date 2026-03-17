@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, ExternalLink, User, Clock } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function NotificationBadge() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // ── Polling cada 60s ───────────────────────────────────────────
+  // Polling cada 60s
   const { data: resumen } = useQuery({
     queryKey: ['notificaciones-resumen'],
     queryFn: async () => {
@@ -25,7 +25,7 @@ export default function NotificationBadge() {
     staleTime: 30_000,
   });
 
-  // ── Marcar todas como leídas ───────────────────────────────────
+  // Marcar todas como leídas
   const markAll = useMutation({
     mutationFn: async () => {
       await apiClient.patch(API_ENDPOINTS.NOTIFICACIONES_MARCAR_TODOS);
@@ -35,7 +35,7 @@ export default function NotificationBadge() {
     },
   });
 
-  // ── Click fuera cierra dropdown ────────────────────────────────
+  // Click fuera cierra dropdown
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -52,7 +52,7 @@ export default function NotificationBadge() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* ── Bell button ─────────────────────────────────────────── */}
+      {/* Bell button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition"
@@ -66,7 +66,7 @@ export default function NotificationBadge() {
         )}
       </button>
 
-      {/* ── Dropdown ────────────────────────────────────────────── */}
+      {/* Dropdown */}
       {open && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
           {/* Header */}

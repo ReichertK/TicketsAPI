@@ -52,7 +52,6 @@ namespace TicketsAPI.Controllers
                 if (ticket == null)
                     return Error<object>("Ticket no encontrado", statusCode: 404);
 
-                // D1: Filtrado directo en DB con WHERE id_tkt, elimina carga completa de tabla
                 var comentariosTicket = await _comentarioRepository.GetByTicketAsync(ticketId);
 
                 var dtos = comentariosTicket.Select(c => new ComentarioDTO

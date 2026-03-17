@@ -46,19 +46,7 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Log detallado de errores 400 para diagnóstico
-    if (error.response?.status === 400) {
-      console.error('[API 400 Debug]', {
-        url: originalRequest?.url,
-        method: originalRequest?.method,
-        params: originalRequest?.params,
-        data: originalRequest?.data,
-        fullURL: error.request?.responseURL || `${originalRequest?.baseURL}${originalRequest?.url}`,
-        responseBody: error.response?.data,
-      });
-    }
-
-    // Solo intentar refresh si es 401, no es login/refresh, y no es reintento
+    // Refresh token en 401: solo si no es login/refresh y no es reintento
     if (
       error.response?.status === 401 &&
       originalRequest &&

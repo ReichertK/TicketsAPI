@@ -215,11 +215,7 @@ proc: BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ticket ya se encuentra en ese estado';
     END IF;
 
-    -- ============================================================
-    -- FIX: Assignment validation - ticket must be assigned before
-    -- advancing to En Proceso (2). If caller provides
-    -- p_id_asignado_nuevo, that counts as simultaneous assignment.
-    -- ============================================================
+    -- Validar asignación antes de avanzar a En Proceso
     IF p_estado_to = 2
        AND v_asignado_actual IS NULL
        AND (p_id_asignado_nuevo IS NULL OR p_id_asignado_nuevo = 0) THEN
@@ -247,10 +243,7 @@ proc: BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Transicion de estado no permitida';
         END IF;
 
-        -- ============================================================
-        -- FIX: Permission check via tkt_* RBAC tables (consistent
-        -- with C# AuthService which also uses tkt_* tables)
-        -- ============================================================
+        -- Verificar permiso requerido vía tkt_* RBAC
         IF v_permiso_requerido IS NOT NULL THEN
             SELECT COUNT(*) INTO v_tiene_permiso
             FROM tkt_usuario_rol tur

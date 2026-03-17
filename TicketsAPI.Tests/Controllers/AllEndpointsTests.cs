@@ -17,7 +17,7 @@ namespace TicketsAPI.Tests.Controllers
     /// </summary>
     public class AllEndpointsTests
     {
-        // ==================== AUTH ====================
+        // Auth
         public class AuthControllerComprehensiveTests
         {
             private readonly Mock<IAuthService> _mockAuthService = new();
@@ -79,7 +79,7 @@ namespace TicketsAPI.Tests.Controllers
             }
         }
 
-        // ==================== TICKETS ====================
+        // Tickets
         public class TicketsControllerComprehensiveTests
         {
             private readonly Mock<ITicketService> _ticketService = new();

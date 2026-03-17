@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+﻿import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useEffect } from 'react';
 import { apiClient } from '../services/api.service';
@@ -36,7 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-// ── Timeline Item types ──────────────────────────────────────────
+// Timeline Item types
 type TimelineEntry =
   | { type: 'comment'; data: ComentarioDTO }
   | { type: 'event'; data: HistorialTicketDTO };
@@ -57,7 +57,7 @@ function mergeTimeline(
   });
 }
 
-// ── Event icon mapping ───────────────────────────────────────────
+// Event icon mapping
 function getEventIcon(accion: string): { Icon: LucideIcon; color: string } {
   const lower = accion.toLowerCase();
   if (lower.includes('cread') || lower.includes('abier'))
@@ -75,7 +75,7 @@ function getEventIcon(accion: string): { Icon: LucideIcon; color: string } {
   return { Icon: History, color: 'text-slate-400' };
 }
 
-// ── Human-readable event labels ──────────────────────────────────
+// Human-readable event labels
 function humanizeAction(accion: string): string {
   const lower = accion.toLowerCase();
   if (lower.includes('creado') || lower.includes('creación')) return 'Ticket creado';
@@ -92,7 +92,7 @@ function humanizeAction(accion: string): string {
   return accion; // Fallback al texto original
 }
 
-// ── Transition button styling ────────────────────────────────────
+// Transition button styling
 function getTransitionStyle(nombre: string): { bg: string; text: string; border: string; Icon: LucideIcon } {
   const lower = nombre.toLowerCase();
   if (lower.includes('cerr'))
@@ -144,7 +144,7 @@ export default function TicketDetailPage() {
     }
   }, [ticketId, subscribeToTicket, unsubscribeFromTicket]);
 
-  // ── Queries ────────────────────────────────────────────────────
+  // Queries
   const { data: ticket, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: async () => {
@@ -182,8 +182,7 @@ export default function TicketDetailPage() {
     staleTime: 1000 * 60,
   });
 
-  // ── Mutations ──────────────────────────────────────────────────
-
+  // Mutations
   const suscribirMutation = useMutation({
     mutationFn: () =>
       sileo.promise(apiClient.post(API_ENDPOINTS.TICKETS_SUBSCRIBE(ticketId)), {
@@ -332,7 +331,7 @@ export default function TicketDetailPage() {
     [comentario, comentarioMutation]
   );
 
-  // ── Loading / Error states ─────────────────────────────────────
+  // Loading / Error states
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -364,7 +363,7 @@ export default function TicketDetailPage() {
     );
   }
 
-  // ── Derived data ───────────────────────────────────────────────
+  // Derived data
   const timeline = mergeTimeline(ticket.comentarios, ticket.historial);
   const admin = isAdmin();
   const canAssign = hasPermission('TKT_ASSIGN');
@@ -380,7 +379,7 @@ export default function TicketDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex items-center gap-4 flex-wrap">
         <button
           onClick={() => navigate('/tickets')}
@@ -447,7 +446,7 @@ export default function TicketDetailPage() {
         )}
       </div>
 
-      {/* ── Two column layout ─────────────────────────────────────── */}
+      {/* Two column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ══ Left column (2/3) ═══════════════════════════════════ */}
         <div className="lg:col-span-2 space-y-6">
@@ -480,7 +479,7 @@ export default function TicketDetailPage() {
             </div>
           </div>
 
-          {/* ── Panel de Acciones Dinámicas ────────────────────────── */}
+          {/* Panel de Acciones Dinámicas */}
           {((hasTransitions && canTransition) || (canAssign && !isClosed) || (!ticketHasOwner && !isClosed) || (admin && !isClosed)) && (
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
@@ -563,7 +562,7 @@ export default function TicketDetailPage() {
             </div>
           )}
 
-          {/* ── Timeline & Comentarios ────────────────────────────── */}
+          {/* Timeline & Comentarios */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-slate-400" />
@@ -647,7 +646,7 @@ export default function TicketDetailPage() {
               </div>
             </div>
 
-            {/* ── Caja de comentario ──────────────────────────────── */}
+            {/* Caja de comentario */}
             <div className="mt-6 pt-6 border-t border-slate-200">
               <div className="flex gap-3">
                 <UserAvatar
@@ -846,7 +845,7 @@ export default function TicketDetailPage() {
         </div>
       </div>
 
-      {/* ── Modales de confirmación ─────────────────────────────── */}
+      {/* Modales de confirmación */}
       <ConfirmActionModal
         open={confirmAction?.type === 'transition'}
         variant={confirmAction?.nombre?.toLowerCase().includes('cerr') ? 'danger' : 'info'}

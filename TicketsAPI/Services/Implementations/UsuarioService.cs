@@ -42,7 +42,6 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<List<UsuarioDTO>> GetAllAsync()
         {
-            // D2: Una sola consulta JOIN en lugar de N+1 (1 + N*rol + N*depto)
             var usuarios = await _usuarioRepository.GetAllWithRelationsAsync();
 
             return usuarios.Select(u => MapToDTO(u, u.Rol, u.Departamento)).ToList();

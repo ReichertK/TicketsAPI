@@ -42,7 +42,6 @@ namespace TicketsAPI.Services.Implementations
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
-            // ── Protección contra fuerza bruta ──
             var (bloqueado, intentosRestantes, bloqueadoHasta) = await _bruteForce.VerificarBloqueoAsync(request.Usuario);
             if (bloqueado)
             {
@@ -73,7 +72,7 @@ namespace TicketsAPI.Services.Implementations
             // Login exitoso → limpiar contador de intentos
             await _bruteForce.LimpiarIntentosAsync(request.Usuario);
 
-            // ── Migración progresiva: si el hash NO es BCrypt, actualizarlo silenciosamente ──
+            // Migración progresiva MD5 → BCrypt
             if (!_passwordService.IsBCrypt(usuario.Contraseña))
             {
                 try

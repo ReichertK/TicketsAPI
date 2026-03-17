@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import {
   BookOpen,
@@ -9,7 +9,7 @@ import {
   ArrowUp,
 } from 'lucide-react';
 
-/* ───────────────────────────── tipos ──────────────────────────── */
+/* tipos */
 
 interface TocItem {
   id: string;
@@ -17,7 +17,7 @@ interface TocItem {
   level: 2 | 3;
 }
 
-/* ─────────────────── componentes de bloque ────────────────────── */
+/* componentes de bloque */
 
 function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -94,7 +94,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   );
 }
 
-/* ──────────────────────────── secciones ───────────────────────── */
+/* secciones */
 
 function SeccionUsuario() {
   return (
@@ -325,7 +325,7 @@ function SeccionProblemas() {
   );
 }
 
-/* ──────────────────── tabla de contenidos ──────────────────────── */
+/* tabla de contenidos */
 
 const tocUser: TocItem[] = [
   { id: 'manual-usuario', label: 'Manual de Usuario', level: 2 },
@@ -353,7 +353,7 @@ const tocProblemas: TocItem[] = [
   { id: 'mas-ayuda', label: '¿Necesitas más ayuda?', level: 3 },
 ];
 
-/* ──────────────────────── HelpPage ────────────────────────────── */
+/* HelpPage */
 
 export default function HelpPage() {
   const { isAdmin } = useAuthStore();
@@ -400,7 +400,7 @@ export default function HelpPage() {
 
   return (
     <div className="flex gap-8 max-w-7xl mx-auto">
-      {/* ── Sidebar TOC (desktop) ──────────────────────────────── */}
+      {/* Sidebar TOC (desktop) */}
       <aside className="hidden xl:block w-64 flex-shrink-0">
         <div className="sticky top-24">
           <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Contenido</h4>
@@ -430,7 +430,7 @@ export default function HelpPage() {
         </div>
       </aside>
 
-      {/* ── Contenido principal ─────────────────────────────────── */}
+      {/* Contenido principal */}
       <article className="flex-1 min-w-0">
         {/* Header */}
         <div className="mb-8">

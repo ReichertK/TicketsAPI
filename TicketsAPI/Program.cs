@@ -18,7 +18,7 @@ using TicketsAPI.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==================== LOGGING ====================
+// Logging
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
@@ -39,7 +39,7 @@ try
 {
     Log.Information("Iniciando aplicación TicketsAPI");
 
-    // ==================== CORS ====================
+    // CORS
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
     var allowedMethods = builder.Configuration.GetSection("Cors:AllowedMethods").Get<string[]>();
     var allowedHeaders = builder.Configuration.GetSection("Cors:AllowedHeaders").Get<string[]>();
@@ -56,15 +56,14 @@ try
         });
     });
 
-    // ==================== AUTHENTICATION ====================
-    // Bind JwtSettings for DI consumers (AuthService)
+    // JWT Authentication
     builder.Services.Configure<TicketsAPI.Config.JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
     var secretKey = jwtSettings["SecretKey"];
     var issuer = jwtSettings["Issuer"];
     var audience = jwtSettings["Audience"];
 
-    // ── SEGURIDAD: La SecretKey DEBE estar configurada y NO ser el valor por defecto ──
+    // Validar SecretKey
     if (string.IsNullOrWhiteSpace(secretKey))
         throw new InvalidOperationException("JwtSettings:SecretKey no está configurada. Defínela en appsettings.json o en variables de entorno.");
     if (secretKey.StartsWith("your-super-secret-key", StringComparison.OrdinalIgnoreCase))
@@ -106,15 +105,14 @@ try
 
     builder.Services.AddAuthorization();
 
-    // ==================== RATE LIMITING (IP) ====================
+    // Rate limiting
     builder.Services.AddMemoryCache();
     builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
     builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
     builder.Services.AddInMemoryRateLimiting();
     builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
-    // ==================== DEPENDENCY INJECTION ====================
-    // Priorizar DbTkt para entorno local segun appsettings
+    // Dependency injection
     var connectionString = builder.Configuration.GetConnectionString("DbTkt")
         ?? builder.Configuration.GetConnectionString("DefaultConnection")
         ?? builder.Configuration.GetSection("ApiSettings").GetValue<string>("ConnectionString")
@@ -202,16 +200,15 @@ try
             connectionString,
             sp.GetRequiredService<ILogger<TicketsAPI.Services.Implementations.ConfigAuditService>>()));
 
-    // ==================== MEMORY CACHE ====================
     builder.Services.AddMemoryCache();
 
-    // ==================== FLUENT VALIDATION ====================
+    // Validación
     builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
-    // ==================== AUTOMAPPER ====================
+    // AutoMapper
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-    // ==================== CONTROLLERS & API ====================
+    // Controllers
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
         {
@@ -224,7 +221,7 @@ try
         });
     builder.Services.AddEndpointsApiExplorer();
 
-    // ==================== MODEL VALIDATION LOGGING ====================
+    // Logging de validación
     builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -249,7 +246,7 @@ try
         };
     });
 
-    // ==================== SWAGGER ====================
+    // Swagger
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -336,7 +333,7 @@ Ejemplo: 'Bearer {token}'
     // Leer setting para habilitar Swagger independientemente del entorno
     var enableSwaggerSetting = builder.Configuration.GetValue<bool>("ApiSettings:EnableSwagger", builder.Environment.IsDevelopment());
 
-    // ==================== SIGNALR ====================
+    // SignalR
     builder.Services.AddSignalR(options =>
     {
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
@@ -345,16 +342,15 @@ Ejemplo: 'Bearer {token}'
     })
         .AddMessagePackProtocol();
 
-    // ==================== HEALTH CHECK ====================
+    // Health checks
     builder.Services.AddHealthChecks()
         .AddCheck<DatabaseHealthCheck>("Database")
         .AddCheck<DashboardWarmupHealthCheck>("DashboardWarmup");
 
-    // ==================== BUILD ====================
+    // Build
     var app = builder.Build();
 
-    // ==================== CACHE WARMUP ====================
-    // Pre-cargar cache de referencias al iniciar
+    // Cache warmup
     using (var scope = app.Services.CreateScope())
     {
         var cacheService = scope.ServiceProvider.GetRequiredService<TicketsAPI.Services.Implementations.CacheService>();
@@ -386,8 +382,7 @@ Ejemplo: 'Bearer {token}'
         }
     }
 
-    // ==================== MIDDLEWARE ====================
-    // Validation exception handler
+    // Middleware pipeline
     app.UseValidationExceptionHandler();
     
     // Request correlation tracking
@@ -427,7 +422,7 @@ Ejemplo: 'Bearer {token}'
     app.UseUserActiveValidation();
     app.UseAuthorization();
 
-    // ==================== ENDPOINTS ====================
+    // Endpoints
     app.MapControllers();
     app.MapHealthChecks("/health");
     app.MapHub<TicketHub>("/hubs/tickets");
@@ -436,7 +431,7 @@ Ejemplo: 'Bearer {token}'
     // Esto permite que React Router maneje rutas como /tickets, /ayuda, etc.
     app.MapFallbackToFile("index.html");
 
-    // ==================== RUN ====================
+    // Run
     await app.RunAsync();
 }
 catch (Exception ex)

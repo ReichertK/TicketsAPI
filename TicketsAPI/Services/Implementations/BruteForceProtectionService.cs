@@ -12,7 +12,6 @@ namespace TicketsAPI.Services.Implementations
         private readonly string _connectionString;
         private readonly ILogger<BruteForceProtectionService> _logger;
 
-        // ── Configuración ────────────────────────────────────────
         private const int MaxIntentosFallidos = 5;
         private const int MinutosBloqueo = 15;
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../services/api.service';
 import { API_ENDPOINTS } from '../../config/api';
@@ -8,8 +8,7 @@ import {
 } from 'lucide-react';
 import type { ApiResponse, PaginatedResponse, TransicionHistorialDTO } from '../../types/api.types';
 
-// ── Colores por tipo de estado ──
-
+// Colores por tipo de estado
 const ESTADO_COLORS: Record<string, string> = {
   Abierto: 'bg-blue-100 text-blue-700',
   'En Proceso': 'bg-amber-100 text-amber-700',
@@ -45,15 +44,13 @@ function relativeTime(dateStr: string): string {
   return formatDate(dateStr);
 }
 
-// ── Props ──
-
+// Props
 interface TicketHistoryProps {
   ticketId: number;
   className?: string;
 }
 
-// ── Componente principal (Named Export) ──
-
+// Componente principal (Named Export)
 export function TicketHistory({ ticketId, className = '' }: TicketHistoryProps) {
   const PAGE_SIZE = 10;
   const [allItems, setAllItems] = useState<TransicionHistorialDTO[]>([]);
@@ -178,8 +175,7 @@ export function TicketHistory({ ticketId, className = '' }: TicketHistoryProps) 
   );
 }
 
-// ── TransicionItem sub-componente ──
-
+// TransicionItem sub-componente
 function TransicionItem({ transicion: t, isFirst }: {
   transicion: TransicionHistorialDTO;
   isFirst: boolean;

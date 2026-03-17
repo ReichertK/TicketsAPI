@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
 import { ApiResponse, DashboardDTO, NotificacionResumenDTO } from '../types/api.types';
@@ -29,7 +29,7 @@ import {
   Legend,
 } from 'recharts';
 
-// ── Colores para los gráficos ────────────────────────────────────
+// Colores para los gráficos
 const PIE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#64748b', '#ef4444', '#8b5cf6', '#06b6d4'];
 const BAR_COLORS = ['#ef4444', '#f97316', '#eab308', '#64748b'];
 
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ── KPI Cards data ─────────────────────────────────────────────
+  // KPI Cards data
   const totalNoLeidos = notifResumen?.totalNoLeidos ?? 0;
   const pendientesAsignados = notifResumen?.pendientesAsignados ?? 0;
 
@@ -129,7 +129,7 @@ export default function DashboardPage() {
     },
   ];
 
-  // ── Chart data transformations ─────────────────────────────────
+  // Chart data transformations
   const estadoData = Object.entries(dashboard.ticketsPorEstado ?? {}).map(([name, value]) => ({
     name,
     value: value as number,
@@ -146,7 +146,7 @@ export default function DashboardPage() {
     tickets: value as number,
   }));
 
-  // ── Métricas derivadas ─────────────────────────────────────────
+  // Métricas derivadas
   const totalTickets = dashboard.ticketsTotal ?? 0;
   const tasaResolucion = totalTickets > 0
     ? Math.round(((dashboard.ticketsCerrados ?? 0) / totalTickets) * 100)
@@ -176,7 +176,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* ── KPI Cards ─────────────────────────────────────────────── */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
           <div
@@ -198,7 +198,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Resumen rápido ────────────────────────────────────────── */}
+      {/* Resumen rápido */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center gap-2 mb-1">
@@ -230,7 +230,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Charts Grid ───────────────────────────────────────────── */}
+      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* PieChart: Tickets por Estado */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -306,7 +306,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Departamentos (ancho completo) ────────────────────────── */}
+      {/* Departamentos (ancho completo) */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-base font-semibold text-slate-900 mb-4">Tickets por Departamento</h3>
         {departamentoData.length > 0 ? (

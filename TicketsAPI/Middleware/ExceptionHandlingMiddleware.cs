@@ -67,8 +67,7 @@ namespace TicketsAPI.Middleware
                     break;
 
                 case MySqlException mysqlEx:
-                    // E1: Errores transitorios de MySQL 5.5 — Deadlock (1213) y Lock Wait Timeout (1205)
-                    if (mysqlEx.Number == 1213 || mysqlEx.Number == 1205)
+                    if (mysqlEx.Number == 1213 || mysqlEx.Number == 1205) // Deadlock / Lock Wait Timeout
                     {
                         context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
                         response.Mensaje = "Servicio temporalmente no disponible. Por favor reintente en unos segundos.";

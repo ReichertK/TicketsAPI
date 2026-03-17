@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
@@ -14,8 +14,7 @@ import type {
 } from '../types/api.types';
 import { DiffTable } from '../components/tickets/DiffTable';
 
-// ── Mapas de colores e iconos por acción ──
-
+// Mapas de colores e iconos por acción
 const ACTION_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
   INSERT: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', badge: 'bg-emerald-100' },
   UPDATE: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', badge: 'bg-blue-100' },
@@ -40,8 +39,7 @@ function getActionColor(action: string) {
   };
 }
 
-// ── Utilidades ──
-
+// Utilidades
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleString('es-HN', {
@@ -50,8 +48,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-// ── Sub-componentes ──
-
+// Sub-componentes
 function StatCard({ icon: Icon, label, value, color }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -124,8 +121,7 @@ function TimelineEntry({ log, isExpanded, onToggle }: {
   );
 }
 
-// ── Componente principal ──
-
+// Componente principal
 export default function AuditLogsPage() {
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
@@ -137,10 +133,10 @@ export default function AuditLogsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // ── Clave de filtros para detectar cambios y resetear ──
+  // Clave de filtros para detectar cambios y resetear
   const filterKey = JSON.stringify({ ...filters, searchTerm });
 
-  // ── Query: Página actual (append) ──
+  // Query: Página actual (append)
   const logsQuery = useQuery({
     queryKey: ['audit-logs', page, filterKey],
     queryFn: async () => {
@@ -172,7 +168,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  // ── Query: Estadísticas ──
+  // Query: Estadísticas
   const statsQuery = useQuery({
     queryKey: ['audit-stats'],
     queryFn: async () => {
@@ -183,7 +179,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  // ── Query: Opciones de filtro ──
+  // Query: Opciones de filtro
   const filterOptionsQuery = useQuery({
     queryKey: ['audit-filter-options'],
     queryFn: async () => {
@@ -227,7 +223,7 @@ export default function AuditLogsPage() {
   const activeFilterCount =
     Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0);
 
-  // ── Exportar a Excel ──
+  // Exportar a Excel
   const [exporting, setExporting] = useState(false);
   const handleExport = useCallback(async () => {
     try {
@@ -259,7 +255,7 @@ export default function AuditLogsPage() {
     }
   }, [filters, searchTerm]);
 
-  // ── Render ──
+  // Render
   return (
     <div className="space-y-6">
       {/* Header */}

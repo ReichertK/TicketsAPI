@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
   ArrowRight, Minus, User, Building2, Shield, Tag, Ticket,
   FileText, Settings, Key, Globe, PlusCircle, Trash2, RefreshCw, Info
 } from 'lucide-react';
 
-// ── Helpers ──
-
+// Helpers
 function humanizeFieldName(field: string): string {
   return field
     .replace(/^id_/, '')
@@ -88,8 +87,7 @@ const ACTION_HEADER: Record<string, { icon: React.ComponentType<{ className?: st
   LOGOUT: { icon: User, label: 'Cierre de Sesi\u00f3n', color: 'text-slate-600' },
 };
 
-// ── Tipos ──
-
+// Tipos
 interface DiffTableProps {
   valoresAntiguos: string | null | undefined;
   valoresNuevos: string | null | undefined;
@@ -107,8 +105,7 @@ interface DiffRow {
   changed: boolean;
 }
 
-// ── Componente principal (Named Export) ──
-
+// Componente principal (Named Export)
 export function DiffTable({ valoresAntiguos, valoresNuevos, accion, tabla, descripcion }: DiffTableProps) {
   const accionUpper = accion?.toUpperCase() ?? '';
   const isInsert = accionUpper === 'INSERT';
@@ -152,7 +149,7 @@ export function DiffTable({ valoresAntiguos, valoresNuevos, accion, tabla, descr
   const headerInfo = ACTION_HEADER[accionUpper] ?? ACTION_HEADER['UPDATE'];
   const TableIcon = tabla ? getTableIcon(tabla) : FileText;
 
-  // ── Fallback: JSON placeholder, mostrar descripci\u00f3n ──
+  // Fallback: JSON placeholder, mostrar descripci\u00f3n
   if (bothPlaceholder) {
     return (
       <div className="mt-3 pt-3 border-t border-slate-200/60">

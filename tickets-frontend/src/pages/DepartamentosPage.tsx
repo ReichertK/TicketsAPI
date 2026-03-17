@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
@@ -21,8 +21,7 @@ import {
   Power,
 } from 'lucide-react';
 
-// ── Modal de departamento ────────────────────────────────────────
-
+// Modal de departamento
 interface DeptModalProps {
   open: boolean;
   dept: DepartamentoDTO | null;
@@ -125,8 +124,7 @@ function DeptModal({ open, dept, onClose }: DeptModalProps) {
   );
 }
 
-// ── Página principal ─────────────────────────────────────────────
-
+// Página principal
 export default function DepartamentosPage() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);

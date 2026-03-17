@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
@@ -24,7 +24,7 @@ export default function EditTicketPage() {
     id_Departamento: 0,
   });
 
-  // ── Cargar datos del ticket existente ──────────────────────────
+  // Cargar datos del ticket existente
   const { data: ticketData, isLoading: isLoadingTicket } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: async () => {
@@ -48,7 +48,7 @@ export default function EditTicketPage() {
     }
   }, [ticketData]);
 
-  // ── Catálogos ──────────────────────────────────────────────────
+  // Catálogos
   const { data: prioridades } = useQuery({
     queryKey: ['prioridades'],
     queryFn: async () => {
@@ -79,7 +79,7 @@ export default function EditTicketPage() {
     },
   });
 
-  // ── Mutation ───────────────────────────────────────────────────
+  // Mutation
   const updateMutation = useMutation({
     mutationFn: async (data: CreateUpdateTicketDTO) => {
       const response = await apiClient.put<ApiResponse<any>>(

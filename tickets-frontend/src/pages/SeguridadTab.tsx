@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
@@ -27,8 +27,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-// ── Sub-sección: Gestión de Roles ────────────────────────────────
-
+// Sub-sección: Gestión de Roles
 function RolesSection() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -390,8 +389,7 @@ function RolesSection() {
   );
 }
 
-// ── Sub-sección: Catálogo de Permisos ────────────────────────────
-
+// Sub-sección: Catálogo de Permisos
 function PermisosSection() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -556,8 +554,7 @@ function PermisosSection() {
   );
 }
 
-// ── Sub-sección: Asignación de Roles a Usuarios ──────────────────
-
+// Sub-sección: Asignación de Roles a Usuarios
 function UsuarioRolesSection() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
@@ -667,8 +664,7 @@ function UsuarioRolesSection() {
   );
 }
 
-// ── Componente Principal: SeguridadTab ───────────────────────────
-
+// Componente Principal: SeguridadTab
 type SecuritySection = 'roles' | 'permisos' | 'usuarios';
 
 const SECURITY_SECTIONS: { id: SecuritySection; label: string; icon: typeof Shield; description: string }[] = [

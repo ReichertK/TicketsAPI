@@ -1,4 +1,4 @@
-﻿namespace TicketsAPI.Config
+namespace TicketsAPI.Config
 {
     /// Constantes de estados del ciclo de vida del ticket.
     /// Centralizan los IDs de estado para evitar magic numbers en servicios y controladores.
@@ -10,19 +10,19 @@
         /// Ticket en proceso de resolución (DB: 2 = En Proceso).
         public const int EnProceso = 2;
 
-        /// Ticket cerrado (DB: 3 = Cerrado)
+        /// Ticket cerrado (DB: 3 = Cerrado).
         public const int Cerrado = 3;
 
-        /// Ticket en espera de información (DB: 4 = En Espera)
+        /// Ticket en espera de información (DB: 4 = En Espera).
         public const int EnEspera = 4;
 
-        /// Ticket pendiente de aprobación (DB: 5 = Pendiente Aprobación)
+        /// Ticket pendiente de aprobación (DB: 5 = Pendiente Aprobación).
         public const int PendienteAprobacion = 5;
 
-        /// Ticket resuelto (DB: 6 = Resuelto)
+        /// Ticket resuelto (DB: 6 = Resuelto).
         public const int Resuelto = 6;
 
-        /// Ticket reabierto (DB: 7 = Reabierto)
+        /// Ticket reabierto (DB: 7 = Reabierto).
         public const int Reabierto = 7;
     }
 

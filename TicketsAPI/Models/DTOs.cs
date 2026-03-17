@@ -323,12 +323,19 @@ namespace TicketsAPI.Models.DTOs
 
         /// <summary>
         /// ID del usuario que visualiza. Cuando está seteado, el filtro se comporta como:
-        /// (creador = VistaUsuarioId) OR (asignado = VistaUsuarioId) OR (sin asignar)
-        /// Esto permite a agentes/operadores ver su cola personal + tickets liberados.
-        /// Se setea automáticamente en TicketService si el usuario NO tiene TKT_LIST_ALL.
+        /// (creador = VistaUsuarioId) OR (asignado = VistaUsuarioId)
+        /// Si además VistaUsuarioDepartamentoId está seteado, agrega: OR (departamento = VistaUsuarioDepartamentoId)
+        /// Se setea automáticamente en TicketService según permisos del usuario.
         /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
         public int? VistaUsuarioId { get; set; }
+
+        /// <summary>
+        /// Departamento del usuario que visualiza. Cuando está seteado junto con VistaUsuarioId,
+        /// permite ver tickets del mismo departamento (para usuarios con VER_SOLO_DEPARTAMENTO o TKT_LIST_ALL).
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int? VistaUsuarioDepartamentoId { get; set; }
     }
 
     /// <summary>

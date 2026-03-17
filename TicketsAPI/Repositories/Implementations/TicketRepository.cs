@@ -584,11 +584,22 @@ namespace TicketsAPI.Repositories.Implementations
             }
 
             // Filtro compuesto de visibilidad:
-            // Muestra tickets creados por el usuario, asignados a él, o sin asignar (liberados)
+            // Muestra tickets creados por el usuario, asignados a él, y opcionalmente de su departamento
             if (filtro.VistaUsuarioId.HasValue)
             {
-                whereClause.Add("(t.Id_Usuario = @VistaUserId OR t.Id_Usuario_Asignado = @VistaUserId OR t.Id_Usuario_Asignado IS NULL)");
-                parameters.Add("@VistaUserId", filtro.VistaUsuarioId.Value);
+                if (filtro.VistaUsuarioDepartamentoId.HasValue)
+                {
+                    // Department-level visibility (VER_SOLO_DEPARTAMENTO or TKT_LIST_ALL)
+                    whereClause.Add("(t.Id_Usuario = @VistaUserId OR t.Id_Usuario_Asignado = @VistaUserId OR t.Id_Departamento = @VistaDptoId)");
+                    parameters.Add("@VistaUserId", filtro.VistaUsuarioId.Value);
+                    parameters.Add("@VistaDptoId", filtro.VistaUsuarioDepartamentoId.Value);
+                }
+                else
+                {
+                    // Basic visibility: own created + assigned only
+                    whereClause.Add("(t.Id_Usuario = @VistaUserId OR t.Id_Usuario_Asignado = @VistaUserId)");
+                    parameters.Add("@VistaUserId", filtro.VistaUsuarioId.Value);
+                }
             }
 
             if (filtro.Id_Motivo.HasValue)

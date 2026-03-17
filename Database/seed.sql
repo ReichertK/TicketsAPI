@@ -132,7 +132,9 @@ INSERT INTO `permiso` (`idPermiso`, `codigo`, `descripcion`) VALUES
   (13, 'TKT_REQUEST_APPROVAL', 'Solicitar aprobación'),
   (14, 'TKT_CLOSE', 'Cerrar'),
   (15, 'TKT_REOPEN', 'Reabrir'),
-  (16, 'TKT_RBAC_ADMIN', 'Admin RBAC');
+  (16, 'TKT_RBAC_ADMIN', 'Admin RBAC'),
+  (17, 'TKT_ASSIGN', 'Asignar tickets a otros usuarios'),
+  (18, 'VER_SOLO_DEPARTAMENTO', 'Ver solo tickets del departamento propio');
 
 INSERT INTO `rol_permiso` (`idRol`, `idPermiso`) VALUES
   -- Administrador: todos
@@ -142,7 +144,7 @@ INSERT INTO `rol_permiso` (`idRol`, `idPermiso`) VALUES
   -- Agente
   (2,3),(2,5),(2,8),(2,9),(2,10),(2,13),(2,15),
   -- Operador
-  (3,1),(3,3),(3,5),(3,8),(3,9),(3,10),
+  (3,1),(3,3),(3,5),(3,8),(3,9),(3,10),(3,18),
   -- Aprobador
   (11,1),
   -- Consulta
@@ -176,7 +178,8 @@ INSERT INTO `tkt_permiso` (`id_permiso`, `codigo`, `descripcion`, `habilitado`) 
   (37, 'TKT_REQUEST_APPROVAL', 'Solicitar aprobación', 1),
   (38, 'TKT_APPROVE', 'Aprobar / Rechazar', 1),
   (39, 'TKT_RESOLVE', 'Marcar como Resuelto', 1),
-  (40, 'TKT_REOPEN', 'Reabrir ticket', 1);
+  (40, 'TKT_REOPEN', 'Reabrir ticket', 1),
+  (41, 'VER_SOLO_DEPARTAMENTO', 'Ver solo tickets del departamento propio', 1);
 
 INSERT INTO `tkt_rol_permiso` (`id_rol`, `id_permiso`) VALUES
   -- Administrador (all)
@@ -184,7 +187,7 @@ INSERT INTO `tkt_rol_permiso` (`id_rol`, `id_permiso`) VALUES
   -- Supervisor
   (2,1),(2,3),(2,4),(2,6),(2,7),(2,8),(2,10),(2,11),(2,35),(2,36),(2,37),(2,38),(2,39),(2,40),
   -- Operador
-  (3,2),(3,3),(3,4),(3,5),(3,8),(3,11),(3,35),(3,36),(3,37),(3,39),
+  (3,2),(3,3),(3,4),(3,5),(3,8),(3,11),(3,35),(3,36),(3,37),(3,39),(3,41),
   -- Consulta
   (4,1),(4,3),(4,10),
   -- Aprobador

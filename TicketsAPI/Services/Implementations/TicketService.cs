@@ -52,12 +52,23 @@ namespace TicketsAPI.Services.Implementations
                     return await _ticketRepository.GetTodosTicketsAsync(idUsuarioActual, filtro);
 
                 default:
-                    // Backward compatibility: sin Vista → lógica de permisos legacy
-                    var tieneListAll = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_LIST_ALL");
-                    if (!tieneListAll)
+                    // Backward compatibility: sin Vista → lógica de permisos
+                    var tieneRbacAdmin = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_RBAC_ADMIN");
+
+                    if (!tieneRbacAdmin)
                     {
                         filtro.VistaUsuarioId = idUsuarioActual;
                         filtro.Id_Usuario = null;
+
+                        // Check for department-level visibility
+                        var tieneListAll = await _authService.ValidarPermisoAsync(idUsuarioActual, "TKT_LIST_ALL");
+                        var tieneVerDepto = await _authService.ValidarPermisoAsync(idUsuarioActual, "VER_SOLO_DEPARTAMENTO");
+
+                        if (tieneListAll || tieneVerDepto)
+                        {
+                            var usuario = await _usuarioRepository.GetByIdAsync(idUsuarioActual);
+                            filtro.VistaUsuarioDepartamentoId = usuario?.Id_Departamento;
+                        }
                     }
                     return await _ticketRepository.GetFilteredAdvancedAsync(filtro);
             }

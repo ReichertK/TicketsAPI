@@ -64,7 +64,7 @@ namespace TicketsAPI.Repositories.Implementations
                     u.nombre AS Nombre,
                     u.email AS Email,
                     u.passwordUsuarioEnc AS Contraseña,
-                    u.idKine AS Id_Departamento,
+                    COALESCE(u.Id_Departamento, u.idKine) AS Id_Departamento,
                     COALESCE(ur.idRol, 0) AS Id_Rol,
                     CASE WHEN u.fechaBaja IS NULL THEN 1 ELSE 0 END AS Activo
                 FROM usuario u
@@ -81,7 +81,7 @@ namespace TicketsAPI.Repositories.Implementations
                     u.nombre AS Nombre,
                     u.email AS Email,
                     u.passwordUsuarioEnc AS Contraseña,
-                    u.idKine AS Id_Departamento,
+                    COALESCE(u.Id_Departamento, u.idKine) AS Id_Departamento,
                     COALESCE(ur.idRol, 0) AS Id_Rol,
                     CASE WHEN u.fechaBaja IS NULL THEN 1 ELSE 0 END AS Activo
                 FROM usuario u
@@ -98,7 +98,7 @@ namespace TicketsAPI.Repositories.Implementations
                     u.nombre AS Nombre,
                     u.email AS Email,
                     u.passwordUsuarioEnc AS Contraseña,
-                    u.idKine AS Id_Departamento,
+                    COALESCE(u.Id_Departamento, u.idKine) AS Id_Departamento,
                     COALESCE(ur.idRol, 0) AS Id_Rol,
                     CASE WHEN u.fechaBaja IS NULL THEN 1 ELSE 0 END AS Activo
                 FROM usuario u
@@ -254,7 +254,7 @@ namespace TicketsAPI.Repositories.Implementations
                     u.nombre     AS Nombre,
                     u.email      AS Email,
                     u.passwordUsuarioEnc AS Contraseña,
-                    u.idKine     AS Id_Departamento,
+                    COALESCE(u.Id_Departamento, u.idKine) AS Id_Departamento,
                     COALESCE(ur.idRol, 0) AS Id_Rol,
                     CASE WHEN u.fechaBaja IS NULL THEN 1 ELSE 0 END AS Activo,
                     r.idRol      AS Id_Rol,
@@ -264,7 +264,7 @@ namespace TicketsAPI.Repositories.Implementations
                 FROM usuario u
                 LEFT JOIN usuario_rol ur ON u.idUsuario = ur.idUsuario
                 LEFT JOIN rol r          ON ur.idRol    = r.idRol
-                LEFT JOIN departamento d ON u.idKine    = d.Id_Departamento
+                LEFT JOIN departamento d ON COALESCE(u.Id_Departamento, u.idKine) = d.Id_Departamento
                 ORDER BY u.idUsuario";
 
             var usuarios = await conn.QueryAsync<Usuario, Rol, Departamento, Usuario>(

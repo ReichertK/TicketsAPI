@@ -44,6 +44,7 @@ $SiteDir = Join-Path $OutputDir "site"
 Write-Host "[1/4] Building Frontend (npm run build)..." -ForegroundColor Yellow
 Push-Location $FrontendDir
 try {
+    $env:NODE_OPTIONS = "--max-old-space-size=4096"
     npm run build
     if ($LASTEXITCODE -ne 0) { throw "Frontend build failed with exit code $LASTEXITCODE" }
     Write-Host "      Frontend build exitoso" -ForegroundColor Green

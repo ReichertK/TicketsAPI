@@ -22,9 +22,9 @@ namespace TicketsAPI.Controllers
                 ?? throw new InvalidOperationException("ConnectionString no configurada.");
         }
 
-        /// Búsqueda global: tickets, usuarios, departamentos.
-        /// GET /api/v1/Search?q=termino&limite=10
-        /// RBAC: usuarios comunes solo ven tickets de su departamento y activos.
+        // Búsqueda global: tickets, usuarios, departamentos.
+        // GET /api/v1/Search?q=termino&limite=10
+        // RBAC: usuarios comunes solo ven tickets de su departamento y activos.
         [HttpGet]
         public async Task<IActionResult> GlobalSearch([FromQuery] string q, [FromQuery] int limite = 10)
         {

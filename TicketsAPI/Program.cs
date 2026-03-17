@@ -205,9 +205,6 @@ try
     // Validación
     builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
-    // AutoMapper
-    builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
     // Controllers
     builder.Services.AddControllers()
         .AddJsonOptions(options =>

@@ -634,9 +634,9 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        /// Obtener estadísticas rápidas de tickets para el mini-dashboard.
-        /// GET /api/v1/Tickets/stats?idEstado=1&idPrioridad=2&idDepartamento=3&busqueda=test
-        /// RBAC: filtrado automático por rol del usuario.
+        // Obtener estadísticas rápidas de tickets para el mini-dashboard.
+        // GET /api/v1/Tickets/stats?idEstado=1&idPrioridad=2&idDepartamento=3&busqueda=test
+        // RBAC: filtrado automático por rol del usuario.
         [HttpGet("stats")]
         public async Task<IActionResult> GetTicketStats(
             [FromQuery] int? idEstado = null,

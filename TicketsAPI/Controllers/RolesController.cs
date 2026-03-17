@@ -105,7 +105,7 @@ namespace TicketsAPI.Controllers
                     GetCurrentUserId(), GetCurrentUserRole(),
                     $"Rol eliminado: id={id}");
 
-                return Success<object>(null, "Rol eliminado exitosamente");
+                return Success<object>(null!, "Rol eliminado exitosamente");
             }
             catch (MySqlException ex) when (ex.SqlState == "45000")
             {
@@ -176,7 +176,7 @@ namespace TicketsAPI.Controllers
             try
             {
                 await _rolRepo.AsignarRolAUsuarioAsync(idUsuario, dto.IdRol);
-                return Success<object>(null, "Rol asignado al usuario exitosamente");
+                return Success<object>(null!, "Rol asignado al usuario exitosamente");
             }
             catch (Exception ex)
             {

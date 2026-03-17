@@ -26,7 +26,7 @@ namespace TicketsAPI.Controllers
         }
 
         /// Obtener registros de auditoría con filtros y paginación.
-        /// GET /api/v1/AuditLogs?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01&pagina=1&porPagina=50
+        // GET /api/v1/AuditLogs?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01&pagina=1&porPagina=50
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] AuditLogFiltroDTO filtro)
         {
@@ -226,7 +226,7 @@ namespace TicketsAPI.Controllers
         }
 
         /// Exportar registros de auditoría a Excel (.xlsx) con los mismos filtros de la vista.
-        /// GET /api/v1/AuditLogs/export?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01
+        // GET /api/v1/AuditLogs/export?tabla=usuario&accion=INSERT&fechaDesde=2025-01-01
         [HttpGet("export")]
         public async Task<IActionResult> ExportToExcel([FromQuery] AuditLogFiltroDTO filtro)
         {

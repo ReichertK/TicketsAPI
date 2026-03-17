@@ -549,9 +549,7 @@ namespace TicketsAPI.Controllers
             }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  SUSCRIPCIONES
-        // ══════════════════════════════════════════════════════════════
+        // Suscripciones
 
         /// <summary>
         /// Suscribirse a un ticket (seguir)

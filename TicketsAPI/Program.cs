@@ -131,7 +131,7 @@ try
         hasPassword,
         sanitizedConnectionString);
 
-    // Registrar repositorios (MySQL 5.5 compatible)
+    // Registrar repositorios
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IUsuarioRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.UsuarioRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.ITicketRepository>(sp =>
@@ -155,7 +155,7 @@ try
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IPermisoRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.PermisoRepository(connectionString));
     
-    // Registrar repositorios adicionales (nuevos endpoints)
+    // Registrar repositorios adicionales
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IMotivoRepository>(sp =>
         new TicketsAPI.Repositories.Implementations.MotivoRepository(connectionString));
     builder.Services.AddSingleton<TicketsAPI.Repositories.Interfaces.IBaseRepository<Motivo>>(sp =>
@@ -394,7 +394,7 @@ Ejemplo: 'Bearer {token}'
     // CORS
     app.UseCors("AllowFrontend");
 
-    // WebSockets (required for SignalR WebSocket transport)
+    // WebSockets
     app.UseWebSockets();
 
 
@@ -428,7 +428,6 @@ Ejemplo: 'Bearer {token}'
     app.MapHub<TicketHub>("/hubs/tickets");
 
     // SPA Fallback: cualquier ruta no manejada por la API → index.html
-    // Esto permite que React Router maneje rutas como /tickets, /ayuda, etc.
     app.MapFallbackToFile("index.html");
 
     // Run

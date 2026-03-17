@@ -1,30 +1,30 @@
 # scripts/
 
-Operational scripts for TicketsAPI. All scripts are designed for Windows (PowerShell 5.0+) unless noted otherwise.
+Scripts operacionales para TicketsAPI. Todos están diseñados para Windows (PowerShell 5.0+) salvo indicación contraria.
 
-## Database Setup
+## Base de datos
 
-| Script | Purpose | Prerequisites |
-|--------|---------|---------------|
-| `db-migrate-refresh-token.ps1` | Adds refresh-token columns to `usuario` table | `mysql.exe` in PATH |
-| `db-setup-admin.ps1` | Creates the Administrador role and default admin user | `mysql.exe` in PATH |
+| Script | Descripción | Requisitos |
+|--------|-------------|------------|
+| `db-migrate-refresh-token.ps1` | Agrega columnas de refresh-token a la tabla `usuario` | `mysql.exe` en PATH |
+| `db-setup-admin.ps1` | Crea el rol Administrador y el usuario admin por defecto | `mysql.exe` en PATH |
 
 ```powershell
-# Example: run migration against local MySQL
+# Ejecutar migración contra MySQL local
 .\scripts\db-migrate-refresh-token.ps1 -Password "yourpass"
 
-# Example: create admin user
+# Crear usuario admin
 .\scripts\db-setup-admin.ps1 -Password "yourpass" -AdminPassword "s3cret"
 ```
 
-## Testing
+## Pruebas
 
-| Script | Purpose | Prerequisites |
-|--------|---------|---------------|
-| `smoke-test.py` | Validates core API endpoints are responding (auth, CRUD, permissions) | Python 3.8+, `requests` |
+| Script | Descripción | Requisitos |
+|--------|-------------|------------|
+| `smoke-test.py` | Valida que los endpoints principales de la API respondan (auth, CRUD, permisos) | Python 3.8+, `requests` |
 
 ```bash
-# Configure via environment variables (or use defaults: localhost:5001, admin/changeme)
+# Configurar vía variables de entorno (o usar defaults: localhost:5001, admin/changeme)
 export API_BASE_URL=https://localhost:5001/api/v1
 export API_USER=admin
 export API_PASSWORD=changeme
@@ -33,8 +33,8 @@ python scripts/smoke-test.py
 
 ## internal/
 
-Scripts that are rarely needed and potentially destructive. **Do not run without understanding the consequences.**
+Scripts de uso poco frecuente y potencialmente destructivos. **No ejecutar sin entender las consecuencias.**
 
-| Script | Purpose |
-|--------|---------|
-| `hard_reset_produccion.sql` | Truncates all tickets, comments, history, and non-admin users. **Destructive.** |
+| Script | Descripción |
+|--------|-------------|
+| `hard_reset_produccion.sql` | Trunca todos los tickets, comentarios, historial y usuarios no-admin. **Destructivo.** |

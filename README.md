@@ -26,8 +26,8 @@ Sistema full-stack para la gestión de tickets con máquina de estados, RBAC gra
 ### 1. Base de Datos
 
 ```sql
-mysql -u root -p < database/schema.sql
-mysql -u root -p tickets_db < database/seed.sql
+mysql -u root -p < Database/schema.sql
+mysql -u root -p tickets_db < Database/seed.sql
 ```
 
 ### 2. Backend
@@ -113,7 +113,7 @@ tickets-frontend/            # Frontend — React 19 SPA
     ├── store/               #   Estado global (Zustand: auth + toasts)
     └── types/               #   Tipos TypeScript
 
-database/                    # Scripts SQL
+Database/                    # Scripts SQL
 ├── schema.sql               #   Esquema completo (30 tablas)
 └── seed.sql                 #   Datos de prueba
 
@@ -150,8 +150,8 @@ Ver [JWT_AUTHENTICATION.md](docs/JWT_AUTHENTICATION.md) y [PERMISSIONS_MATRIX.md
 - **Stored Procedures** para operaciones críticas
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p tickets_db < database/seed.sql
+mysql -u root -p < Database/schema.sql
+mysql -u root -p tickets_db < Database/seed.sql
 ```
 
 ---
@@ -219,11 +219,11 @@ python scripts/smoke-test.py
 
 | Documento | Descripción |
 |-----------|-------------|
-| [Technical Architecture](docs/Technical-Architecture.md) | Arquitectura del sistema |
-| [API Integration Guide](docs/API_INTEGRATION_GUIDE.md) | Referencia completa de endpoints |
-| [JWT Authentication](docs/JWT_AUTHENTICATION.md) | Flujo de autenticación |
-| [Permissions Matrix](docs/PERMISSIONS_MATRIX.md) | Matriz de roles y permisos |
-| [Deploy IIS Guide](docs/DEPLOY_IIS_GUIDE.md) | Despliegue en IIS |
+| [Arquitectura Técnica](docs/Technical-Architecture.md) | Arquitectura del sistema |
+| [Guía de Integración API](docs/API_INTEGRATION_GUIDE.md) | Referencia de endpoints |
+| [Autenticación JWT](docs/JWT_AUTHENTICATION.md) | Flujo de autenticación |
+| [Matriz de Permisos](docs/PERMISSIONS_MATRIX.md) | Roles, permisos y transiciones |
+| [Despliegue IIS](docs/DEPLOY_IIS_GUIDE.md) | Guía de despliegue en IIS |
 
 ---
 

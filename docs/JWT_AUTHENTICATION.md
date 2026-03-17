@@ -1,134 +1,84 @@
-# Mapeo de Autenticación JWT
+# Autenticación JWT
 
-Este archivo documenta el mapeo de claims JWT para autorización RBAC.
-
-## Claims Estándar
+## Claims del token
 
 ```json
 {
-  "sub": "1",                    // User ID (subject)
-  "email": "user@empresa.com",
-  "name": "Juan Pérez",
-  "role": "2",                   // Role ID
-  "role_name": "Técnico",
-  "department": "1",
-  "permissions": [
-    "tickets.crear",
-    "tickets.editar", 
-    "tickets.eliminar"
-  ],
-  "iat": 1707000000,            // Issued at
-  "exp": 1707003600,            // Expiration
-  "iss": "TicketsAPI",          // Issuer
-  "aud": "TicketsClients"       // Audience
+  "sub": "1",
+  "unique_name": "Admin",
+  "email": "admin@demo.com",
+  "role": "Administrador",
+  "exp": 1707003600,
+  "iss": "TicketsAPI",
+  "aud": "TicketsClients"
 }
 ```
 
-## Extracción en Controladores
+| Claim         | Tipo JWT                        | Contenido             |
+|---------------|---------------------------------|-----------------------|
+| `sub`         | `JwtRegisteredClaimNames.Sub`   | ID de usuario         |
+| `unique_name` | `JwtRegisteredClaimNames.UniqueName` | Nombre de usuario |
+| `email`       | `JwtRegisteredClaimNames.Email` | Email                 |
+| `role`        | `ClaimTypes.Role`               | Nombre del rol        |
+
+## Configuración
+
+En `appsettings.json`:
+
+```json
+{
+  "JwtSettings": {
+    "SecretKey": "CLAVE_SECRETA_MINIMO_32_CHARS",
+    "Issuer": "TicketsAPI",
+    "Audience": "TicketsClients",
+    "ExpirationMinutes": 60,
+    "RefreshTokenExpirationDays": 7
+  }
+}
+```
+
+- Access token: 60 minutos
+- Refresh token: 7 días, hasheado con SHA-256 en BD, rotado en cada uso
+- ClockSkew: 5 minutos
+- Algoritmo: HS256
+
+## Extracción en controllers
+
+`BaseApiController` expone:
 
 ```csharp
-// En BaseApiController
 protected int GetCurrentUserId()
 {
-    return int.Parse(User.FindFirst("sub")?.Value ?? "0");
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? User.FindFirst("sub")?.Value;
+    return int.TryParse(userIdClaim, out var userId) ? userId : 0;
 }
 
-protected int GetCurrentRoleId()
+protected string? GetCurrentUserRole()
 {
-    return int.Parse(User.FindFirst("role")?.Value ?? "0");
-}
-
-protected List<string> GetCurrentPermissions()
-{
-    var permClaim = User.FindFirst("permissions")?.Value;
-    return permClaim?.Split(',').ToList() ?? new();
+    return User.FindFirst(ClaimTypes.Role)?.Value
+        ?? User.FindFirst("role")?.Value;
 }
 ```
 
-## Validación de Permisos
+## Validación de permisos
+
+Los permisos no viajan en el JWT. Se consultan en la BD vía `IAuthService.ValidarPermisoAsync`:
 
 ```csharp
-// Validar permiso específico
-[Authorize]
-[HttpPost("tickets")]
-public async Task<IActionResult> CreateTicket([FromBody] CreateUpdateTicketDTO dto)
-{
-    // Automático: [Authorize] valida token JWT
-    // Manual: validar permisos adicionales
-    var permisos = GetCurrentPermissions();
-    if (!permisos.Contains("tickets.crear"))
-        return Forbid();
-    
-    // Continuar...
-}
+bool tienePermiso = await _authService.ValidarPermisoAsync(userId, "TKT_CREATE");
 ```
 
-## Política de Autorización Personalizada
+La validación usa las tablas `tkt_usuario_rol` → `tkt_rol_permiso` → `tkt_permiso`.
 
-```csharp
-// En Program.cs
-builder.Services.AddAuthorization(options =>
-{
-    // Política: solo administradores
-    options.AddPolicy("AdminOnly", policy =>
-        policy.RequireClaim("role_name", "Administrador"));
-    
-    // Política: crear tickets
-    options.AddPolicy("CanCreateTickets", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasClaim("permissions", "tickets.crear")));
-});
+## Flujo completo
 
-// En Controller
-[Authorize(Policy = "CanCreateTickets")]
-[HttpPost("tickets")]
-public async Task<IActionResult> CreateTicket(...) { }
-```
+1. `POST /api/v1/Auth/login` — credenciales → access token + refresh token
+2. Cada request: header `Authorization: Bearer {token}`
+3. Token expirado: `POST /api/v1/Auth/refresh` con el refresh token
+4. Refresh token se rota (el anterior queda invalidado)
+5. Logout: `POST /api/v1/Auth/logout` revoca el refresh token
 
-## Roles Soportados
+## Roles del sistema
 
-| ID | Nombre | Descripción |
-|----|--------|-----------|
-| 1 | Administrador | Control total, gestión de usuarios y configuración |
-| 2 | Técnico | Crear, asignar y resolver tickets |
-| 3 | Usuario | Crear y ver sus propios tickets |
-
-## Permisos por Rol
-
-### Administrador
-- tickets.crear
-- tickets.editar
-- tickets.eliminar
-- tickets.asignar
-- tickets.cerrar
-- usuarios.crear
-- usuarios.editar
-- usuarios.eliminar
-- reportes.ver
-- configuracion.editar
-
-### Técnico
-- tickets.crear
-- tickets.editar
-- tickets.asignar
-- tickets.cerrar
-- reportes.ver
-
-### Usuario
-- tickets.crear
-- tickets.ver.propios
-
-## Refresh Token
-
-Los refresh tokens se emiten con expiración extendida (7 días por defecto).
-
-```csharp
-// En AuthService
-var refreshToken = _jwtTokenHandler.GenerateRefreshToken(userId);
-// Guardar en base de datos para validación posterior
-```
-
----
-
-**Versión**: 1.0.0
-**Última Actualización**: 9 de Diciembre de 2025
+Ver [PERMISSIONS_MATRIX.md](PERMISSIONS_MATRIX.md) para la matriz completa de roles, permisos y transiciones.

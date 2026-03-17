@@ -1,9 +1,9 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace TicketsAPI.Models.DTOs
 {
-    // ==================== AUTH DTOs ====================
+    // AUTH DTOs
     /// <summary>
     /// DTO para login
     /// </summary>
@@ -49,7 +49,7 @@ namespace TicketsAPI.Models.DTOs
         public string RefreshToken { get; set; } = string.Empty;
     }
 
-    // ==================== USER DTOs ====================
+    // USER DTOs
     /// <summary>
     /// DTO para usuario
     /// </summary>
@@ -108,7 +108,7 @@ namespace TicketsAPI.Models.DTOs
         public string PasswordNueva { get; set; } = string.Empty;
     }
 
-    // ==================== ROLE & PERMISSION DTOs ====================
+    // ROLE & PERMISSION DTOs
     /// <summary>
     /// DTO para rol
     /// </summary>
@@ -132,7 +132,7 @@ namespace TicketsAPI.Models.DTOs
         public string Modulo { get; set; } = string.Empty;
     }
 
-    // ==================== DEPARTMENT DTOs ====================
+    // DEPARTMENT DTOs
     /// <summary>
     /// DTO para departamento
     /// </summary>
@@ -144,7 +144,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Activo { get; set; }
     }
 
-    // ==================== TICKET DTOs ====================
+    // TICKET DTOs
     /// <summary>
     /// DTO para crear/actualizar ticket
     /// </summary>
@@ -210,7 +210,7 @@ namespace TicketsAPI.Models.DTOs
         public int? Id_Usuario_Asignado_Nuevo { get; set; }
     }
 
-    // ==================== STATUS & PRIORITY DTOs ====================
+    // STATUS & PRIORITY DTOs
     /// <summary>
     /// DTO para estado
     /// </summary>
@@ -235,7 +235,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Activo { get; set; }
     }
 
-    // ==================== COMMENT & HISTORY DTOs ====================
+    // COMMENT & HISTORY DTOs
     /// <summary>
     /// DTO para comentario
     /// </summary>
@@ -279,7 +279,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime Fecha_Cambio { get; set; }
     }
 
-    // ==================== PAGINATION & RESPONSE DTOs ====================
+    // PAGINATION & RESPONSE DTOs
     /// <summary>
     /// DTO para filtros de búsqueda
     /// </summary>
@@ -394,7 +394,7 @@ namespace TicketsAPI.Models.DTOs
         public decimal TasaCumplimientoSLA { get; set; }
     }
 
-    // ==================== MOTIVO DTOs ====================
+    // MOTIVO DTOs
     /// <summary>
     /// DTO para motivo de ticket
     /// </summary>
@@ -418,7 +418,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Categoria { get; set; }
     }
 
-    // ==================== ESTADO / PRIORIDAD ADMIN DTOs ====================
+    // ESTADO / PRIORIDAD ADMIN DTOs
     /// <summary>
     /// DTO para crear/actualizar estado
     /// </summary>
@@ -439,7 +439,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Descripcion { get; set; }
     }
 
-    // ==================== GRUPO DTOs ====================
+    // GRUPO DTOs
     /// <summary>
     /// DTO para grupo
     /// </summary>
@@ -449,7 +449,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Tipo_Grupo { get; set; }
     }
 
-    // ==================== APROBACION DTOs ====================
+    // APROBACION DTOs
     /// <summary>
     /// DTO para solicitud de aprobación
     /// </summary>
@@ -483,7 +483,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Comentario { get; set; }
     }
 
-    // ==================== TRANSICION DTOs ====================
+    // TRANSICION DTOs
     /// <summary>
     /// DTO para transición de estado
     /// </summary>
@@ -508,7 +508,7 @@ namespace TicketsAPI.Models.DTOs
         public string? Descripcion { get; set; }
     }
 
-    // ==================== TRANSICION RESULT DTO ====================
+    // TRANSICION RESULT DTO
     /// <summary>
     /// Resultado de la transición de estado de un ticket (salida de sp_tkt_transicionar)
     /// </summary>
@@ -520,7 +520,7 @@ namespace TicketsAPI.Models.DTOs
         public int? IdAsignado { get; set; }  // Usuario asignado (si aplica)
     }
 
-    // ==================== COMENTARIO RESULT DTO ====================
+    // COMENTARIO RESULT DTO
     /// <summary>
     /// Resultado de la creación de comentario (salida de sp_tkt_comentar)
     /// </summary>
@@ -531,7 +531,7 @@ namespace TicketsAPI.Models.DTOs
         public int? IdComentario { get; set; }  // ID del comentario creado (si aplica)
     }
 
-    // ==================== REPORTES DTOs ====================
+    // REPORTES DTOs
     /// <summary>
     /// DTO para reporte agrupado por estado
     /// </summary>
@@ -591,7 +591,7 @@ namespace TicketsAPI.Models.DTOs
         public string? AgrupacionPeriodo { get; set; } = "dia"; // "dia", "semana", "mes"
     }
 
-    // ==================== SUSCRIPCION DTOs ====================
+    // SUSCRIPCION DTOs
     /// <summary>
     /// Resultado de sp_tkt_gestionar_suscripcion
     /// </summary>
@@ -613,7 +613,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime Fecha_Registro { get; set; }
     }
 
-    // ==================== NOTIFICACION LECTURA DTOs ====================
+    // NOTIFICACION LECTURA DTOs
     /// <summary>
     /// Resumen de notificaciones no leídas
     /// </summary>
@@ -638,7 +638,7 @@ namespace TicketsAPI.Models.DTOs
         public bool Es_Asignado_A_Mi { get; set; }
     }
 
-    // ==================== RBAC (Roles & Permisos) DTOs ====================
+    // RBAC (Roles & Permisos) DTOs
 
     public class RolListDTO
     {
@@ -682,7 +682,7 @@ namespace TicketsAPI.Models.DTOs
         public int IdRol { get; set; }
     }
 
-    // ==================== AUDIT LOG DTOs ====================
+    // AUDIT LOG DTOs
     /// <summary>
     /// DTO para registros de auditoría (audit_log)
     /// </summary>
@@ -748,7 +748,7 @@ namespace TicketsAPI.Models.DTOs
         public DateTime Fecha { get; set; }
     }
 
-    // ==================== GLOBAL SEARCH DTOs ====================
+    // GLOBAL SEARCH DTOs
     /// <summary>
     /// Resultado individual de la búsqueda global
     /// </summary>
@@ -770,7 +770,7 @@ namespace TicketsAPI.Models.DTOs
         public List<GlobalSearchItemDTO> Departamentos { get; set; } = new();
     }
 
-    // ==================== TICKET STATS DTOs ====================
+    // TICKET STATS DTOs
     /// <summary>
     /// Estadísticas rápidas de tickets para el mini-dashboard
     /// </summary>
@@ -782,7 +782,7 @@ namespace TicketsAPI.Models.DTOs
         public int TotalFiltro { get; set; }
     }
 
-    // ==================== ALERTAS / MENCIONES DTOs ====================
+    // ALERTAS / MENCIONES DTOs
     /// <summary>
     /// Alerta de mención (@usuario)
     /// </summary>

@@ -1,7 +1,5 @@
 # Centro de Ayuda — Sistema de Tickets Cediac
 
----
-
 ## Manual de Usuario
 
 ### Crear un Ticket
@@ -37,8 +35,7 @@ Cada ticket pasa por diferentes estados durante su ciclo de vida. A continuació
 | **Pendiente Aprobación** | El ticket requiere la aprobación de un supervisor antes de avanzar. |
 | **Resuelto** | La solicitud fue atendida satisfactoriamente. |
 | **Cerrado** | El ticket finalizó y no requiere más acciones. |
-
----
+| **Reabierto** | Un ticket cerrado o resuelto fue reabierto porque requiere atención adicional. |
 
 ### Agregar Comentarios
 
@@ -54,8 +51,6 @@ Puedes comunicarte con el equipo de soporte directamente desde la vista detalle 
 - **Comentarios privados:** Si está habilitado, puedes marcar un comentario como privado (solo visible para ti y los administradores).
 - **@Menciones:** Escribe `@` seguido del nombre de un usuario para mencionarlo directamente.
 
----
-
 ### Notificaciones
 
 El sistema utiliza notificaciones en tiempo real para mantenerte informado:
@@ -65,10 +60,6 @@ El sistema utiliza notificaciones en tiempo real para mantenerte informado:
 - **Asignación:** Si un ticket te es asignado, recibirás un aviso inmediato.
 
 Las notificaciones aparecen como avisos emergentes en la esquina superior derecha de la pantalla. Además, el ícono de campana en la barra superior muestra un contador con tus notificaciones no leídas.
-
----
-
----
 
 ## Manual de Administrador
 
@@ -82,9 +73,11 @@ Desde la sección **"Usuarios"** del menú lateral, puedes administrar las cuent
 
 | Rol | Permisos principales |
 |-----|---------------------|
-| **Administrador** | Acceso total: gestión de usuarios, departamentos, configuración, auditoría y dashboard. |
-| **Técnico / Soporte** | Puede ver la cola de trabajo, todos los tickets y atender solicitudes asignadas. |
-| **Usuario común** | Puede crear tickets, agregar comentarios y ver únicamente sus propios tickets. |
+| **Administrador** | Acceso total: gestión de usuarios, departamentos, configuración, auditoría y RBAC. |
+| **Supervisor** | Supervisa, edita y asigna tickets. Puede aprobar solicitudes. Sin acceso a eliminar. |
+| **Operador** | Trabaja tickets asignados: crear, editar propios, comentar, transicionar. Vista restringida a su departamento. |
+| **Consulta** | Solo lectura: ver todos los tickets y exportar a CSV. |
+| **Aprobador** | Puede aprobar o rechazar tickets en estado Pendiente Aprobación. |
 
 ---
 
@@ -99,8 +92,6 @@ Como administrador o supervisor, puedes asignar y reasignar tickets a otros usua
 5. Confirma la acción.
 
 > **Importante:** La reasignación a otro usuario siempre requiere un comentario explicativo. Este comentario queda registrado en el historial del ticket para fines de trazabilidad.
-
----
 
 ### Logs de Auditoría
 
@@ -122,8 +113,6 @@ Al expandir un registro, puedes ver una **tabla comparativa** (antes/después) d
 - Filtrar por tipo de acción (INSERT, UPDATE, DELETE…).
 - Filtrar por tabla afectada.
 
----
-
 ### Dashboard
 
 El Dashboard presenta un resumen visual del estado general del sistema:
@@ -143,10 +132,6 @@ El Dashboard presenta un resumen visual del estado general del sistema:
 - **Tickets por Prioridad** (gráfico de barras): Cantidad de tickets según su nivel de prioridad.
 - **Tickets por Departamento** (gráfico de barras): Volumen de tickets por cada departamento.
 
----
-
----
-
 ## Diccionario de Términos
 
 | Término | Definición |
@@ -155,16 +140,12 @@ El Dashboard presenta un resumen visual del estado general del sistema:
 | **Prioridad** | Nivel de urgencia asignado al ticket (por ejemplo: Baja, Media, Alta, Crítica). Determina el orden de atención. |
 | **Departamento** | Área organizacional a la que se dirige el ticket (por ejemplo: Sistemas, Administración, Soporte Técnico). |
 | **Motivo** | Clasificación que describe la razón del ticket (por ejemplo: Falla de equipo, Solicitud de acceso, Consulta general). Es opcional al crear un ticket. |
-| **Estado** | Fase actual del ticket dentro de su ciclo de vida (Abierto, En Proceso, En Espera, Resuelto, Cerrado). |
+| **Estado** | Fase actual del ticket dentro de su ciclo de vida (Abierto, En Proceso, En Espera, Pendiente Aprobación, Resuelto, Cerrado, Reabierto). |
 | **Asignado** | Usuario responsable de atender y resolver el ticket. |
 | **Cola de Trabajo** | Vista donde los técnicos y supervisores encuentran todos los tickets pendientes de atención. |
 | **Transición** | Cambio de estado de un ticket (por ejemplo, de "Abierto" a "En Proceso"). Se registra automáticamente. |
 | **Auditoría** | Registro histórico de todas las acciones realizadas en el sistema, incluyendo quién las hizo y cuándo. |
 | **SignalR** | Tecnología de comunicación en tiempo real que permite recibir notificaciones instantáneas sin recargar la página. |
-
----
-
----
 
 ## Resolución de Problemas
 

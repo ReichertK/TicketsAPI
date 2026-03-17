@@ -1,8 +1,8 @@
-# Technical Architecture
+# Arquitectura Técnica
 
-## System Overview
+## Vista General
 
-Full-stack ticket management system with role-based access control, real-time notifications, and a state-machine workflow engine. Designed for internal organizational use.
+Sistema full-stack de gestión de tickets con control de acceso basado en roles (RBAC), notificaciones en tiempo real y motor de flujo de estados. Diseñado para uso organizacional interno.
 
 ```
 ┌─────────────────────┐     ┌──────────────────────────┐     ┌──────────────┐
@@ -21,110 +21,110 @@ Full-stack ticket management system with role-based access control, real-time no
 
 ### Stack
 
-| Component         | Technology                  | Version  |
+| Componente        | Tecnología                  | Versión  |
 |-------------------|-----------------------------|----------|
 | Framework         | ASP.NET Core                | 6.0      |
 | ORM               | Dapper + Dapper.Contrib      | 2.1.1    |
-| Database Driver   | MySqlConnector              | 2.2.7    |
-| Auth              | JWT Bearer                  | 6.0.21   |
-| Password Hashing  | BCrypt.Net-Next             | 4.0.3    |
-| Real-time         | SignalR + MessagePack       | 6.0.21   |
-| Validation        | FluentValidation            | 11.11.0  |
-| Mapping           | AutoMapper                  | 12.0.1   |
+| Driver BD         | MySqlConnector              | 2.2.7    |
+| Autenticación     | JWT Bearer                  | 6.0.21   |
+| Hashing           | BCrypt.Net-Next             | 4.0.3    |
+| Tiempo real       | SignalR + MessagePack       | 6.0.21   |
+| Validación        | FluentValidation            | 11.11.0  |
+| Mapeo             | AutoMapper                  | 12.0.1   |
 | Logging           | Serilog (Console + File)    | 3.1.1    |
 | Rate Limiting     | AspNetCoreRateLimit         | 5.0.0    |
-| Export            | MiniExcel + CsvHelper       | 1.42.0 / 30.0.0 |
-| API Docs          | Swashbuckle                 | 6.5.0    |
+| Exportación       | MiniExcel + CsvHelper       | 1.42.0 / 30.0.0 |
+| Docs API          | Swashbuckle                 | 6.5.0    |
 
-### Architecture Pattern
+### Patrón de arquitectura
 
-Repository → Service → Controller, all wired through DI.
+Repository → Service → Controller, inyección de dependencias.
 
 ```
-Controller (HTTP boundary)
-    └── Service (business logic, authorization checks)
-         └── Repository (Dapper raw SQL, MySQL 5.5 compatible)
+Controller (frontera HTTP)
+    └── Service (lógica de negocio, validación de permisos)
+         └── Repository (SQL directo con Dapper, compatible MySQL 5.5)
 ```
 
-Repositories registered as **Singleton** (stateless, connection-per-query via MySqlConnector pooling). Services are Singleton except `UsuarioService` (Scoped).
+Repositories registrados como **Singleton** (stateless, conexión por query vía pooling de MySqlConnector). Services son Singleton excepto `UsuarioService` (Scoped).
 
-### Authentication & Security
+### Autenticación y seguridad
 
-**JWT flow:**
-1. `POST /api/auth/login` — validates credentials, returns access token + refresh token
-2. Access token: short-lived, contains `sub` (userId), `role`, custom claims
-3. Refresh token: hashed (SHA-256) in DB, rotated on use
-4. Token validation: issuer, audience, lifetime, signing key (HS256)
+**Flujo JWT:**
+1. `POST /api/v1/Auth/login` — valida credenciales, retorna access token + refresh token
+2. Access token: corta duración (60 min), contiene `sub` (userId), `role`, claims personalizados
+3. Refresh token: hasheado (SHA-256) en BD, rotado en cada uso, expira en 7 días
+4. Validación: issuer, audience, lifetime, signing key (HS256)
 
-**Password handling:**
-- Accepts BCrypt, MD5, SHA256, and plaintext (legacy migration)
-- Auto-upgrades old hashes to BCrypt on successful login
-- BCrypt cost factor for all new passwords
+**Manejo de contraseñas:**
+- Acepta BCrypt, MD5, SHA256 y texto plano (migración legacy)
+- Auto-upgrade a BCrypt en login exitoso
+- BCrypt cost factor para todas las contraseñas nuevas
 
-**Brute force protection:**
-- Per-account lockout tracked in MySQL
-- Returns remaining attempts and lockout expiry
-- Failed attempts logged even for non-existent users (prevents enumeration)
+**Protección contra fuerza bruta:**
+- Bloqueo por cuenta, registrado en MySQL
+- Retorna intentos restantes y expiración del bloqueo
+- Registra intentos fallidos incluso para usuarios inexistentes (previene enumeración)
 
 **Rate limiting:**
-- IP-based via AspNetCoreRateLimit
-- Configurable in `appsettings.json` under `IpRateLimiting`
+- Basado en IP vía AspNetCoreRateLimit
+- Configurable en `appsettings.json` bajo `IpRateLimiting`
 
-### State Machine
+### Máquina de estados
 
-Ticket lifecycle governed by `PoliticaTransicion` table:
+El ciclo de vida del ticket está gobernado por la tabla `tkt_transicion_regla`:
 
-| Column               | Purpose                                     |
-|----------------------|---------------------------------------------|
-| `Id_Estado_Origen`   | Source state                                |
-| `Id_Estado_Destino`  | Target state                                |
-| `Id_Rol`             | Which role can execute this transition      |
-| `Requiere_Propietario` | Must be ticket owner                     |
-| `Requiere_Aprobacion`  | Triggers approval workflow                |
-| `Permiso_Requerido`    | Granular permission code check            |
+| Columna                | Propósito                                   |
+|------------------------|---------------------------------------------|
+| `id_estado_origen`     | Estado origen                               |
+| `id_estado_destino`    | Estado destino                              |
+| `id_rol`               | Rol que puede ejecutar la transición        |
+| `requiere_propietario` | Debe ser propietario del ticket             |
+| `requiere_aprobacion`  | Lanza flujo de aprobación                   |
+| `permiso_requerido`    | Código de permiso granular a verificar      |
 
-Transitions are validated server-side before execution. Invalid transitions return 403.
+Las transiciones se validan en servidor antes de ejecutarse. Transiciones inválidas retornan 403.
 
-### Real-time (SignalR)
+### Tiempo real (SignalR)
 
-Hub endpoint: `/hubs/tickets`
+Endpoint del Hub: `/hubs/tickets`
 
-**Groups:**
-- `ticket-{id}` — per-ticket updates (assigned user, watchers)
-- `approvals` — approval queue notifications
-- `user_{id}` — personal notifications and mentions
+**Grupos:**
+- `ticket-{id}` — actualizaciones por ticket (asignado, observadores)
+- `approvals` — notificaciones de cola de aprobación
+- `user_{id}` — notificaciones personales y menciones
 
-Authentication via JWT query string parameter (`access_token`) for WebSocket upgrade.
+Autenticación vía parámetro JWT en query string (`access_token`) para el upgrade WebSocket.
 
-### Error Handling
+### Manejo de errores
 
-Centralized middleware (`ExceptionHandlingMiddleware`) maps exceptions to HTTP responses:
+Middleware centralizado (`ExceptionHandlingMiddleware`) mapea excepciones a respuestas HTTP:
 
-| Exception                  | Status | Notes                            |
+| Excepción                  | Status | Notas                            |
 |----------------------------|--------|----------------------------------|
 | `UnauthorizedAccessException` | 401 |                                  |
 | `KeyNotFoundException`     | 404    |                                  |
 | `ArgumentException`        | 400    |                                  |
 | `MySqlException` 1213/1205 | 503    | Deadlock / lock timeout → retry  |
-| Unhandled                  | 500    | Details hidden in Production     |
+| No manejada                | 500    | Detalles ocultos en Producción   |
 
-All responses use `ApiResponse<T>` envelope: `{ exitoso, mensaje, datos, errores }`.
+Todas las respuestas usan el envelope `ApiResponse<T>`: `{ exitoso, mensaje, datos, errores }`.
 
 ### Controllers
 
-| Controller         | Prefix                    | Auth       | Purpose                          |
-|--------------------|---------------------------|------------|----------------------------------|
-| Auth               | `/api/auth`               | Anonymous  | Login, refresh, logout           |
-| Tickets            | `/api/tickets`            | Authorized | CRUD, search, assign, transition |
-| Comentarios        | `/api/comentarios`        | Authorized | Ticket comments (public/private) |
-| Aprobaciones       | `/api/aprobaciones`       | Authorized | Approval workflow                |
-| Transiciones       | `/api/transiciones`       | Authorized | State transition history         |
-| Departamentos      | `/api/departamentos`      | Authorized | Department management            |
-| Grupos             | `/api/grupos`             | Authorized | User group management            |
-| Motivos            | `/api/motivos`            | Authorized | Ticket categories/reasons        |
-| References         | `/api/references`         | Authorized | Lookup data (estados, prioridades) |
-| StoredProcedures   | `/api/stored-procedures`  | Authorized | Report generation via SPs        |
-| Admin              | `/api/admin`              | Admin only | User management, config audit    |
+| Controller         | Prefijo                   | Auth       | Propósito                           |
+|--------------------|---------------------------|------------|-------------------------------------|
+| Auth               | `api/v1/Auth`             | Anónimo    | Login, refresh, logout              |
+| Tickets            | `api/v1/Tickets`          | Autorizado | CRUD, búsqueda, asignar, transición |
+| Comentarios        | `api/v1/comentarios`      | Autorizado | Comentarios (públicos/privados)     |
+| Aprobaciones       | `api/v1/aprobaciones`     | Autorizado | Flujo de aprobaciones               |
+| Transiciones       | `api/v1/transiciones`     | Autorizado | Historial de transiciones           |
+| Departamentos      | `api/v1/Departamentos`    | Autorizado | Gestión de departamentos            |
+| Grupos             | `api/v1/Grupos`           | Autorizado | Gestión de grupos                   |
+| Motivos            | `api/v1/Motivos`          | Autorizado | Categorías de tickets               |
+| References         | `api/v1/References`       | Autorizado | Datos de consulta (estados, prioridades) |
+| StoredProcedures   | `api/sp`                  | Admin      | Reportes vía stored procedures      |
+| Admin              | `api/admin`               | Admin      | Gestión de usuarios, auditoría      |
 
 ---
 
@@ -132,96 +132,104 @@ All responses use `ApiResponse<T>` envelope: `{ exitoso, mensaje, datos, errores
 
 ### Stack
 
-| Component         | Technology                  | Version    |
+| Componente        | Tecnología                  | Versión    |
 |-------------------|-----------------------------|------------|
-| Framework         | React                       | 19.2.4     |
-| Build             | Vite                        | 7.2.4      |
-| Language          | TypeScript                  | 5.9.3      |
-| State             | Zustand (persist middleware) | 4.4.7      |
-| Server State      | @tanstack/react-query       | 5.90.20    |
-| HTTP              | Axios                       | 1.13.4     |
-| Real-time         | @microsoft/signalr          | 10.0.0     |
-| Routing           | react-router-dom            | 7.13.0     |
-| Styling           | Tailwind CSS                | 4.1.18     |
-| Charts            | Recharts                    | 3.7.0      |
-| Icons             | lucide-react                | 0.563.0    |
+| Framework         | React                       | 19         |
+| Build             | Vite                        | 7          |
+| Lenguaje          | TypeScript                  | 5.9        |
+| Estado local      | Zustand (persist middleware) | 4          |
+| Estado servidor   | @tanstack/react-query       | 5          |
+| HTTP              | Axios                       | 1          |
+| Tiempo real       | @microsoft/signalr          | 10         |
+| Routing           | react-router-dom            | 7          |
+| Estilos           | Tailwind CSS                | 4          |
+| Gráficos          | Recharts                    | 3          |
+| Iconos            | lucide-react                | 0.563      |
 
-### State Management
+### Gestión de estado
 
 **Zustand `authStore`:**
-- Persisted to `localStorage` (key: `auth-storage`)
-- Stores: `user`, `token`, `isAuthenticated`
-- Role helpers: `isAdmin()`, `isTecnico()`, `hasPermission(code)`
-- Token stored in both Zustand state and `localStorage` for Axios interceptor access
+- Persistido en `localStorage` (key: `auth-storage`)
+- Almacena: `user`, `token`, `isAuthenticated`
+- Helpers de rol: `isAdmin()`, `isTecnico()`, `hasPermission(code)`
+- Token almacenado en estado Zustand y `localStorage` para el interceptor de Axios
 
-**React Query** handles all server state (tickets, departments, etc.) with automatic cache invalidation.
+**React Query** maneja todo el estado de servidor (tickets, departamentos, etc.) con invalidación automática de caché.
 
-### Authentication Flow (Client)
+### Flujo de autenticación (cliente)
 
-1. Login form → `POST /api/auth/login`
-2. Response stored in Zustand (persisted)
-3. Axios interceptor attaches `Authorization: Bearer {token}` to all requests
-4. 401 response → auto-logout, redirect to `/login`
-5. SignalR connection established with token in query string
-
----
-
-## Database
-
-### Engine
-
-MySQL 5.5+ with `utf8mb4` charset (mixed `latin1` in some legacy tables).
-
-### Core Tables
-
-| Table                | Purpose                              |
-|----------------------|--------------------------------------|
-| `usuario`            | Users with auth credentials          |
-| `rol` / `permiso` / `rol_permiso` | RBAC permission system  |
-| `ticket`             | Main ticket entity                   |
-| `estado`             | Ticket lifecycle states              |
-| `prioridad`          | Priority levels (Baja→Crítica)       |
-| `departamento`       | Organizational departments           |
-| `motivo`             | Ticket categories                    |
-| `comentario`         | Ticket comments (public/private)     |
-| `historial_ticket`   | Full audit trail per ticket          |
-| `politica_transicion`| State machine rules                  |
-| `aprobacion`         | Approval workflow records            |
-| `grupo`              | User groups                          |
-
-### Access Pattern
-
-All queries via Dapper (raw SQL). No EF Core. MySQL 5.5 compatibility enforced — no CTEs, no window functions, no JSON operators.
-
-Connection string resolution order: `DbTkt` → `DefaultConnection` → `ApiSettings:ConnectionString` → `ConnectionString`.
+1. Formulario de login → `POST /api/v1/Auth/login`
+2. Respuesta almacenada en Zustand (persistida)
+3. Interceptor de Axios agrega `Authorization: Bearer {token}` a todas las peticiones
+4. Respuesta 401 → auto-logout, redirección a `/login`
+5. Conexión SignalR establecida con token en query string
 
 ---
 
-## Testing
+## Base de datos
+
+### Motor
+
+MySQL 5.5+ con charset `utf8mb4` (algunas tablas legacy usan `latin1`).
+
+### Tablas RBAC (módulo tickets)
+
+| Tabla                   | Propósito                          |
+|-------------------------|------------------------------------|
+| `tkt_rol`               | Roles del módulo de tickets        |
+| `tkt_permiso`           | Permisos granulares                |
+| `tkt_rol_permiso`       | Asignación rol → permiso           |
+| `tkt_usuario_rol`       | Asignación usuario → rol           |
+
+### Tablas principales
+
+| Tabla                   | Propósito                          |
+|-------------------------|------------------------------------|
+| `usuario`               | Usuarios con credenciales          |
+| `ticket`                | Entidad principal de ticket        |
+| `estado`                | Estados del ciclo de vida          |
+| `prioridad`             | Niveles de prioridad (Baja→Crítica)|
+| `departamento`          | Departamentos organizacionales     |
+| `motivo`                | Categorías de tickets              |
+| `comentario`            | Comentarios (públicos/privados)    |
+| `historial_ticket`      | Auditoría completa por ticket      |
+| `tkt_transicion_regla`  | Reglas de la máquina de estados    |
+| `aprobacion`            | Registros de flujo de aprobación   |
+| `grupo`                 | Grupos de usuarios                 |
+
+### Patrón de acceso
+
+Todas las queries vía Dapper (SQL directo). Sin EF Core. Compatibilidad MySQL 5.5 — sin CTEs, sin window functions, sin operadores JSON.
+
+Resolución del connection string: `DbTkt` → `DefaultConnection` → `ApiSettings:ConnectionString` → `ConnectionString`.
+
+---
+
+## Pruebas
 
 ### Backend (xUnit)
 
-- **Framework:** xUnit 2.6.2 + Moq 4.20.70 + FluentAssertions 6.12.0
-- **Coverage:** AuthService (12), TicketService (11), EstadoService (8), Controller tests (5 suites)
-- **Result:** 92 passing, 3 skipped, 0 failures
+- **Framework:** xUnit + Moq + FluentAssertions
+- **Cobertura:** AuthService, TicketService, EstadoService, suites de controllers
+- **Resultado:** 92 pasando, 3 omitidos, 0 fallos
 
 ### Frontend (Vitest)
 
 - **Framework:** Vitest + @testing-library/react + jsdom
-- **Coverage:** LoginPage (6), TicketsPage (3), authStore (9)
-- **Result:** 18 passing, 0 failures
+- **Cobertura:** LoginPage, TicketsPage, authStore
+- **Resultado:** 18 pasando, 0 fallos
 
 ---
 
-## Deployment
+## Despliegue
 
-Target: IIS on Windows Server. See [DEPLOY_IIS_GUIDE.md](DEPLOY_IIS_GUIDE.md) for step-by-step instructions.
+Destino: IIS en Windows Server. Ver [DEPLOY_IIS_GUIDE.md](DEPLOY_IIS_GUIDE.md) para guía paso a paso.
 
-**Requirements:**
+**Requisitos:**
 - .NET 6.0 Runtime
-- MySQL 5.5+ instance
-- Node.js (for frontend build only)
-- IIS with URL Rewrite module
-- HTTPS certificate
+- MySQL 5.5+
+- Node.js (solo para build del frontend)
+- IIS con módulo URL Rewrite
+- Certificado HTTPS
 
-**Configuration:** All secrets via `appsettings.json` or environment variables. JWT secret key validated at startup — default/empty values cause immediate failure.
+**Configuración:** Todos los secretos vía `appsettings.json` o variables de entorno. La clave JWT se valida al arranque — valores vacíos o por defecto causan fallo inmediato.

@@ -1,152 +1,55 @@
-# Quick Start - Sistema de Tickets Frontend
+# Inicio Rápido
 
-## 🚀 Inicio Rápido (5 minutos)
-
-### Paso 1: Asegúrate que la API está corriendo
+## 1. Verificar que la API esté corriendo
 
 ```bash
-# En otra terminal, en la carpeta TicketsAPI/
-dotnet run --project TicketsAPI.csproj
-# Debe estar en: http://localhost:5000
+dotnet run --project TicketsAPI/TicketsAPI.csproj
+# API en http://localhost:5000
 ```
 
-### Paso 2: Inicia el Frontend
+## 2. Instalar e iniciar el frontend
 
 ```bash
 cd tickets-frontend
+npm install
 npm run dev
 ```
 
-### Paso 3: Abre en el navegador
+Abrir `http://localhost:5173` en el navegador.
 
-```
-http://localhost:5174
-```
+## 3. Login
 
-## 🔐 Login
+Credenciales de prueba (seed):
 
-### Datos de prueba (si existen)
+| Usuario           | Contraseña | Rol           |
+|--------------------|-----------|---------------|
+| admin@demo.com     | admin123  | Administrador |
+| supervisor@demo.com| admin123  | Supervisor    |
+| operador@demo.com  | admin123  | Operador      |
+| consulta@demo.com  | admin123  | Consulta      |
 
-```
-Usuario: admin@ticketsapi.com
-Contraseña: Admin123!
-```
+## 4. Navegación
 
-Si no funcionan, usa tus credenciales del sistema API.
+| Ruta                   | Página                  | Acceso        |
+|------------------------|-------------------------|---------------|
+| `/`                    | Dashboard               | Todos          |
+| `/tickets`             | Listado de tickets      | Todos          |
+| `/tickets/nuevo`       | Crear ticket            | Operadores+    |
+| `/tickets/:id`         | Detalle del ticket      | Todos          |
+| `/tickets/:id/editar`  | Editar ticket           | Según permisos |
+| `/usuarios`            | Gestión de usuarios     | Admin          |
+| `/departamentos`       | Gestión departamentos   | Admin          |
+| `/configuracion`       | Configuración           | Admin          |
+| `/seguridad`           | RBAC (roles/permisos)   | Admin          |
+| `/audit-logs`          | Logs de auditoría       | Admin          |
+| `/ayuda`               | Manual de usuario       | Todos          |
 
-## 📍 Páginas Disponibles
+## Troubleshooting
 
-Una vez logueado:
+**No conecta a la API**: verificar que corre en el puerto configurado en `.env` (`VITE_API_URL`).
 
-| URL | Descripción |
-|-----|------------|
-| `/` | Dashboard con métricas |
-| `/tickets` | Listado de todos los tickets |
-| `/tickets/nuevo` | Crear nuevo ticket |
-| `/tickets/:id` | Ver detalle del ticket |
-| `/usuarios` | Gestión de usuarios (Admin) |
-| `/departamentos` | Gestión de departamentos (Admin) |
+**Login no funciona**: verificar credenciales en la base de datos. Los usuarios seed se crean con `Database/seed.sql`.
 
-## ⚡ Funcionalidades Clave Rápidas
+**Puerto en uso**: Vite asigna el siguiente puerto disponible automáticamente.
 
-### Dashboard
-- Ver todas las métricas en tiempo real
-- Gráficos de tickets por estado/prioridad/departamento
-
-### Crear Ticket
-1. Ir a "Tickets" → "Nuevo Ticket"
-2. Completar formulario
-3. Click "Crear Ticket"
-
-### Ver Ticket
-1. Ir a "Tickets"
-2. Click en la fila del ticket
-3. Ver detalles, comentarios, historial
-
-### Comentar
-1. En detalle del ticket
-2. Scroll a "Comentarios"
-3. Escribir y click "Agregar Comentario"
-
-## 🔧 Troubleshooting Rápido
-
-### "No puedo conectarme a la API"
-```
-❌ Error: CORS, conexión rechazada
-✅ Solución: Verifica que API está corriendo en http://localhost:5000
-```
-
-### "El login no funciona"
-```
-❌ Error: Credenciales inválidas
-✅ Solución: Verifica usuario en base de datos API
-```
-
-### "El front no carga"
-```
-❌ Error: Página en blanco
-✅ Solución: Abre DevTools (F12) y revisa Console para errores
-```
-
-### "Port 5173 está en uso"
-```
-✅ El sistema usa automáticamente puerto 5174
-```
-
-## 📦 Estructura Minimalista
-
-```
-tickets-frontend/
-├── src/
-│   ├── pages/          ← Páginas principales
-│   ├── components/     ← Componentes UI
-│   ├── services/       ← HTTP requests
-│   ├── store/          ← Estado global
-│   ├── types/          ← TypeScript types
-│   └── main.tsx        ← Inicio de app
-├── .env                ← Config (API URL)
-└── package.json        ← Dependencias
-```
-
-## 💡 Tips de Desarrollo
-
-### Recargar sin perder estado
-```bash
-Ctrl+Shift+R (Windows)
-Cmd+Shift+R (Mac)
-```
-
-### Ver estado global (Zustand)
-```javascript
-// En DevTools Console:
-import { useAuthStore } from './store/authStore';
-useAuthStore.getState()
-```
-
-### Inspeccionar queries (React Query)
-```bash
-# Instala React Query DevTools:
-npm install @tanstack/react-query-devtools
-
-# Se mostrará panel en esquina inferior derecha
-```
-
-## 🎓 Próximos Pasos
-
-1. **Explorar Dashboard**: Ver todas las métricas
-2. **Crear un Ticket**: Probar formulario de creación
-3. **Comentar**: Agregar comentarios a tickets
-4. **Admin Panel**: Ver usuarios y departamentos (si eres admin)
-
-## 📞 Soporte
-
-Si algo no funciona:
-
-1. Revisa console (F12)
-2. Verifica que API está corriendo (http://localhost:5000)
-3. Revisa `.env` tenga `VITE_API_URL=http://localhost:5000`
-4. Limpia cache browser (Ctrl+Shift+Del)
-
----
-
-**¡Listo para empezar!** 🎉
+**Errores en consola**: abrir DevTools (F12 → Console) para diagnóstico.

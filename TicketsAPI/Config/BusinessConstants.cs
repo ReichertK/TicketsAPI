@@ -1,15 +1,13 @@
 namespace TicketsAPI.Config
 {
-    /// <summary>
     /// Constantes de estados del ciclo de vida del ticket.
     /// Centralizan los IDs de estado para evitar magic numbers en servicios y controladores.
-    /// </summary>
     public static class TicketStates
     {
-        /// <summary>Estado inicial al crear un ticket (DB: 1 = Abierto)</summary>
+        /// Estado inicial al crear un ticket (DB: 1 = Abierto).
         public const int Abierto = 1;
 
-        /// <summary>Ticket en proceso de resolución (DB: 2 = En Proceso)</summary>
+        /// Ticket en proceso de resolución (DB: 2 = En Proceso).
         public const int EnProceso = 2;
 
         /// <summary>Ticket cerrado (DB: 3 = Cerrado)</summary>

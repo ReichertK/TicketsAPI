@@ -135,6 +135,12 @@ export function useSignalR() {
       queryClientRef.current.invalidateQueries({ queryKey: ['tickets-cola'] });
     };
 
+    /** Invalidar el estado de notificaciones (campana + alertas) */
+    const invalidateNotificaciones = () => {
+      queryClientRef.current.invalidateQueries({ queryKey: ['notificaciones-resumen'] });
+      queryClientRef.current.invalidateQueries({ queryKey: ['alertas'] });
+    };
+
     connection.on('NuevoTicket', (payload: NuevoTicketPayload | number) => {
       const data = typeof payload === 'number' ? { idTicket: payload } : payload;
       if (isDup(`NuevoTicket-${data.idTicket}`)) return;
@@ -146,6 +152,7 @@ export function useSignalR() {
       queryClientRef.current.invalidateQueries({ queryKey: ['tickets-todos'] });
       queryClientRef.current.invalidateQueries({ queryKey: ['tickets-cola'] });
       queryClientRef.current.invalidateQueries({ queryKey: ['dashboard'] });
+      invalidateNotificaciones();
 
       sileo.action({
         title: 'Nuevo Ticket',
@@ -164,6 +171,7 @@ export function useSignalR() {
         invalidateTicketLists();
         queryClientRef.current.invalidateQueries({ queryKey: ['ticket', data.idTicket] });
         queryClientRef.current.invalidateQueries({ queryKey: ['dashboard'] });
+        invalidateNotificaciones();
 
         sileo.action({
           title: 'Ticket Actualizado',
@@ -183,6 +191,7 @@ export function useSignalR() {
         invalidateTicketLists();
         queryClientRef.current.invalidateQueries({ queryKey: ['ticket', data.idTicket] });
         queryClientRef.current.invalidateQueries({ queryKey: ['dashboard'] });
+        invalidateNotificaciones();
 
         const estadoLabel = data.nuevoEstado ?? `Estado #${data.idEstadoNuevo}`;
         sileo.action({
@@ -201,6 +210,7 @@ export function useSignalR() {
         if (isDup(`NuevoComentario-${data.idTicket}`)) return;
 
         queryClientRef.current.invalidateQueries({ queryKey: ['ticket', data.idTicket] });
+        invalidateNotificaciones();
 
         sileo.action({
           title: 'Nuevo Comentario',
@@ -219,6 +229,7 @@ export function useSignalR() {
 
         invalidateTicketLists();
         queryClientRef.current.invalidateQueries({ queryKey: ['ticket', data.idTicket] });
+        invalidateNotificaciones();
 
         sileo.action({
           title: 'Solicitud de Aprobación',
@@ -234,6 +245,7 @@ export function useSignalR() {
 
       // Invalidar alertas
       queryClientRef.current.invalidateQueries({ queryKey: ['alertas'] });
+      queryClientRef.current.invalidateQueries({ queryKey: ['notificaciones-resumen'] });
       queryClientRef.current.invalidateQueries({ queryKey: ['ticket', payload.idTicket] });
 
       sileo.action({
@@ -249,6 +261,7 @@ export function useSignalR() {
 
       // Invalidar alertas (campana), ticket detalle, lista de tickets y transiciones
       queryClientRef.current.invalidateQueries({ queryKey: ['alertas'] });
+      queryClientRef.current.invalidateQueries({ queryKey: ['notificaciones-resumen'] });
       queryClientRef.current.invalidateQueries({ queryKey: ['ticket', payload.idTicket] });
       invalidateTicketLists();
       queryClientRef.current.invalidateQueries({ queryKey: ['ticket-transitions', payload.idTicket] });

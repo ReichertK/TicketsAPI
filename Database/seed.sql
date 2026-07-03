@@ -134,85 +134,44 @@ INSERT INTO `permiso` (`idPermiso`, `codigo`, `descripcion`) VALUES
   (15, 'TKT_REOPEN', 'Reabrir'),
   (16, 'TKT_RBAC_ADMIN', 'Admin RBAC'),
   (17, 'TKT_ASSIGN', 'Asignar tickets a otros usuarios'),
-  (18, 'VER_SOLO_DEPARTAMENTO', 'Ver solo tickets del departamento propio');
+  (18, 'VER_SOLO_DEPARTAMENTO', 'Ver solo tickets del departamento propio'),
+  (19, 'TKT_VIEW_DETAIL', 'Ver detalle del ticket');
 
 INSERT INTO `rol_permiso` (`idRol`, `idPermiso`) VALUES
-  -- Administrador: todos
-  (10,1),(10,2),(10,4),(10,5),(10,6),(10,7),(10,10),(10,11),(10,12),(10,13),(10,14),(10,15),(10,16),
-  -- Supervisor
-  (1,1),(1,2),(1,4),(1,7),(1,10),(1,11),(1,12),(1,13),(1,14),(1,15),
-  -- Agente
-  (2,3),(2,5),(2,8),(2,9),(2,10),(2,13),(2,15),
-  -- Operador
-  (3,1),(3,3),(3,5),(3,8),(3,9),(3,10),(3,18),
-  -- Aprobador
-  (11,1),
-  -- Consulta
-  (12,1);
+  -- Administrador (10): todos
+  (10,1),(10,2),(10,3),(10,4),(10,5),(10,6),(10,7),(10,8),(10,9),(10,10),(10,11),(10,12),(10,13),(10,14),(10,15),(10,16),(10,17),(10,18),(10,19),
+  -- Supervisor (1): todo menos DELETE(6) y RBAC_ADMIN(16)
+  (1,1),(1,2),(1,3),(1,4),(1,5),(1,7),(1,8),(1,9),(1,10),(1,11),(1,12),(1,13),(1,14),(1,15),(1,17),(1,18),(1,19),
+  -- Agente (2): operar tickets asignados
+  (2,1),(2,3),(2,5),(2,8),(2,9),(2,10),(2,12),(2,13),(2,15),(2,19),
+  -- Operador (3): como Agente + cerrar(14) + ver solo depto(18)
+  (3,1),(3,3),(3,5),(3,8),(3,9),(3,10),(3,12),(3,13),(3,14),(3,15),(3,18),(3,19),
+  -- Aprobador (11): aprobar y ver
+  (11,2),(11,7),(11,8),(11,19),
+  -- Consulta (12): solo lectura y exportar
+  (12,2),(12,11),(12,19);
 
 -- ─────────────────────────────────────
--- RBAC: Ticket Module Roles & Permissions
--- ─────────────────────────────────────
-INSERT INTO `tkt_rol` (`id_rol`, `nombre`, `descripcion`, `habilitado`) VALUES
-  (1, 'Administrador', 'Acceso total', 1),
-  (2, 'Supervisor', 'Supervisa y edita, sin eliminar', 1),
-  (3, 'Operador', 'Opera tickets asignados', 1),
-  (4, 'Consulta', 'Solo lectura y exportar', 1),
-  (6, 'Aprobador', 'Puede aprobar/rechazar tickets', 1);
-
-INSERT INTO `tkt_permiso` (`id_permiso`, `codigo`, `descripcion`, `habilitado`) VALUES
-  (1, 'TKT_LIST_ALL', 'Ver todos los tickets', 1),
-  (2, 'TKT_LIST_ASSIGNED', 'Ver mis asignados', 1),
-  (3, 'TKT_VIEW_DETAIL', 'Ver detalle', 1),
-  (4, 'TKT_CREATE', 'Crear ticket', 1),
-  (5, 'TKT_EDIT_ASSIGNED', 'Editar si soy asignado', 1),
-  (6, 'TKT_EDIT_ANY', 'Editar cualquiera', 1),
-  (7, 'TKT_ASSIGN', 'Asignar tickets', 1),
-  (8, 'TKT_CLOSE', 'Cerrar tickets', 1),
-  (9, 'TKT_DELETE', 'Eliminar tickets', 1),
-  (10, 'TKT_EXPORT', 'Exportar CSV', 1),
-  (11, 'TKT_COMMENT', 'Comentar', 1),
-  (34, 'TKT_RBAC_ADMIN', 'Administrar roles y permisos', 1),
-  (35, 'TKT_START', 'Iniciar trabajo', 1),
-  (36, 'TKT_WAIT', 'Poner / sacar de Espera', 1),
-  (37, 'TKT_REQUEST_APPROVAL', 'Solicitar aprobación', 1),
-  (38, 'TKT_APPROVE', 'Aprobar / Rechazar', 1),
-  (39, 'TKT_RESOLVE', 'Marcar como Resuelto', 1),
-  (40, 'TKT_REOPEN', 'Reabrir ticket', 1),
-  (41, 'VER_SOLO_DEPARTAMENTO', 'Ver solo tickets del departamento propio', 1);
-
-INSERT INTO `tkt_rol_permiso` (`id_rol`, `id_permiso`) VALUES
-  -- Administrador (all)
-  (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(1,11),(1,34),(1,35),(1,36),(1,37),(1,38),(1,39),(1,40),
-  -- Supervisor
-  (2,1),(2,3),(2,4),(2,6),(2,7),(2,8),(2,10),(2,11),(2,35),(2,36),(2,37),(2,38),(2,39),(2,40),
-  -- Operador
-  (3,2),(3,3),(3,4),(3,5),(3,8),(3,11),(3,35),(3,36),(3,37),(3,39),(3,41),
-  -- Consulta
-  (4,1),(4,3),(4,10),
-  -- Aprobador
-  (6,1),(6,38);
-
--- ─────────────────────────────────────
--- Transition Rules (State Machine)
+-- Transition Rules (State Machine) — reglas reales de la BD
+-- RBAC unificado en rol/permiso/rol_permiso/usuario_rol.
+-- Las tablas tkt_rol / tkt_permiso / tkt_rol_permiso / tkt_usuario_rol fueron eliminadas.
 -- ─────────────────────────────────────
 INSERT INTO `tkt_transicion_regla` (`id`, `estado_from`, `estado_to`, `requiere_propietario`, `permiso_requerido`, `requiere_aprobacion`, `habilitado`, `descripcion`) VALUES
-  (1, 1, 2, 0, 'TKT_ASSIGN', 0, 1, 'Abierto → En Proceso (asignar)'),
-  (2, 2, 3, 1, 'TKT_START', 0, 1, 'En Proceso → Cerrado'),
-  (3, 3, 4, 1, 'TKT_WAIT', 0, 1, 'Cerrado → En Espera'),
-  (4, 4, 3, 1, 'TKT_WAIT', 0, 1, 'En Espera → Cerrado'),
-  (5, 3, 5, 1, 'TKT_REQUEST_APPROVAL', 1, 1, 'Cerrado → Pendiente Aprobación'),
-  (6, 5, 3, 0, 'TKT_APPROVE', 0, 1, 'Pendiente Aprobación → Cerrado (rechazar)'),
-  (7, 5, 6, 0, 'TKT_APPROVE', 0, 1, 'Pendiente Aprobación → Resuelto (aprobar)'),
-  (8, 3, 6, 1, 'TKT_RESOLVE', 0, 1, 'Cerrado → Resuelto'),
-  (9, 6, 7, 0, 'TKT_CLOSE', 0, 1, 'Resuelto → Reabierto'),
-  (38, 2, 4, 1, 'TKT_WAIT', 0, 1, 'En Proceso → En Espera'),
-  (39, 4, 2, 1, 'TKT_WAIT', 0, 1, 'En Espera → En Proceso'),
-  (40, 2, 5, 1, 'TKT_REQUEST_APPROVAL', 1, 1, 'En Proceso → Pendiente Aprobación'),
-  (41, 5, 2, 0, 'TKT_APPROVE', 0, 1, 'Pendiente Aprobación → En Proceso'),
-  (44, 6, 3, 0, 'TKT_CLOSE', 0, 1, 'Resuelto → Cerrado'),
-  (45, 3, 7, 0, 'TKT_REOPEN', 0, 1, 'Cerrado → Reabierto'),
-  (46, 7, 2, 0, 'TKT_START', 0, 1, 'Reabierto → En Proceso');
+  (1, 1, 2, 0, 'TKT_START', 0, 1, 'Iniciar/tomar ticket'),
+  (2, 2, 3, 1, 'TKT_CLOSE', 0, 1, 'Cierre directo desde proceso'),
+  (4, 4, 3, 1, 'TKT_WAIT', 0, 1, 'Cerrar desde espera'),
+  (6, 5, 3, 0, 'TKT_APPROVE', 0, 1, 'Aprobar y cerrar'),
+  (7, 5, 6, 0, 'TKT_APPROVE', 0, 1, 'Aprobar como resuelto'),
+  (9, 6, 7, 0, 'TKT_REOPEN', 0, 1, 'Reabrir por inconformidad'),
+  (38, 2, 4, 1, 'TKT_WAIT', 0, 1, 'Pausar trabajo'),
+  (39, 4, 2, 1, 'TKT_WAIT', 0, 1, 'Retomar trabajo'),
+  (40, 2, 5, 1, 'TKT_REQUEST_APPROVAL', 1, 1, 'Solicitar aprobacion'),
+  (41, 5, 2, 0, 'TKT_APPROVE', 0, 1, 'Aprobar y continuar'),
+  (43, 2, 6, 1, 'TKT_RESOLVE', 0, 1, 'Resolver directo desde En Proceso (sin aprobacion)'),
+  (44, 6, 3, 0, 'TKT_CLOSE', 0, 1, 'Confirmar cierre final'),
+  (45, 3, 7, 0, 'TKT_REOPEN', 0, 1, 'Reapertura de ticket cerrado'),
+  (46, 7, 2, 0, 'TKT_START', 0, 1, 'Retomar ticket reabierto'),
+  (47, 1, 4, 0, 'TKT_WAIT', 0, 1, 'Poner en espera antes de iniciar');
 
 -- ─────────────────────────────────────
 -- Demo Users  (password: admin123 → MD5)
@@ -230,13 +189,6 @@ INSERT INTO `usuario_rol` (`idUsuario`, `idRol`) VALUES
   (2, 1),   -- Supervisor
   (3, 3),   -- Operador
   (4, 12);  -- Consulta
-
--- Ticket module role mapping
-INSERT INTO `tkt_usuario_rol` (`idUsuario`, `id_rol`) VALUES
-  (1, 1),  -- Admin → Administrador
-  (2, 2),  -- Supervisor
-  (3, 3),  -- Operador
-  (4, 4);  -- Consulta
 
 -- User-Company-Branch-Profile assignment
 INSERT INTO `usuario_empresa_sucursal_perfil_sistema` (`idUsuario`, `idEmpresa`, `idSucursal`, `idSistema`, `idPerfil`, `habilitado`) VALUES

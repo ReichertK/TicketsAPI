@@ -16,7 +16,7 @@ namespace TicketsAPI.Services.Interfaces
         Task<PaginatedResponse<TicketDTO>> GetFilteredAsync(TicketFiltroDTO filtro, int idUsuarioActual);
         Task<int> CreateAsync(CreateUpdateTicketDTO dto, int idUsuarioCreador);
         Task<bool> UpdateAsync(int id, CreateUpdateTicketDTO dto, int idUsuarioActual);
-        Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario);
+        Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario, bool esSuperAdmin = false);
         Task<bool> AsignarAsync(int id, int idUsuarioAsignado, int idUsuarioActor, string? comentario);
         Task<bool> CloseAsync(int id, int idUsuario, string? comentario = null);
     }

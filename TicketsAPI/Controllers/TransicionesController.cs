@@ -114,7 +114,8 @@ namespace TicketsAPI.Controllers
                 };
 
                 // Llamar al servicio de tickets para manejar la transición
-                await _ticketService.TransicionarEstadoAsync(ticketId, transicionDto, usuarioId);
+                var esSuperAdmin = User.IsInRole("Administrador") || User.IsInRole("Admin") || User.HasClaim("permiso", "TKT_ADMIN");
+                await _ticketService.TransicionarEstadoAsync(ticketId, transicionDto, usuarioId, esSuperAdmin);
 
                 // Crear registro de transición
                 var transicion = new Transicion

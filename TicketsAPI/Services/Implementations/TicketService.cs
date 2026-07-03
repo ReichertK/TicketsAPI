@@ -185,7 +185,7 @@ namespace TicketsAPI.Services.Implementations
                 );
         }
 
-        public async Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario)
+        public async Task<bool> TransicionarEstadoAsync(int id, TransicionEstadoDTO dto, int idUsuario, bool esSuperAdmin = false)
         {
             var result = await _ticketRepository.TransicionarEstadoViaStoredProcedureAsync(
                 idTkt: id,
@@ -193,7 +193,8 @@ namespace TicketsAPI.Services.Implementations
                 idUsuarioActor: idUsuario,
                 comentario: dto.Comentario,
                 motivo: dto.Motivo,
-                idAsignadoNuevo: dto.Id_Usuario_Asignado_Nuevo);
+                idAsignadoNuevo: dto.Id_Usuario_Asignado_Nuevo,
+                esSuperAdmin: esSuperAdmin);
 
             return result.Success == 1;
         }

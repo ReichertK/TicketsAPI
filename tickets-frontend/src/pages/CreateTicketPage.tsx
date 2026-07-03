@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { sileo } from 'sileo';
 import { apiClient } from '../services/api.service';
 import { API_ENDPOINTS } from '../config/api';
 import { 
@@ -14,6 +15,7 @@ import { Save, X, AlertTriangle, Building2, FileText, TicketPlus, Tag } from 'lu
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [ticket, setTicket] = useState<CreateUpdateTicketDTO>({
     contenido: '',
     id_Prioridad: 0,
@@ -60,18 +62,26 @@ export default function CreateTicketPage() {
       );
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Refrescar las listas para que el ticket nuevo aparezca sin F5
+      queryClient.invalidateQueries({ queryKey: ['mis-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets-todos'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets-cola'] });
+      sileo.success({ description: data?.mensaje || 'Ticket creado exitosamente' });
       navigate('/tickets');
     },
     onError: (err: any) => {
       // Parsear ValidationProblemDetails de ASP.NET
       const respData = err?.response?.data;
+      let msg: string;
       if (respData?.errors) {
         const messages = Object.values(respData.errors).flat().join('. ');
-        setSubmitError(messages || 'Error de validación.');
+        msg = messages || 'Error de validación.';
       } else {
-        setSubmitError(respData?.mensaje || 'Error al crear el ticket. Inténtalo de nuevo.');
+        msg = respData?.mensaje || 'Error al crear el ticket. Inténtalo de nuevo.';
       }
+      setSubmitError(msg);
+      sileo.error({ description: msg });
     },
   });
 

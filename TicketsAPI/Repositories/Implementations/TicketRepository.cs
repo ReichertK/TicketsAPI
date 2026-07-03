@@ -11,6 +11,11 @@ namespace TicketsAPI.Repositories.Implementations
     {
         public TicketRepository(string connectionString) : base(connectionString) { }
 
+        /// Convierte un valor dinámico (posible BIGINT/long boxeado) a int? de forma segura.
+        /// El cast `as int?` sobre un long boxeado devuelve null, por eso se usa Convert.
+        private static int? ToNullableInt(object? value)
+            => value == null || value is DBNull ? (int?)null : Convert.ToInt32(value);
+
         public async Task<int> CreateAsync(Ticket entity)
         {
             // Usar stored procedure sp_agregar_tkt en lugar de INSERT directo
@@ -231,11 +236,12 @@ namespace TicketsAPI.Repositories.Implementations
                 Id_Estado = row.Id_Estado as int?,
                 Id_Prioridad = row.Id_Prioridad as int?,
                 Id_Departamento = row.Id_Departamento as int?,
-                Id_Usuario = row.Id_Usuario as int?,
-                Id_Usuario_Asignado = row.Id_Usuario_Asignado as int?,
-                Id_Empresa = row.Id_Empresa as int?,
-                Id_Perfil = row.Id_Perfil as int?,
-                Id_Sucursal = row.Id_Sucursal as int?,
+                // Columnas BIGINT: usar conversión segura (el cast `as int?` sobre un long boxed devuelve null)
+                Id_Usuario = ToNullableInt(row.Id_Usuario),
+                Id_Usuario_Asignado = ToNullableInt(row.Id_Usuario_Asignado),
+                Id_Empresa = ToNullableInt(row.Id_Empresa),
+                Id_Perfil = ToNullableInt(row.Id_Perfil),
+                Id_Sucursal = ToNullableInt(row.Id_Sucursal),
                 Date_Creado = row.Date_Creado as DateTime?,
                 Date_Asignado = row.Date_Asignado as DateTime?,
                 Date_Cierre = row.Date_Cierre as DateTime?,

@@ -52,7 +52,8 @@ namespace TicketsAPI.Repositories.Implementations
         public async Task<List<Permiso>> GetByModuloAsync(string modulo)
         {
             using var conn = CreateConnection();
-            var sql = "SELECT idPermiso AS Id_Permiso, codigo AS Codigo, descripcion AS Descripcion FROM permiso WHERE Modulo = @modulo";
+            // La tabla 'permiso' no tiene columna Modulo; el modulo se infiere del prefijo del codigo (ej: 'TKT').
+            var sql = "SELECT idPermiso AS Id_Permiso, codigo AS Codigo, descripcion AS Descripcion FROM permiso WHERE codigo LIKE CONCAT(@modulo, '_%') ORDER BY codigo";
             var list = await conn.QueryAsync<Permiso>(sql, new { modulo });
             return list.ToList();
         }
